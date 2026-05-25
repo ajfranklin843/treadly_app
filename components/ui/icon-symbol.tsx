@@ -9,72 +9,43 @@ type IconMapping = Record<SymbolViewProps["name"], ComponentProps<typeof Materia
 type IconSymbolName = keyof typeof MAPPING;
 
 /**
- * SF Symbols to Material Icons mappings for Threadly.
+ * SF Symbols → Material Icons mappings for Threadly tab bar.
  */
 const MAPPING = {
-  // Navigation
+  // Core navigation
   "house.fill": "home",
   "house": "home",
+  "sparkles": "auto-awesome",
+  "sparkles.fill": "auto-awesome",
+  "hanger": "checkroom",
+  "bag.fill": "shopping-bag",
+  "bag": "shopping-bag",
+  "message.fill": "chat",
+  "message": "chat",
+  // Utility
   "paperplane.fill": "send",
   "chevron.left.forwardslash.chevron.right": "code",
   "chevron.right": "chevron-right",
   "chevron.left": "chevron-left",
-  "chevron.down": "keyboard-arrow-down",
-  "chevron.up": "keyboard-arrow-up",
-  // Threadly tabs
-  "hanger": "checkroom",
-  "sparkles": "auto-awesome",
-  "bag.fill": "shopping-bag",
-  "bag": "shopping-bag",
-  "person.fill": "person",
-  "person": "person",
-  "magnifyingglass": "search",
-  "bell.fill": "notifications",
-  "bell": "notifications-none",
-  // Closet / wardrobe
-  "tshirt.fill": "checkroom",
-  "tshirt": "checkroom",
-  "camera.fill": "camera-alt",
-  "camera": "camera-alt",
-  "photo.fill": "photo",
-  "photo": "photo",
+  "xmark": "close",
   "plus": "add",
-  "plus.circle.fill": "add-circle",
-  "minus.circle.fill": "remove-circle",
-  // Shopping / deals
-  "tag.fill": "local-offer",
-  "tag": "local-offer",
-  "percent": "percent",
-  "cart.fill": "shopping-cart",
-  "cart": "shopping-cart",
   "heart.fill": "favorite",
   "heart": "favorite-border",
-  "star.fill": "star",
-  "star": "star-border",
-  // AI / style
-  "wand.and.stars": "auto-fix-high",
-  "wand.and.stars.inverse": "auto-fix-high",
-  "brain": "psychology",
-  "lightbulb.fill": "lightbulb",
-  "lightbulb": "lightbulb-outline",
-  // Misc
-  "xmark": "close",
-  "xmark.circle.fill": "cancel",
-  "checkmark": "check",
-  "checkmark.circle.fill": "check-circle",
+  "camera.fill": "camera-alt",
+  "camera": "camera-alt",
+  "magnifyingglass": "search",
+  "person.fill": "person",
+  "person": "person",
+  "gearshape.fill": "settings",
   "arrow.right": "arrow-forward",
   "arrow.left": "arrow-back",
-  "arrow.up": "arrow-upward",
-  "arrow.down": "arrow-downward",
-  "ellipsis": "more-horiz",
-  "ellipsis.circle": "more-horiz",
-  "square.and.arrow.up": "ios-share",
-  "trash.fill": "delete",
-  "pencil": "edit",
-  "gear": "settings",
-  "info.circle": "info",
-  "questionmark.circle": "help-outline",
-} as IconMapping;
+  "star.fill": "star",
+  "star": "star-border",
+  "tag.fill": "local-offer",
+  "tag": "local-offer",
+  "bolt.fill": "bolt",
+  "bolt": "bolt",
+} as unknown as IconMapping;
 
 /**
  * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.

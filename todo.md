@@ -12,7 +12,7 @@
 
 ## Phase 2 — Navigation Architecture
 - [x] Set up onboarding stack (no tab bar, slide transitions)
-- [x] Set up 5-tab main navigation (Home, Closet, Go New FAB, Looks, Shop)
+- [x] Set up 5-tab main navigation (Home, Closet, Go New FAB, Shop, Stylist)
 - [x] Style tab bar with dark luxury aesthetic + rose gold center FAB
 - [x] Set up onboarding state management (AsyncStorage)
 - [x] Root _layout.tsx routing logic (onboarding vs main app)
@@ -31,7 +31,7 @@
 - [x] Home screen — AI Stylist greeting, Today's Look card, AI Recommendations, Deals
 - [x] Go New screen — Idle, Building animation, Ready state with missing pieces
 - [x] Closet screen — Digital wardrobe grid, category filters, Closet Analysis
-- [x] Looks screen — Occasion tabs, outfit cards with match %, See More Looks
+- [x] Looks/Stylist screen — Occasion tabs, outfit cards with match %, AI Stylist conversational chat
 - [x] Shop screen — AI Shopping Engine, Price Comparison, Deals, Trend Matches
 
 ## Phase 5 — Testing
@@ -40,7 +40,7 @@
 
 ## Future Enhancements
 - [ ] Closet scan camera flow (add item via camera)
-- [ ] AI stylist chat interaction screen
+- [x] AI Stylist conversational screen (Stylist tab) — suggestion chips, recommendation cards, typing indicator
 - [ ] Profile / settings screen
 - [ ] Haptic feedback on key interactions
 - [ ] Animated transitions between onboarding steps
