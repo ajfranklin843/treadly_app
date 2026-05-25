@@ -1,11 +1,11 @@
 /**
  * Threadly — Closet
  * Digital wardrobe with AI intelligence.
+ * Wired to ClosetScanModal — the "holy shit" product moment.
  */
 
-import React from "react";
-import { useState, useRef } from "react";
-import { ALL_PRODUCT_IMAGES, pickImage } from '@/lib/images';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { ALL_PRODUCT_IMAGES, pickImage } from "@/lib/images";
 import {
   View,
   Text,
@@ -17,14 +17,12 @@ import {
   Animated,
   Pressable,
 } from "react-native";
-import { useScalePress, useImageFade, hapticLight, hapticSuccess } from '@/lib/animations';
+import { useScalePress, hapticLight, hapticSuccess } from "@/lib/animations";
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
-import {
-  ThreadlyColors,
-  ThreadlySpacing,
-  ThreadlyRadius,
-} from "@/constants/threadly";
+import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from "@/constants/threadly";
+import { ClosetScanModal, ScannedItem } from "@/components/closet-scan-modal";
+import { getStyleProfile } from "@/lib/onboarding-store";
 
 const { width } = Dimensions.get("window");
 const GRID_GAP = 10;
@@ -33,7 +31,16 @@ const ITEM_W = (width - ThreadlySpacing.screenPadding * 2 - GRID_GAP * (GRID_COL
 
 const CATEGORIES = ["All", "Tops", "Bottoms", "Dresses", "Outerwear", "Shoes", "Bags", "Accessories"];
 
-const CLOSET_ITEMS = [
+type ClosetItem = {
+  id: string;
+  name: string;
+  cat: string;
+  worn: number;
+  image: string;
+  isNew?: boolean;
+};
+
+const INITIAL_ITEMS: ClosetItem[] = [
   { id: "1", name: "Camel Blazer", cat: "Outerwear", worn: 12, image: pickImage(ALL_PRODUCT_IMAGES, 0) },
   { id: "2", name: "Black Tee", cat: "Tops", worn: 28, image: pickImage(ALL_PRODUCT_IMAGES, 1) },
   { id: "3", name: "Wide-Leg Trousers", cat: "Bottoms", worn: 9, image: pickImage(ALL_PRODUCT_IMAGES, 2) },
@@ -66,10 +73,36 @@ const BRAND_BREAKDOWN = [
 
 export default function ClosetScreen() {
   const [activeCategory, setActiveCategory] = useState("All");
+  const [showScanModal, setShowScanModal] = useState(false);
+  const [closetItems, setClosetItems] = useState<ClosetItem[]>(INITIAL_ITEMS);
+  const [userVibe, setUserVibe] = useState("Minimal");
+
+  // Load user vibe from profile
+  useEffect(() => {
+    getStyleProfile().then(profile => {
+      if (profile?.styleVibes?.[0]) {
+        setUserVibe(profile.styleVibes[0]);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleItemAdded = useCallback((scanned: ScannedItem) => {
+    const newItem: ClosetItem = {
+      id: scanned.id,
+      name: scanned.name,
+      cat: scanned.category,
+      worn: 0,
+      image: scanned.image,
+      isNew: true,
+    };
+    // Prepend the new item so it appears first in the grid
+    setClosetItems(prev => [newItem, ...prev]);
+    hapticSuccess();
+  }, []);
 
   const filtered = activeCategory === "All"
-    ? CLOSET_ITEMS
-    : CLOSET_ITEMS.filter(i => i.cat === activeCategory);
+    ? closetItems
+    : closetItems.filter(i => i.cat === activeCategory);
 
   return (
     <ScreenContainer containerClassName="bg-[#0A0A0A]" edges={["top", "left", "right"]}>
@@ -85,26 +118,13 @@ export default function ClosetScreen() {
             <Text style={styles.headerTitle}>Wardrobe Intelligence</Text>
           </View>
           <View style={styles.headerStats}>
-            <Text style={styles.headerStatNum}>{CLOSET_ITEMS.length}</Text>
+            <Text style={styles.headerStatNum}>{closetItems.length}</Text>
             <Text style={styles.headerStatLabel}>items</Text>
           </View>
         </View>
 
-        {/* Scan CTA */}
-        <AnimatedScanCard>
-          <LinearGradient colors={["#1A0E08", "#2A1A10"]} style={StyleSheet.absoluteFill} />
-          <View style={styles.scanCardBorder} />
-          <View style={styles.scanCardContent}>
-            <View style={styles.scanIcon}>
-              <Text style={styles.scanIconText}>+</Text>
-            </View>
-            <View style={styles.scanCardText}>
-              <Text style={styles.scanCardTitle}>Scan a New Item</Text>
-              <Text style={styles.scanCardSub}>Point your camera at any garment</Text>
-            </View>
-            <Text style={styles.scanCardArrow}>→</Text>
-          </View>
-        </AnimatedScanCard>
+        {/* Scan CTA — the entry point to the "holy shit" moment */}
+        <ScanCTA onPress={() => setShowScanModal(true)} />
 
         {/* AI Analysis */}
         <View style={styles.analysisCard}>
@@ -189,12 +209,17 @@ export default function ClosetScreen() {
 
         {/* Items Grid */}
         <View style={styles.itemGrid}>
-          {filtered.map(item => (
-            <AnimatedItemCard key={item.id} item={item} width={ITEM_W}>
+          {filtered.map((item, idx) => (
+            <AnimatedItemCard key={item.id} item={item} width={ITEM_W} isNew={item.isNew} index={idx}>
               <View style={styles.itemImageWrap}>
                 <Image source={{ uri: item.image }} style={styles.itemImage} resizeMode="cover" />
+                {item.isNew && (
+                  <View style={styles.newBadge}>
+                    <Text style={styles.newBadgeText}>NEW</Text>
+                  </View>
+                )}
                 <View style={styles.itemWornBadge}>
-                  <Text style={styles.itemWornText}>{item.worn}x</Text>
+                  <Text style={styles.itemWornText}>{item.worn === 0 ? "✦" : `${item.worn}x`}</Text>
                 </View>
               </View>
               <View style={styles.itemInfo}>
@@ -207,43 +232,133 @@ export default function ClosetScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* The "holy shit" scan modal */}
+      <ClosetScanModal
+        visible={showScanModal}
+        onClose={() => setShowScanModal(false)}
+        onItemAdded={handleItemAdded}
+        userVibe={userVibe}
+      />
     </ScreenContainer>
   );
 }
 
-// ─── Animated Scan Card ───────────────────────────────────────────────────────────
+// ─── Scan CTA ─────────────────────────────────────────────────────────────────
 
-function AnimatedScanCard({ children }: { children: React.ReactNode }) {
+function ScanCTA({ onPress }: { onPress: () => void }) {
   const { scale, onPressIn, onPressOut } = useScalePress(0.97);
   const glowOpacity = useRef(new Animated.Value(0)).current;
-  const handlePressIn = () => {
+  const ringScale = useRef(new Animated.Value(1)).current;
+
+  // Pulsing ring animation
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(ringScale, { toValue: 1.08, duration: 1600, useNativeDriver: true }),
+        Animated.timing(ringScale, { toValue: 1, duration: 1600, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+
+  function handlePressIn() {
     onPressIn();
     Animated.timing(glowOpacity, { toValue: 1, duration: 80, useNativeDriver: true }).start();
-  };
-  const handlePressOut = () => {
+  }
+  function handlePressOut() {
     onPressOut();
-    Animated.timing(glowOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start();
-  };
+    Animated.timing(glowOpacity, { toValue: 0, duration: 220, useNativeDriver: true }).start();
+  }
+
   return (
-    <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={() => hapticSuccess()}>
+    <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onPress={onPress}
+    >
       <Animated.View style={[styles.scanCard, { transform: [{ scale }] }]}>
-        {children}
+        <LinearGradient colors={["#1A0E08", "#2A1A10"]} style={StyleSheet.absoluteFill} />
+        <View style={styles.scanCardBorder} />
+        <View style={styles.scanCardContent}>
+          {/* Pulsing icon */}
+          <View style={styles.scanIconWrap}>
+            <Animated.View
+              style={[
+                styles.scanIconRing,
+                { transform: [{ scale: ringScale }], opacity: 0.35 },
+              ]}
+            />
+            <View style={styles.scanIcon}>
+              <Text style={styles.scanIconText}>+</Text>
+            </View>
+          </View>
+          <View style={styles.scanCardText}>
+            <Text style={styles.scanCardTitle}>Scan a New Item</Text>
+            <Text style={styles.scanCardSub}>Threadly will learn your style</Text>
+          </View>
+          <Text style={styles.scanCardArrow}>→</Text>
+        </View>
+        {/* Glow border on press */}
         <Animated.View
           pointerEvents="none"
-          style={[StyleSheet.absoluteFill, { borderRadius: ThreadlyRadius.xl, borderWidth: 1, borderColor: ThreadlyColors.roseGold, opacity: glowOpacity }]}
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              borderRadius: ThreadlyRadius.xl,
+              borderWidth: 1,
+              borderColor: ThreadlyColors.roseGold,
+              opacity: glowOpacity,
+            },
+          ]}
         />
       </Animated.View>
     </Pressable>
   );
 }
 
-// ─── Animated Item Card ───────────────────────────────────────────────────────────
+// ─── Animated Item Card ───────────────────────────────────────────────────────
 
-function AnimatedItemCard({ children, item, width }: { children: React.ReactNode; item: { id: string }; width: number }) {
+function AnimatedItemCard({
+  children,
+  item,
+  width: cardWidth,
+  isNew = false,
+  index,
+}: {
+  children: React.ReactNode;
+  item: { id: string };
+  width: number;
+  isNew?: boolean;
+  index: number;
+}) {
   const { scale, onPressIn, onPressOut } = useScalePress(0.96);
+  const entranceOpacity = useRef(new Animated.Value(isNew ? 0 : 1)).current;
+  const entranceScale = useRef(new Animated.Value(isNew ? 0.85 : 1)).current;
+
+  useEffect(() => {
+    if (isNew) {
+      Animated.parallel([
+        Animated.timing(entranceOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.spring(entranceScale, { toValue: 1, tension: 70, friction: 10, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [isNew]);
+
   return (
     <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={() => hapticLight()}>
-      <Animated.View style={[styles.itemCard, { width }, { transform: [{ scale }] }]}>
+      <Animated.View
+        style={[
+          styles.itemCard,
+          { width: cardWidth },
+          {
+            transform: [{ scale }, { scale: entranceScale }],
+            opacity: entranceOpacity,
+          },
+          isNew && styles.itemCardNew,
+        ]}
+      >
         {children}
       </Animated.View>
     </Pressable>
@@ -280,19 +395,36 @@ const styles = StyleSheet.create({
   },
   headerStatNum: { fontSize: 22, fontFamily: "Georgia", color: ThreadlyColors.roseGoldLight, lineHeight: 24 },
   headerStatLabel: { fontSize: 9, color: ThreadlyColors.warmWhiteSubtle, letterSpacing: 1 },
+
+  // Scan CTA
   scanCard: {
     marginHorizontal: ThreadlySpacing.screenPadding,
     borderRadius: ThreadlyRadius.xl,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(201,149,106,0.2)",
+    borderColor: "rgba(201,149,106,0.25)",
     marginBottom: 20,
   },
   scanCardBorder: {
     position: "absolute", top: 0, left: 0, right: 0, height: 1,
-    backgroundColor: ThreadlyColors.roseGold, opacity: 0.4,
+    backgroundColor: ThreadlyColors.roseGold, opacity: 0.45,
   },
   scanCardContent: { flexDirection: "row", alignItems: "center", padding: 18, gap: 14 },
+  scanIconWrap: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
+  scanIconRing: {
+    position: "absolute",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: ThreadlyColors.roseGold,
+  },
   scanIcon: {
     width: 44, height: 44, borderRadius: 22,
     backgroundColor: "rgba(201,149,106,0.15)",
@@ -304,6 +436,8 @@ const styles = StyleSheet.create({
   scanCardTitle: { fontSize: 15, fontFamily: "Georgia", color: ThreadlyColors.warmWhite, marginBottom: 3 },
   scanCardSub: { fontSize: 12, color: ThreadlyColors.warmWhiteSubtle },
   scanCardArrow: { fontSize: 18, color: ThreadlyColors.warmWhiteMuted },
+
+  // Analysis card
   analysisCard: {
     marginHorizontal: ThreadlySpacing.screenPadding,
     borderRadius: ThreadlyRadius.xl,
@@ -352,6 +486,8 @@ const styles = StyleSheet.create({
   brandBarWrap: { flex: 1, height: 4, backgroundColor: ThreadlyColors.charcoalLight, borderRadius: 2, overflow: "hidden" },
   brandBar: { height: "100%", backgroundColor: ThreadlyColors.roseGold, borderRadius: 2 },
   brandCount: { fontSize: 11, color: ThreadlyColors.warmWhiteSubtle, width: 20, textAlign: "right" },
+
+  // Category filter
   categoryScroll: { marginBottom: 16 },
   categoryList: { paddingHorizontal: ThreadlySpacing.screenPadding, gap: 8 },
   categoryChip: {
@@ -363,6 +499,8 @@ const styles = StyleSheet.create({
   categoryChipActive: { backgroundColor: "rgba(201,149,106,0.15)", borderColor: ThreadlyColors.roseGold },
   categoryChipText: { fontSize: 12, color: ThreadlyColors.warmWhiteSubtle, fontWeight: "600" },
   categoryChipTextActive: { color: ThreadlyColors.roseGoldLight },
+
+  // Item grid
   itemGrid: {
     paddingHorizontal: ThreadlySpacing.screenPadding,
     flexDirection: "row",
@@ -375,8 +513,18 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1, borderColor: ThreadlyColors.charcoalLight,
   },
+  itemCardNew: {
+    borderColor: "rgba(201,149,106,0.5)",
+  },
   itemImageWrap: { height: ITEM_W, position: "relative" },
   itemImage: { width: "100%", height: "100%" },
+  newBadge: {
+    position: "absolute", top: 6, left: 6,
+    backgroundColor: ThreadlyColors.roseGold,
+    paddingHorizontal: 5, paddingVertical: 2,
+    borderRadius: 4,
+  },
+  newBadgeText: { fontSize: 7, fontWeight: "800", color: "#0A0A0A", letterSpacing: 0.5 },
   itemWornBadge: {
     position: "absolute", top: 6, right: 6,
     backgroundColor: "rgba(10,10,10,0.7)",

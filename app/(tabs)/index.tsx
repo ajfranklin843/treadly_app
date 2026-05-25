@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from "@/constants/threadly";
 import { usePersonalization } from "@/lib/personalization";
+import { resetOnboarding } from "@/lib/onboarding-store";
 import { useScalePress, useImageFade, hapticLight, hapticSuccess } from "@/lib/animations";
 import {
   HERO_IMAGES,
@@ -178,7 +179,18 @@ export default function HomeScreen() {
       >
         {/* ── Header ── */}
         <Animated.View style={[styles.header, { opacity: headerFade }]}>
-          <View>
+          {/* THREADLY wordmark — long-press to reset onboarding (dev shortcut) */}
+          <View style={styles.headerLeft}>
+            <Pressable
+              onLongPress={async () => {
+                await resetOnboarding();
+                router.replace("/onboarding");
+              }}
+              delayLongPress={1200}
+            >
+              <Text style={styles.wordmark}>THREADLY</Text>
+              <View style={styles.wordmarkLine} />
+            </Pressable>
             <Text style={styles.greeting}>{p.greeting}</Text>
             <Text style={styles.headerSub}>{p.heroTagline}</Text>
           </View>
@@ -588,6 +600,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 16,
     paddingBottom: 20,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  wordmark: {
+    fontFamily: "Georgia",
+    fontSize: 11,
+    letterSpacing: 5,
+    color: ThreadlyColors.roseGoldLight,
+    marginBottom: 4,
+  },
+  wordmarkLine: {
+    width: 28,
+    height: 1,
+    backgroundColor: ThreadlyColors.roseGold,
+    opacity: 0.6,
+    marginBottom: 10,
   },
   greeting: {
     fontFamily: "Georgia",

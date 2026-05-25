@@ -171,3 +171,12 @@
 - [ ] Onboarding: style vibe cards (Minimal, Clean Girl, Old Money, etc.) — editorial fashion photography
 - [ ] Consistent aspect ratios, rounded corners, fade-in loading across all image surfaces
 - [ ] TypeScript clean, tests passing
+
+## Phase 12 — Closet Scan + Refinements
+
+- [x] Build ClosetScanModal — camera/gallery picker, AI analysis cinematic sequence, item reveal card
+- [x] Wire scan modal into Closet screen with wardrobe grid insertion animation
+- [x] Add wardrobe intelligence panel (pairs well, outfit count, aesthetic match)
+- [ ] Dynamic vibe-matched imagery on Home outfit picks (Old Money, Chic, Clean Girl, etc.)
+- [x] Reset onboarding long-press shortcut on THREADLY wordmark with haptic + glow
+- [ ] Premium image motion polish (parallax, fade-in, shimmer, card entrance animations)

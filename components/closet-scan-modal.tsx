@@ -1,12 +1,16 @@
 /**
  * Threadly — Closet Scan Modal
- * The signature product moment: photographing a garment transforms into wardrobe intelligence.
- * Emotional outcome: "Threadly is learning my style."
+ * The "holy shit" product moment: "Threadly is learning your identity."
  *
- * Flow:
- *   1. Source Picker  → camera / photo library / inspiration URL
- *   2. AI Analysis    → scan line sweep, glow pulse, step-by-step intelligence reveal
- *   3. Item Reveal    → Color DNA, Style Match, Pairs Well, outfit count, add to closet
+ * Emotional arc:
+ *   1. Source Picker  — luxury dark bottom-sheet, pulsing orb, 3 source cards
+ *   2. AI Analysis    — cinematic scan line sweep, rose-gold glow, step-by-step intelligence
+ *   3. Item Reveal    — Color DNA, Style Match Score, Closet IQ, Pairs Well, Trending insight
+ *
+ * Design principles:
+ *   • Apple Vision Pro + Pinterest + luxury fashion app aesthetic
+ *   • NOT a utility scanner — an emotional intelligence moment
+ *   • Perceived intelligence > backend sophistication
  */
 
 import React, { useRef, useEffect, useState, useCallback } from "react";
@@ -21,13 +25,15 @@ import {
   ScrollView,
   Dimensions,
   Platform,
+  TouchableOpacity,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
-import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from "@/constants/threadly";
-import { useScalePress, hapticLight, hapticSuccess } from "@/lib/animations";
+import { ThreadlyColors, ThreadlyRadius } from "@/constants/threadly";
+import { hapticLight, hapticSuccess } from "@/lib/animations";
+import { ALL_CLOSET_IMAGES, ALL_PRODUCT_IMAGES, pickImage } from "@/lib/images";
 
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
+const { width: W, height: H } = Dimensions.get("window");
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -42,8 +48,10 @@ export type ScannedItem = {
   image: string;
   outfitCount: number;
   matchScore: number;
+  closetIQ: number;
   pairsWith: string[];
   trendingIn: string;
+  occasions: string[];
   worn: number;
 };
 
@@ -53,55 +61,80 @@ type Props = {
   visible: boolean;
   onClose: () => void;
   onItemAdded: (item: ScannedItem) => void;
+  userVibe?: string;
 };
 
-// ─── Mock AI Analysis Engine ──────────────────────────────────────────────────
-// In production this calls the server LLM with the image.
-// For now, it deterministically derives rich metadata from the image URI.
+// ─── Mock AI Engine ───────────────────────────────────────────────────────────
 
-const BRANDS = ["Zara", "Aritzia", "COS", "Everlane", "Mango", "Uniqlo", "H&M", "& Other Stories", "Massimo Dutti"];
-const CATEGORIES = ["Blazer", "Trousers", "Dress", "Blouse", "Coat", "Knitwear", "Denim", "Skirt", "Top"];
-const COLORS = [
-  { name: "Ivory", hex: "#FAF7F2" },
-  { name: "Camel", hex: "#C19A6B" },
-  { name: "Charcoal", hex: "#3A3A3A" },
+const CATEGORIES = ["Tops", "Bottoms", "Dresses", "Outerwear", "Shoes", "Bags", "Accessories"];
+const BRANDS = ["Zara", "Mango", "H&M", "Aritzia", "COS", "Everlane", "Uniqlo", "& Other Stories", "Massimo Dutti"];
+const COLORS: { name: string; hex: string }[] = [
+  { name: "Ivory", hex: "#F5F0E8" },
+  { name: "Camel", hex: "#C4A882" },
+  { name: "Obsidian", hex: "#1A1A1A" },
   { name: "Blush", hex: "#E8C4B8" },
-  { name: "Sage", hex: "#8FAF8A" },
-  { name: "Navy", hex: "#1B2A4A" },
-  { name: "Cream", hex: "#F5F0E8" },
-  { name: "Burgundy", hex: "#722F37" },
+  { name: "Charcoal", hex: "#3A3A3A" },
+  { name: "Cream", hex: "#FAF7F4" },
+  { name: "Taupe", hex: "#8B7355" },
+  { name: "Sage", hex: "#9CAF88" },
 ];
-const STYLE_TAGS = ["Quiet Luxury", "Clean Girl", "Old Money", "Minimal Chic", "Casual Elevated", "Parisian Edit"];
-const PAIRS_WITH = [
-  ["Straight-leg trousers", "Loafers", "Silk scarf"],
-  ["Wide-leg jeans", "White sneakers", "Gold hoops"],
-  ["Midi skirt", "Block heels", "Structured bag"],
-  ["Tailored shorts", "Mules", "Delicate necklace"],
+const STYLE_TAGS = ["Quiet Luxury", "Minimal Chic", "Clean Girl", "Casual Elevated", "Old Money", "Parisian Edit", "Timeless"];
+const PAIRS_WITH_POOL = [
+  "Tailored Trousers", "Silk Slip Skirt", "Wide-Leg Denim", "Leather Trousers",
+  "Cashmere Knit", "Blazer", "Trench Coat", "White Sneakers", "Kitten Heels",
+  "Gold Hoops", "Leather Tote", "Strappy Sandals",
 ];
-const TRENDING = [
-  "Quiet Luxury aesthetic",
-  "Clean Girl wardrobe",
-  "Old Money edit",
-  "Minimal Chic feeds",
-  "Parisian wardrobe",
-];
+const OCCASIONS_POOL = ["Work", "Date Night", "Weekend", "Travel", "Events", "Casual"];
+const ITEM_NAMES: Record<string, string> = {
+  Tops: "Relaxed Silk Blouse",
+  Bottoms: "Tailored Wide-Leg Trousers",
+  Dresses: "Midi Slip Dress",
+  Outerwear: "Longline Trench Coat",
+  Shoes: "Pointed-Toe Kitten Heels",
+  Bags: "Structured Leather Tote",
+  Accessories: "Sculptural Gold Earrings",
+};
 
-function mockAnalyze(uri: string): ScannedItem {
-  const seed = uri.length % 9;
-  const color = COLORS[seed];
+function seedHash(uri: string): number {
+  let h = 0;
+  for (let i = 0; i < uri.length; i++) h = (h * 31 + uri.charCodeAt(i)) & 0xffffffff;
+  return Math.abs(h);
+}
+
+function mockAnalyze(uri: string, vibe: string): ScannedItem {
+  const s = seedHash(uri);
+  const cat = CATEGORIES[s % CATEGORIES.length];
+  const brand = BRANDS[(s >> 3) % BRANDS.length];
+  const color = COLORS[(s >> 5) % COLORS.length];
+  const styleTag = STYLE_TAGS[(s >> 7) % STYLE_TAGS.length];
+  const outfitCount = 8 + (s % 15);
+  const matchScore = 82 + (s % 17);
+  const closetIQ = 74 + (s % 24);
+  const pairsWith = [
+    PAIRS_WITH_POOL[(s >> 2) % PAIRS_WITH_POOL.length],
+    PAIRS_WITH_POOL[(s >> 4) % PAIRS_WITH_POOL.length],
+    PAIRS_WITH_POOL[(s >> 6) % PAIRS_WITH_POOL.length],
+  ].filter((v, i, a) => a.indexOf(v) === i);
+  const occasions = [
+    OCCASIONS_POOL[(s >> 1) % OCCASIONS_POOL.length],
+    OCCASIONS_POOL[(s >> 3) % OCCASIONS_POOL.length],
+  ].filter((v, i, a) => a.indexOf(v) === i);
+  const trendingIn = vibe || styleTag;
   return {
     id: `scan_${Date.now()}`,
-    name: `${color.name} ${CATEGORIES[seed]}`,
-    brand: BRANDS[seed],
-    category: CATEGORIES[seed],
+    name: ITEM_NAMES[cat] ?? cat,
+    brand,
+    category: cat,
     color: color.name,
     colorHex: color.hex,
-    styleTag: STYLE_TAGS[seed % STYLE_TAGS.length],
+    styleTag,
     image: uri,
-    outfitCount: 8 + (seed * 3),
-    matchScore: 88 + (seed % 10),
-    pairsWith: PAIRS_WITH[seed % PAIRS_WITH.length],
-    trendingIn: TRENDING[seed % TRENDING.length],
+    outfitCount,
+    matchScore,
+    closetIQ,
+    pairsWith,
+    trendingIn,
+    occasions,
     worn: 0,
   };
 }
@@ -109,101 +142,183 @@ function mockAnalyze(uri: string): ScannedItem {
 // ─── Analysis Steps ───────────────────────────────────────────────────────────
 
 const ANALYSIS_STEPS = [
-  { label: "Identifying brand", detail: "Scanning fabric texture & label" },
-  { label: "Detecting color palette", detail: "Mapping to your Color DNA" },
-  { label: "Classifying category", detail: "Recognizing silhouette & cut" },
-  { label: "Tagging style aesthetic", detail: "Matching to your vibes" },
-  { label: "Checking outfit compatibility", detail: "Cross-referencing 24 items" },
-  { label: "Building wardrobe card", detail: "Personalizing to your closet" },
+  { label: "Detecting garment category", sub: "Reading silhouette & cut" },
+  { label: "Identifying color palette", sub: "Mapping to your Color DNA" },
+  { label: "Reading brand signature", sub: "Texture & label analysis" },
+  { label: "Tagging aesthetic style", sub: "Matching to your vibes" },
+  { label: "Checking outfit compatibility", sub: "Cross-referencing your closet" },
+  { label: "Scanning wardrobe matches", sub: "Finding existing pairs" },
+  { label: "Building wardrobe intelligence", sub: "Personalizing to your identity" },
 ];
+
+const STEP_DURATION = 720; // ms per step
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function ClosetScanModal({ visible, onClose, onItemAdded }: Props) {
+export function ClosetScanModal({ visible, onClose, onItemAdded, userVibe = "Minimal" }: Props) {
   const [phase, setPhase] = useState<ScanPhase>("picker");
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [analysisStep, setAnalysisStep] = useState(0);
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState(-1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [scannedItem, setScannedItem] = useState<ScannedItem | null>(null);
 
-  // Reset on open
+  // Sheet animation
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const sheetY = useRef(new Animated.Value(H)).current;
+
+  // Analysis animations
+  const scanLineY = useRef(new Animated.Value(0)).current;
+  const glowPulse = useRef(new Animated.Value(0.4)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const checkScales = useRef(ANALYSIS_STEPS.map(() => new Animated.Value(0))).current;
+
+  // Reveal animations
+  const revealOpacity = useRef(new Animated.Value(0)).current;
+  const revealSlide = useRef(new Animated.Value(50)).current;
+  const imageScale = useRef(new Animated.Value(0.88)).current;
+
+  // Open/close sheet
   useEffect(() => {
     if (visible) {
+      // Reset state
       setPhase("picker");
-      setSelectedImage(null);
-      setAnalysisStep(0);
+      setImageUri(null);
+      setCurrentStep(-1);
       setCompletedSteps([]);
       setScannedItem(null);
+      progressAnim.setValue(0);
+      revealOpacity.setValue(0);
+      revealSlide.setValue(50);
+      imageScale.setValue(0.88);
+      checkScales.forEach(s => s.setValue(0));
+
+      Animated.parallel([
+        Animated.timing(backdropOpacity, { toValue: 1, duration: 280, useNativeDriver: true }),
+        Animated.spring(sheetY, { toValue: 0, tension: 60, friction: 11, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(backdropOpacity, { toValue: 0, duration: 220, useNativeDriver: true }),
+        Animated.timing(sheetY, { toValue: H, duration: 260, useNativeDriver: true }),
+      ]).start();
     }
   }, [visible]);
 
-  const handleImageSelected = useCallback((uri: string) => {
-    setSelectedImage(uri);
-    setPhase("analyzing");
-    hapticLight();
-    // Run mock analysis steps
-    let step = 0;
-    const advance = () => {
-      if (step < ANALYSIS_STEPS.length) {
-        setAnalysisStep(step);
-        setTimeout(() => {
-          setCompletedSteps(prev => [...prev, step]);
-          step++;
-          setTimeout(advance, 320);
-        }, 680);
-      } else {
-        // Reveal
-        const item = mockAnalyze(uri);
-        setScannedItem(item);
-        setTimeout(() => {
-          setPhase("reveal");
-          hapticSuccess();
-        }, 400);
-      }
-    };
-    setTimeout(advance, 600);
+  // Glow pulse loop during analysis
+  useEffect(() => {
+    if (phase === "analyzing") {
+      const loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(glowPulse, { toValue: 1, duration: 1100, useNativeDriver: true }),
+          Animated.timing(glowPulse, { toValue: 0.35, duration: 1100, useNativeDriver: true }),
+        ])
+      );
+      loop.start();
+      return () => loop.stop();
+    }
+  }, [phase]);
+
+  // Scan line loop during analysis
+  const startScanLine = useCallback(() => {
+    scanLineY.setValue(0);
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scanLineY, { toValue: 1, duration: 1600, useNativeDriver: true }),
+        Animated.timing(scanLineY, { toValue: 0, duration: 0, useNativeDriver: true }),
+      ]),
+      { iterations: 6 }
+    ).start();
   }, []);
 
-  const handleLaunchCamera = useCallback(async () => {
-    hapticLight();
-    if (Platform.OS !== "web") {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== "granted") return;
-      const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [3, 4],
-        quality: 0.8,
-      });
-      if (!result.canceled) handleImageSelected(result.assets[0].uri);
-    } else {
-      // Web fallback — use a fashion image
-      handleImageSelected("https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=600&q=80");
-    }
-  }, [handleImageSelected]);
+  const runAnalysis = useCallback((uri: string) => {
+    setPhase("analyzing");
+    startScanLine();
 
-  const handleLaunchLibrary = useCallback(async () => {
+    ANALYSIS_STEPS.forEach((_, i) => {
+      const delay = i * STEP_DURATION + 400;
+      setTimeout(() => {
+        setCurrentStep(i);
+        hapticLight();
+      }, delay);
+      setTimeout(() => {
+        setCompletedSteps(prev => [...prev, i]);
+        Animated.spring(checkScales[i], {
+          toValue: 1, tension: 130, friction: 8, useNativeDriver: true,
+        }).start();
+        Animated.timing(progressAnim, {
+          toValue: (i + 1) / ANALYSIS_STEPS.length,
+          duration: 280,
+          useNativeDriver: false,
+        }).start();
+      }, delay + STEP_DURATION * 0.7);
+    });
+
+    const totalDelay = ANALYSIS_STEPS.length * STEP_DURATION + 800;
+    setTimeout(() => {
+      const item = mockAnalyze(uri, userVibe);
+      setScannedItem(item);
+      setPhase("reveal");
+      hapticSuccess();
+      Animated.parallel([
+        Animated.timing(revealOpacity, { toValue: 1, duration: 420, useNativeDriver: true }),
+        Animated.spring(revealSlide, { toValue: 0, tension: 65, friction: 12, useNativeDriver: true }),
+        Animated.spring(imageScale, { toValue: 1, tension: 75, friction: 10, useNativeDriver: true }),
+      ]).start();
+    }, totalDelay);
+  }, [userVibe, startScanLine]);
+
+  const handleCamera = useCallback(async () => {
     hapticLight();
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    if (Platform.OS === "web") {
+      const uri = pickImage(ALL_CLOSET_IMAGES, Date.now());
+      setImageUri(uri);
+      runAnalysis(uri);
+      return;
+    }
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") return;
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ["images"],
+      quality: 0.85,
       allowsEditing: true,
       aspect: [3, 4],
-      quality: 0.8,
     });
-    if (!result.canceled) handleImageSelected(result.assets[0].uri);
-  }, [handleImageSelected]);
+    if (!result.canceled && result.assets[0]) {
+      const uri = result.assets[0].uri;
+      setImageUri(uri);
+      runAnalysis(uri);
+    }
+  }, [runAnalysis]);
 
-  const handleInspirationDemo = useCallback(() => {
+  const handleGallery = useCallback(async () => {
     hapticLight();
-    // Demo with a curated fashion image
-    const DEMO_IMAGES = [
-      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&q=80",
-      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80",
-      "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=80",
-      "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80",
-    ];
-    const pick = DEMO_IMAGES[Math.floor(Math.random() * DEMO_IMAGES.length)];
-    handleImageSelected(pick);
-  }, [handleImageSelected]);
+    if (Platform.OS === "web") {
+      const uri = pickImage(ALL_PRODUCT_IMAGES, Date.now() + 7);
+      setImageUri(uri);
+      runAnalysis(uri);
+      return;
+    }
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.85,
+      allowsEditing: true,
+      aspect: [3, 4],
+    });
+    if (!result.canceled && result.assets[0]) {
+      const uri = result.assets[0].uri;
+      setImageUri(uri);
+      runAnalysis(uri);
+    }
+  }, [runAnalysis]);
+
+  const handleInspiration = useCallback(() => {
+    hapticLight();
+    const uri = pickImage(ALL_CLOSET_IMAGES, Date.now() + 13);
+    setImageUri(uri);
+    runAnalysis(uri);
+  }, [runAnalysis]);
 
   const handleAddToCloset = useCallback(() => {
     if (!scannedItem) return;
@@ -212,1108 +327,1061 @@ export function ClosetScanModal({ visible, onClose, onItemAdded }: Props) {
     onClose();
   }, [scannedItem, onItemAdded, onClose]);
 
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="fullScreen"
-      statusBarTranslucent
-    >
-      <View style={styles.root}>
-        <LinearGradient
-          colors={[ThreadlyColors.black, "#0D0D0D", ThreadlyColors.black]}
-          style={StyleSheet.absoluteFill}
-        />
+  const scanLineTranslate = scanLineY.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 300],
+  });
 
+  return (
+    <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
+      {/* Backdrop */}
+      <Animated.View style={[S.backdrop, { opacity: backdropOpacity }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+      </Animated.View>
+
+      {/* Bottom Sheet */}
+      <Animated.View style={[S.sheet, { transform: [{ translateY: sheetY }] }]}>
+        <LinearGradient colors={["#0E0E0E", "#0A0A0A"]} style={StyleSheet.absoluteFill} />
+
+        {/* Handle bar */}
+        <View style={S.handle} />
+
+        {/* Header */}
+        <View style={S.sheetHeader}>
+          <View>
+            <Text style={S.sheetTitle}>Scan Item</Text>
+            <Text style={S.sheetSub}>Threadly is learning your identity</Text>
+          </View>
+          <TouchableOpacity style={S.closeBtn} onPress={onClose}>
+            <Text style={S.closeBtnText}>✕</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Phase content */}
         {phase === "picker" && (
           <PickerPhase
-            onCamera={handleLaunchCamera}
-            onLibrary={handleLaunchLibrary}
-            onInspiration={handleInspirationDemo}
-            onClose={onClose}
+            onCamera={handleCamera}
+            onGallery={handleGallery}
+            onInspiration={handleInspiration}
           />
         )}
-
-        {phase === "analyzing" && selectedImage && (
-          <AnalyzingPhase
-            image={selectedImage}
-            currentStep={analysisStep}
+        {phase === "analyzing" && imageUri && (
+          <AnalysisPhase
+            imageUri={imageUri}
+            currentStep={currentStep}
             completedSteps={completedSteps}
+            scanLineTranslate={scanLineTranslate}
+            glowPulse={glowPulse}
+            progressAnim={progressAnim}
+            checkScales={checkScales}
           />
         )}
-
-        {phase === "reveal" && scannedItem && (
+        {phase === "reveal" && scannedItem && imageUri && (
           <RevealPhase
             item={scannedItem}
+            imageUri={imageUri}
+            revealOpacity={revealOpacity}
+            revealSlide={revealSlide}
+            imageScale={imageScale}
             onAdd={handleAddToCloset}
-            onRetry={() => setPhase("picker")}
+            onRescan={() => setPhase("picker")}
             onClose={onClose}
           />
         )}
-      </View>
+      </Animated.View>
     </Modal>
   );
 }
 
-// ─── Phase 1: Picker ──────────────────────────────────────────────────────────
+// ─── Phase 1: Source Picker ───────────────────────────────────────────────────
 
 function PickerPhase({
   onCamera,
-  onLibrary,
+  onGallery,
   onInspiration,
-  onClose,
 }: {
   onCamera: () => void;
-  onLibrary: () => void;
+  onGallery: () => void;
   onInspiration: () => void;
-  onClose: () => void;
 }) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(40)).current;
+  const fadeIn = useRef(new Animated.Value(0)).current;
+  const slideIn = useRef(new Animated.Value(30)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 400, useNativeDriver: true }),
+      Animated.timing(fadeIn, { toValue: 1, duration: 350, useNativeDriver: true }),
+      Animated.spring(slideIn, { toValue: 0, tension: 80, friction: 12, useNativeDriver: true }),
     ]).start();
   }, []);
 
   return (
-    <Animated.View style={[styles.phaseContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-      {/* Header */}
-      <View style={styles.pickerHeader}>
-        <Pressable onPress={onClose} style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.6 }]}>
-          <Text style={styles.closeBtnText}>✕</Text>
-        </Pressable>
-        <View style={styles.pickerHeaderCenter}>
-          <Text style={styles.pickerTitle}>SCAN ITEM</Text>
-          <View style={styles.roseGoldDivider} />
-        </View>
-        <View style={{ width: 40 }} />
+    <Animated.View style={[S.pickerWrap, { opacity: fadeIn, transform: [{ translateY: slideIn }] }]}>
+      {/* Decorative orb */}
+      <View style={S.orbContainer}>
+        <LinearGradient
+          colors={["rgba(201,149,106,0.25)", "rgba(201,149,106,0.06)", "transparent"]}
+          style={S.orbGradient}
+        />
+        <OrbPulse />
+        <Text style={S.orbGlyph}>✦</Text>
       </View>
 
-      {/* Viewfinder Frame */}
-      <View style={styles.viewfinderWrap}>
-        <View style={styles.viewfinder}>
-          {/* Corner brackets */}
-          <View style={[styles.corner, styles.cornerTL]} />
-          <View style={[styles.corner, styles.cornerTR]} />
-          <View style={[styles.corner, styles.cornerBL]} />
-          <View style={[styles.corner, styles.cornerBR]} />
-          {/* Center crosshair */}
-          <View style={styles.crosshairH} />
-          <View style={styles.crosshairV} />
-          {/* Subtle scan line */}
-          <ScanLineIdle />
-          {/* Center label */}
-          <View style={styles.viewfinderLabel}>
-            <Text style={styles.viewfinderLabelText}>Point at any garment</Text>
-          </View>
-        </View>
-      </View>
+      <Text style={S.pickerHeadline}>Add to Your Wardrobe</Text>
+      <Text style={S.pickerBody}>
+        Threadly will analyze your item and build{"\n"}intelligent outfit connections instantly.
+      </Text>
 
-      {/* Source Options */}
-      <View style={styles.sourceOptions}>
-        <Text style={styles.sourceOptionsLabel}>Choose how to scan</Text>
-
-        <SourceButton
+      <View style={S.sourceCards}>
+        <SourceCard
           icon="📷"
-          title="Take Photo"
-          subtitle="Use your camera"
+          title="Take a Photo"
+          desc="Point your camera at any garment"
           onPress={onCamera}
           primary
         />
-        <SourceButton
+        <SourceCard
           icon="🖼"
-          title="Photo Library"
-          subtitle="Select from your gallery"
-          onPress={onLibrary}
+          title="Upload from Library"
+          desc="Choose from your photo library"
+          onPress={onGallery}
         />
-        <SourceButton
+        <SourceCard
           icon="✨"
-          title="Inspiration Image"
-          subtitle="Upload a screenshot or Pinterest save"
+          title="Add Inspiration"
+          desc="Screenshot or save from anywhere"
           onPress={onInspiration}
+          dim
         />
       </View>
 
-      <Text style={styles.pickerFootnote}>
-        Threadly identifies brand, color, and style automatically
+      <Text style={S.pickerNote}>
+        Your images are processed privately and never shared.
       </Text>
     </Animated.View>
   );
 }
 
-function ScanLineIdle() {
-  const pos = useRef(new Animated.Value(0)).current;
+function OrbPulse() {
+  const scale = useRef(new Animated.Value(1)).current;
+  const opacity = useRef(new Animated.Value(0.5)).current;
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pos, { toValue: 1, duration: 2200, useNativeDriver: true }),
-        Animated.timing(pos, { toValue: 0, duration: 2200, useNativeDriver: true }),
+        Animated.parallel([
+          Animated.timing(scale, { toValue: 1.15, duration: 1400, useNativeDriver: true }),
+          Animated.timing(opacity, { toValue: 0.15, duration: 1400, useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(scale, { toValue: 1, duration: 1400, useNativeDriver: true }),
+          Animated.timing(opacity, { toValue: 0.5, duration: 1400, useNativeDriver: true }),
+        ]),
       ])
     ).start();
   }, []);
-  const translateY = pos.interpolate({ inputRange: [0, 1], outputRange: [0, VIEWFINDER_H - 2] });
   return (
     <Animated.View
-      style={[styles.scanLineIdle, { transform: [{ translateY }] }]}
-      pointerEvents="none"
+      style={[S.orbRing, { transform: [{ scale }], opacity }]}
     />
   );
 }
 
-function SourceButton({
+function SourceCard({
   icon,
   title,
-  subtitle,
+  desc,
   onPress,
   primary = false,
+  dim = false,
 }: {
   icon: string;
   title: string;
-  subtitle: string;
+  desc: string;
   onPress: () => void;
   primary?: boolean;
+  dim?: boolean;
 }) {
-  const { scale, onPressIn, onPressOut } = useScalePress(0.97);
+  const scale = useRef(new Animated.Value(1)).current;
+  function pressIn() {
+    Animated.spring(scale, { toValue: 0.97, tension: 200, friction: 10, useNativeDriver: true }).start();
+  }
+  function pressOut() {
+    Animated.spring(scale, { toValue: 1, tension: 200, friction: 10, useNativeDriver: true }).start();
+  }
   return (
-    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress}>
-      <Animated.View style={[styles.sourceBtn, primary && styles.sourceBtnPrimary, { transform: [{ scale }] }]}>
+    <Animated.View style={[{ transform: [{ scale }] }, dim && S.cardDim]}>
+      <Pressable
+        style={[S.sourceCard, primary && S.sourceCardPrimary]}
+        onPressIn={pressIn}
+        onPressOut={pressOut}
+        onPress={onPress}
+      >
         {primary && (
           <LinearGradient
-            colors={[ThreadlyColors.roseGold + "33", ThreadlyColors.roseGold + "11"]}
+            colors={["rgba(201,149,106,0.13)", "rgba(201,149,106,0.04)"]}
             style={StyleSheet.absoluteFill}
           />
         )}
-        <View style={[styles.sourceBtnBorder, primary && styles.sourceBtnBorderPrimary]} />
-        <Text style={styles.sourceBtnIcon}>{icon}</Text>
-        <View style={styles.sourceBtnText}>
-          <Text style={[styles.sourceBtnTitle, primary && styles.sourceBtnTitlePrimary]}>{title}</Text>
-          <Text style={styles.sourceBtnSub}>{subtitle}</Text>
+        {primary && <View style={S.sourceCardTopBorder} />}
+        <View style={S.sourceIconCircle}>
+          <Text style={S.sourceIconText}>{icon}</Text>
         </View>
-        <Text style={[styles.sourceBtnArrow, primary && styles.sourceBtnArrowPrimary]}>→</Text>
-      </Animated.View>
-    </Pressable>
+        <View style={S.sourceCardBody}>
+          <Text style={[S.sourceCardTitle, primary && S.sourceCardTitlePrimary]}>{title}</Text>
+          <Text style={S.sourceCardDesc}>{desc}</Text>
+        </View>
+        <Text style={[S.sourceArrow, primary && S.sourceArrowPrimary]}>→</Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
-// ─── Phase 2: Analyzing ───────────────────────────────────────────────────────
+// ─── Phase 2: AI Analysis ─────────────────────────────────────────────────────
 
-function AnalyzingPhase({
-  image,
+function AnalysisPhase({
+  imageUri,
   currentStep,
   completedSteps,
+  scanLineTranslate,
+  glowPulse,
+  progressAnim,
+  checkScales,
 }: {
-  image: string;
+  imageUri: string;
   currentStep: number;
   completedSteps: number[];
+  scanLineTranslate: Animated.AnimatedInterpolation<number>;
+  glowPulse: Animated.Value;
+  progressAnim: Animated.Value;
+  checkScales: Animated.Value[];
 }) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scanPos = useRef(new Animated.Value(0)).current;
-  const glowOpacity = useRef(new Animated.Value(0.3)).current;
-  const imageOpacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
-    Animated.timing(imageOpacity, { toValue: 1, duration: 500, useNativeDriver: true }).start();
-    // Scan line sweep
-    Animated.loop(
-      Animated.timing(scanPos, { toValue: 1, duration: 1400, useNativeDriver: true })
-    ).start();
-    // Glow pulse
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowOpacity, { toValue: 0.9, duration: 900, useNativeDriver: true }),
-        Animated.timing(glowOpacity, { toValue: 0.3, duration: 900, useNativeDriver: true }),
-      ])
-    ).start();
-  }, []);
-
-  const scanTranslateY = scanPos.interpolate({
+  const glowBorderOpacity = glowPulse.interpolate({
+    inputRange: [0.35, 1],
+    outputRange: [0.4, 1],
+  });
+  const progressWidth = progressAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, ANALYSIS_IMAGE_H],
+    outputRange: ["0%", "100%"],
   });
 
   return (
-    <Animated.View style={[styles.phaseContainer, { opacity: fadeAnim }]}>
-      {/* Header */}
-      <View style={styles.analysisHeader}>
-        <Text style={styles.analysisHeaderTitle}>ANALYZING</Text>
-        <View style={styles.roseGoldDivider} />
-        <Text style={styles.analysisHeaderSub}>Threadly is learning this piece</Text>
-      </View>
+    <View style={S.analysisWrap}>
+      {/* Scanned image with cinematic overlays */}
+      <View style={S.scanImageContainer}>
+        <Image source={{ uri: imageUri }} style={S.scanImage} resizeMode="cover" />
 
-      {/* Image with scan overlay */}
-      <View style={styles.analysisImageWrap}>
-        <Animated.Image
-          source={{ uri: image }}
-          style={[styles.analysisImage, { opacity: imageOpacity }]}
-          resizeMode="cover"
-        />
-        {/* Dark overlay */}
+        {/* Vignette */}
         <LinearGradient
-          colors={["transparent", ThreadlyColors.black + "88", "transparent"]}
+          colors={["rgba(10,10,10,0.4)", "transparent", "rgba(10,10,10,0.4)"]}
           style={StyleSheet.absoluteFill}
         />
-        {/* Scan line */}
-        <Animated.View
-          style={[styles.scanLine, { transform: [{ translateY: scanTranslateY }] }]}
-          pointerEvents="none"
-        />
+
         {/* Rose-gold glow border */}
+        <Animated.View style={[S.scanGlowBorder, { opacity: glowBorderOpacity }]} />
+
+        {/* Animated scan line */}
         <Animated.View
-          style={[styles.analysisGlowBorder, { opacity: glowOpacity }]}
+          style={[S.scanLine, { transform: [{ translateY: scanLineTranslate }] }]}
           pointerEvents="none"
-        />
-        {/* Corner brackets */}
-        <View style={[styles.corner, styles.cornerTL, styles.cornerAnalysis]} />
-        <View style={[styles.corner, styles.cornerTR, styles.cornerAnalysis]} />
-        <View style={[styles.corner, styles.cornerBL, styles.cornerAnalysis]} />
-        <View style={[styles.corner, styles.cornerBR, styles.cornerAnalysis]} />
+        >
+          <LinearGradient
+            colors={["transparent", ThreadlyColors.roseGold, "transparent"]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={S.scanLineGrad}
+          />
+        </Animated.View>
+
+        {/* Corner guides */}
+        <View style={[S.corner, S.cornerTL]} />
+        <View style={[S.corner, S.cornerTR]} />
+        <View style={[S.corner, S.cornerBL]} />
+        <View style={[S.corner, S.cornerBR]} />
+
+        {/* AI label badge */}
+        <View style={S.aiLabel}>
+          <Animated.View style={[S.aiLabelDot, { opacity: glowPulse }]} />
+          <Text style={S.aiLabelText}>THREADLY AI</Text>
+        </View>
+      </View>
+
+      {/* Progress bar */}
+      <View style={S.progressTrack}>
+        <Animated.View style={[S.progressFill, { width: progressWidth }]}>
+          <LinearGradient
+            colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
       </View>
 
       {/* Step list */}
-      <View style={styles.stepList}>
-        {ANALYSIS_STEPS.map((step, i) => (
-          <AnalysisStepRow
-            key={i}
-            label={step.label}
-            detail={step.detail}
-            state={
-              completedSteps.includes(i)
-                ? "done"
-                : i === currentStep
-                ? "active"
-                : "pending"
-            }
-          />
-        ))}
-      </View>
-    </Animated.View>
+      <ScrollView style={S.stepsList} showsVerticalScrollIndicator={false}>
+        {ANALYSIS_STEPS.map((step, i) => {
+          const done = completedSteps.includes(i);
+          const active = currentStep === i && !done;
+          return (
+            <View key={i} style={S.stepRow}>
+              <Animated.View
+                style={[
+                  S.stepBullet,
+                  done && S.stepBulletDone,
+                  active && S.stepBulletActive,
+                  { transform: [{ scale: done ? checkScales[i] : 1 }] },
+                ]}
+              >
+                <Text style={[S.stepBulletText, done && S.stepBulletTextDone]}>
+                  {done ? "✓" : `${i + 1}`}
+                </Text>
+              </Animated.View>
+              <View style={S.stepTextCol}>
+                <Text style={[S.stepLabel, done && S.stepLabelDone, active && S.stepLabelActive]}>
+                  {step.label}
+                </Text>
+                {active && <Text style={S.stepSub}>{step.sub}</Text>}
+              </View>
+              {active && <Text style={S.stepDots}>• • •</Text>}
+            </View>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 }
 
-function AnalysisStepRow({
-  label,
-  detail,
-  state,
-}: {
-  label: string;
-  detail: string;
-  state: "pending" | "active" | "done";
-}) {
-  const opacity = useRef(new Animated.Value(state === "pending" ? 0.3 : 1)).current;
-  const scale = useRef(new Animated.Value(state === "active" ? 1.02 : 1)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: state === "pending" ? 0.3 : 1,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scale, {
-        toValue: state === "active" ? 1.02 : 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [state]);
-
-  return (
-    <Animated.View style={[styles.stepRow, { opacity, transform: [{ scale }] }]}>
-      <View style={styles.stepIconWrap}>
-        {state === "done" ? (
-          <LinearGradient
-            colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
-            style={styles.stepIconDone}
-          >
-            <Text style={styles.stepCheckmark}>✓</Text>
-          </LinearGradient>
-        ) : state === "active" ? (
-          <View style={styles.stepIconActive}>
-            <ActiveDot />
-          </View>
-        ) : (
-          <View style={styles.stepIconPending} />
-        )}
-      </View>
-      <View style={styles.stepTextWrap}>
-        <Text style={[styles.stepLabel, state === "done" && styles.stepLabelDone, state === "active" && styles.stepLabelActive]}>
-          {label}
-        </Text>
-        {state === "active" && <Text style={styles.stepDetail}>{detail}</Text>}
-      </View>
-    </Animated.View>
-  );
-}
-
-function ActiveDot() {
-  const pulse = useRef(new Animated.Value(0.4)).current;
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 500, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0.4, duration: 500, useNativeDriver: true }),
-      ])
-    ).start();
-  }, []);
-  return <Animated.View style={[styles.activeDot, { opacity: pulse }]} />;
-}
-
-// ─── Phase 3: Reveal ──────────────────────────────────────────────────────────
+// ─── Phase 3: Item Reveal ─────────────────────────────────────────────────────
 
 function RevealPhase({
   item,
+  imageUri,
+  revealOpacity,
+  revealSlide,
+  imageScale,
   onAdd,
-  onRetry,
+  onRescan,
   onClose,
 }: {
   item: ScannedItem;
+  imageUri: string;
+  revealOpacity: Animated.Value;
+  revealSlide: Animated.Value;
+  imageScale: Animated.Value;
   onAdd: () => void;
-  onRetry: () => void;
+  onRescan: () => void;
   onClose: () => void;
 }) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(60)).current;
-  const imageOpacity = useRef(new Animated.Value(0)).current;
-  const cardScale = useRef(new Animated.Value(0.92)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-      Animated.spring(slideAnim, { toValue: 0, tension: 60, friction: 10, useNativeDriver: true }),
-      Animated.timing(imageOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.spring(cardScale, { toValue: 1, tension: 55, friction: 9, useNativeDriver: true }),
-    ]).start();
-  }, []);
-
-  const { scale: addScale, onPressIn: addIn, onPressOut: addOut } = useScalePress(0.96);
-  const { scale: retryScale, onPressIn: retryIn, onPressOut: retryOut } = useScalePress(0.96);
+  const addScale = useRef(new Animated.Value(1)).current;
+  function addIn() {
+    Animated.spring(addScale, { toValue: 0.96, tension: 200, friction: 10, useNativeDriver: true }).start();
+  }
+  function addOut() {
+    Animated.spring(addScale, { toValue: 1, tension: 200, friction: 10, useNativeDriver: true }).start();
+  }
 
   return (
-    <Animated.ScrollView
-      style={[styles.phaseContainer, { opacity: fadeAnim }]}
-      contentContainerStyle={styles.revealScroll}
-      showsVerticalScrollIndicator={false}
+    <Animated.View
+      style={[S.revealWrap, { opacity: revealOpacity, transform: [{ translateY: revealSlide }] }]}
     >
-      {/* Header */}
-      <View style={styles.revealHeader}>
-        <Pressable onPress={onClose} style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.6 }]}>
-          <Text style={styles.closeBtnText}>✕</Text>
-        </Pressable>
-        <View style={styles.revealHeaderCenter}>
-          <Text style={styles.revealTitle}>ITEM IDENTIFIED</Text>
-          <View style={styles.roseGoldDivider} />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={S.revealScroll}>
+
+        {/* Success indicator */}
+        <View style={S.revealSuccessRow}>
+          <View style={S.revealSuccessDot} />
+          <Text style={S.revealSuccessLabel}>ITEM IDENTIFIED</Text>
         </View>
-        <View style={{ width: 40 }} />
-      </View>
 
-      {/* Item Card */}
-      <Animated.View style={[styles.revealCard, { transform: [{ scale: cardScale }, { translateY: slideAnim }] }]}>
-        <LinearGradient colors={["#1A1410", "#161616"]} style={StyleSheet.absoluteFill} />
-        <View style={styles.revealCardBorder} />
-
-        {/* Image + overlay */}
-        <View style={styles.revealImageWrap}>
-          <Animated.Image
-            source={{ uri: item.image }}
-            style={[styles.revealImage, { opacity: imageOpacity }]}
-            resizeMode="cover"
-          />
-          <LinearGradient
-            colors={["transparent", ThreadlyColors.black + "CC"]}
-            style={[StyleSheet.absoluteFill, { borderRadius: ThreadlyRadius.lg }]}
-          />
-          {/* Match score badge */}
-          <View style={styles.matchBadge}>
+        {/* Image + metadata */}
+        <View style={S.revealTopRow}>
+          <Animated.View style={[S.revealImgWrap, { transform: [{ scale: imageScale }] }]}>
+            <Image source={{ uri: imageUri }} style={S.revealImg} resizeMode="cover" />
             <LinearGradient
-              colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
+              colors={["transparent", "rgba(10,10,10,0.65)"]}
               style={StyleSheet.absoluteFill}
             />
-            <Text style={styles.matchBadgeText}>{item.matchScore}%</Text>
-            <Text style={styles.matchBadgeLabel}>match</Text>
-          </View>
-          {/* Style tag */}
-          <View style={styles.styleTagBadge}>
-            <Text style={styles.styleTagText}>{item.styleTag}</Text>
-          </View>
-        </View>
+            {/* Match score badge */}
+            <View style={S.matchBadge}>
+              <LinearGradient
+                colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
+                style={StyleSheet.absoluteFill}
+              />
+              <Text style={S.matchBadgeNum}>{item.matchScore}%</Text>
+              <Text style={S.matchBadgeSub}>match</Text>
+            </View>
+          </Animated.View>
 
-        {/* Item identity */}
-        <View style={styles.revealIdentity}>
-          <Text style={styles.revealBrand}>{item.brand.toUpperCase()}</Text>
-          <Text style={styles.revealItemName}>{item.name}</Text>
-          <Text style={styles.revealCategory}>{item.category}</Text>
+          <View style={S.revealMeta}>
+            <Text style={S.revealItemName}>{item.name}</Text>
+            <Text style={S.revealBrand}>{item.brand}</Text>
+            <View style={S.revealCatChip}>
+              <Text style={S.revealCatText}>{item.category}</Text>
+            </View>
+            <View style={S.styleTagChip}>
+              <Text style={S.styleTagText}>✦ {item.styleTag}</Text>
+            </View>
+            {/* Occasions */}
+            <View style={S.occasionRow}>
+              {item.occasions.map((o, i) => (
+                <View key={i} style={S.occasionChip}>
+                  <Text style={S.occasionText}>{o}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
         </View>
 
         {/* Color DNA */}
-        <View style={styles.dnaRow}>
-          <View style={styles.dnaSection}>
-            <Text style={styles.dnaSectionLabel}>COLOR DNA</Text>
-            <View style={styles.dnaColorRow}>
-              <View style={[styles.dnaColorSwatch, { backgroundColor: item.colorHex }]} />
-              <Text style={styles.dnaColorName}>{item.color}</Text>
+        <View style={S.sectionBlock}>
+          <Text style={S.sectionLabel}>COLOR DNA</Text>
+          <View style={S.colorDnaCard}>
+            <View style={[S.colorSwatch, { backgroundColor: item.colorHex }]} />
+            <View style={S.colorDnaInfo}>
+              <Text style={S.colorDnaName}>{item.color}</Text>
+              <Text style={S.colorDnaHex}>{item.colorHex}</Text>
             </View>
-          </View>
-          <View style={styles.dnaDivider} />
-          <View style={styles.dnaSection}>
-            <Text style={styles.dnaSectionLabel}>WORKS WITH</Text>
-            <Text style={styles.dnaOutfitCount}>{item.outfitCount} outfits</Text>
-            <Text style={styles.dnaOutfitSub}>in your closet</Text>
+            <View style={S.colorDnaFitBadge}>
+              <Text style={S.colorDnaFitText}>Fits your palette</Text>
+            </View>
           </View>
         </View>
 
-        {/* Pairs Well */}
-        <View style={styles.pairsSection}>
-          <Text style={styles.pairsSectionLabel}>PAIRS WELL WITH</Text>
-          <View style={styles.pairsChips}>
-            {item.pairsWith.map((pair, i) => (
-              <View key={i} style={styles.pairsChip}>
-                <Text style={styles.pairsChipText}>{pair}</Text>
+        {/* Intelligence cards */}
+        <View style={S.intelRow}>
+          <View style={S.intelCard}>
+            <Text style={S.intelNum}>{item.outfitCount}</Text>
+            <Text style={S.intelCardLabel}>outfit{"\n"}combinations</Text>
+          </View>
+          <View style={S.intelCard}>
+            <Text style={S.intelNum}>{item.matchScore}%</Text>
+            <Text style={S.intelCardLabel}>style{"\n"}match score</Text>
+          </View>
+          <View style={S.intelCard}>
+            <Text style={S.intelNum}>{item.closetIQ}</Text>
+            <Text style={S.intelCardLabel}>closet{"\n"}IQ boost</Text>
+          </View>
+        </View>
+
+        {/* Pairs Well With */}
+        <View style={S.sectionBlock}>
+          <Text style={S.sectionLabel}>PAIRS WELL WITH</Text>
+          <View style={S.pairsRow}>
+            {item.pairsWith.map((p, i) => (
+              <View key={i} style={S.pairsChip}>
+                <Text style={S.pairsChipText}>{p}</Text>
               </View>
             ))}
           </View>
         </View>
 
-        {/* Trending */}
-        <View style={styles.trendingRow}>
-          <View style={styles.trendingDot} />
-          <Text style={styles.trendingText}>
-            Trending in <Text style={styles.trendingHighlight}>{item.trendingIn}</Text>
-          </Text>
-        </View>
-
-        {/* Intelligence insight */}
-        <View style={styles.insightRow}>
+        {/* Trending insight card */}
+        <View style={S.trendCard}>
           <LinearGradient
-            colors={[ThreadlyColors.roseGold + "18", ThreadlyColors.roseGold + "08"]}
+            colors={["rgba(201,149,106,0.1)", "rgba(201,149,106,0.03)"]}
             style={StyleSheet.absoluteFill}
           />
-          <View style={styles.insightBorder} />
-          <Text style={styles.insightIcon}>✦</Text>
-          <Text style={styles.insightText}>
-            Adding this piece increases your outfit combinations by{" "}
-            <Text style={styles.insightHighlight}>{item.outfitCount} new looks</Text>
-          </Text>
+          <View style={S.trendCardTopBorder} />
+          <Text style={S.trendCardIcon}>✦</Text>
+          <View style={S.trendCardBody}>
+            <Text style={S.trendCardText}>
+              Trending in{" "}
+              <Text style={S.trendCardHighlight}>{item.trendingIn}</Text>
+              {" "}aesthetics right now.
+            </Text>
+            <Text style={S.trendCardSub}>
+              Already works with{" "}
+              <Text style={S.trendCardHighlight}>{item.outfitCount} saved looks</Text>
+              {" "}in your wardrobe.
+            </Text>
+          </View>
         </View>
-      </Animated.View>
 
-      {/* Actions */}
-      <View style={styles.revealActions}>
-        <Pressable onPressIn={addIn} onPressOut={addOut} onPress={onAdd}>
-          <Animated.View style={[styles.addBtn, { transform: [{ scale: addScale }] }]}>
+        {/* Add CTA */}
+        <Animated.View style={{ transform: [{ scale: addScale }] }}>
+          <Pressable
+            style={S.addBtn}
+            onPressIn={addIn}
+            onPressOut={addOut}
+            onPress={onAdd}
+          >
             <LinearGradient
               colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
               style={StyleSheet.absoluteFill}
             />
-            <Text style={styles.addBtnText}>Add to My Closet</Text>
-          </Animated.View>
-        </Pressable>
+            <Text style={S.addBtnText}>Add to My Wardrobe</Text>
+          </Pressable>
+        </Animated.View>
 
-        <Pressable onPressIn={retryIn} onPressOut={retryOut} onPress={onRetry}>
-          <Animated.View style={[styles.retryBtn, { transform: [{ scale: retryScale }] }]}>
-            <View style={styles.retryBtnBorder} />
-            <Text style={styles.retryBtnText}>Scan Another Item</Text>
-          </Animated.View>
-        </Pressable>
-      </View>
+        <TouchableOpacity style={S.rescanBtn} onPress={onRescan}>
+          <Text style={S.rescanBtnText}>Scan Another Item</Text>
+        </TouchableOpacity>
 
-      <View style={{ height: 40 }} />
-    </Animated.ScrollView>
+        <View style={{ height: 20 }} />
+      </ScrollView>
+    </Animated.View>
   );
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const VIEWFINDER_W = SCREEN_W - 64;
-const VIEWFINDER_H = VIEWFINDER_W * 1.25;
-const ANALYSIS_IMAGE_H = 220;
-const CORNER_SIZE = 22;
-const CORNER_THICKNESS = 2;
-
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: ThreadlyColors.black,
+const S = StyleSheet.create({
+  // Sheet
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.78)",
   },
-  phaseContainer: {
-    flex: 1,
+  sheet: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: H * 0.92,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    overflow: "hidden",
   },
-
-  // ── Picker ──
-  pickerHeader: {
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(255,255,255,0.14)",
+    alignSelf: "center",
+    marginTop: 10,
+    marginBottom: 2,
+  },
+  sheetHeader: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 60,
-    paddingHorizontal: 24,
-    paddingBottom: 16,
+    alignItems: "flex-start",
+    paddingHorizontal: 22,
+    paddingTop: 10,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.05)",
+  },
+  sheetTitle: {
+    fontSize: 17,
+    fontFamily: "Georgia",
+    color: ThreadlyColors.warmWhite,
+    marginBottom: 2,
+  },
+  sheetSub: {
+    fontSize: 11,
+    color: ThreadlyColors.warmWhiteSubtle,
+    letterSpacing: 0.3,
   },
   closeBtn: {
-    width: 40,
-    height: 40,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(255,255,255,0.07)",
     alignItems: "center",
     justifyContent: "center",
   },
   closeBtnText: {
-    color: ThreadlyColors.warmWhite,
-    fontSize: 18,
-    opacity: 0.7,
-  },
-  pickerHeaderCenter: {
-    alignItems: "center",
-    gap: 6,
-  },
-  pickerTitle: {
-    fontFamily: "Georgia",
-    fontSize: 13,
-    letterSpacing: 4,
-    color: ThreadlyColors.warmWhite,
-  },
-  roseGoldDivider: {
-    width: 32,
-    height: 1,
-    backgroundColor: ThreadlyColors.roseGold,
-    opacity: 0.8,
-  },
-  viewfinderWrap: {
-    alignItems: "center",
-    paddingVertical: 20,
-  },
-  viewfinder: {
-    width: VIEWFINDER_W,
-    height: VIEWFINDER_H,
-    backgroundColor: ThreadlyColors.charcoal + "44",
-    borderRadius: 4,
-    overflow: "hidden",
-    position: "relative",
-  },
-  corner: {
-    position: "absolute",
-    width: CORNER_SIZE,
-    height: CORNER_SIZE,
-  },
-  cornerTL: {
-    top: 0,
-    left: 0,
-    borderTopWidth: CORNER_THICKNESS,
-    borderLeftWidth: CORNER_THICKNESS,
-    borderColor: ThreadlyColors.roseGold,
-  },
-  cornerTR: {
-    top: 0,
-    right: 0,
-    borderTopWidth: CORNER_THICKNESS,
-    borderRightWidth: CORNER_THICKNESS,
-    borderColor: ThreadlyColors.roseGold,
-  },
-  cornerBL: {
-    bottom: 0,
-    left: 0,
-    borderBottomWidth: CORNER_THICKNESS,
-    borderLeftWidth: CORNER_THICKNESS,
-    borderColor: ThreadlyColors.roseGold,
-  },
-  cornerBR: {
-    bottom: 0,
-    right: 0,
-    borderBottomWidth: CORNER_THICKNESS,
-    borderRightWidth: CORNER_THICKNESS,
-    borderColor: ThreadlyColors.roseGold,
-  },
-  cornerAnalysis: {
-    borderColor: ThreadlyColors.roseGold,
-    opacity: 0.8,
-  },
-  crosshairH: {
-    position: "absolute",
-    top: "50%",
-    left: "20%",
-    right: "20%",
-    height: 0.5,
-    backgroundColor: ThreadlyColors.roseGold,
-    opacity: 0.25,
-  },
-  crosshairV: {
-    position: "absolute",
-    left: "50%",
-    top: "20%",
-    bottom: "20%",
-    width: 0.5,
-    backgroundColor: ThreadlyColors.roseGold,
-    opacity: 0.25,
-  },
-  scanLineIdle: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    height: 1.5,
-    backgroundColor: ThreadlyColors.roseGold,
-    opacity: 0.35,
-    shadowColor: ThreadlyColors.roseGold,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
-  },
-  viewfinderLabel: {
-    position: "absolute",
-    bottom: 16,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-  },
-  viewfinderLabelText: {
-    color: ThreadlyColors.warmWhite,
-    fontSize: 11,
-    letterSpacing: 1.5,
-    opacity: 0.5,
-  },
-  sourceOptions: {
-    paddingHorizontal: 24,
-    gap: 10,
-  },
-  sourceOptionsLabel: {
+    fontSize: 12,
     color: ThreadlyColors.warmWhiteMuted,
-    fontSize: 11,
-    letterSpacing: 2,
-    marginBottom: 4,
-    textTransform: "uppercase",
   },
-  sourceBtn: {
+
+  // Picker
+  pickerWrap: {
+    flex: 1,
+    paddingHorizontal: 22,
+    paddingTop: 20,
+  },
+  orbContainer: {
+    alignSelf: "center",
+    width: 72,
+    height: 72,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 18,
+  },
+  orbGradient: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 36,
+  },
+  orbRing: {
+    position: "absolute",
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 1.5,
+    borderColor: ThreadlyColors.roseGold,
+  },
+  orbGlyph: {
+    fontSize: 26,
+    color: ThreadlyColors.roseGold,
+  },
+  pickerHeadline: {
+    fontSize: 20,
+    fontFamily: "Georgia",
+    color: ThreadlyColors.warmWhite,
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  pickerBody: {
+    fontSize: 13,
+    color: ThreadlyColors.warmWhiteSubtle,
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  sourceCards: { gap: 10 },
+  cardDim: { opacity: 0.68 },
+  sourceCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: ThreadlyColors.charcoal,
+    backgroundColor: "rgba(255,255,255,0.04)",
     borderRadius: ThreadlyRadius.lg,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.07)",
     padding: 16,
     gap: 14,
     overflow: "hidden",
   },
-  sourceBtnPrimary: {
-    backgroundColor: "#1A1410",
+  sourceCardPrimary: {
+    backgroundColor: "rgba(201,149,106,0.06)",
+    borderColor: "rgba(201,149,106,0.3)",
   },
-  sourceBtnBorder: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: ThreadlyRadius.lg,
-    borderWidth: 0.5,
-    borderColor: ThreadlyColors.charcoalLight,
+  sourceCardTopBorder: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: ThreadlyColors.roseGold,
+    opacity: 0.5,
   },
-  sourceBtnBorderPrimary: {
-    borderColor: ThreadlyColors.roseGold,
-    opacity: 0.6,
+  sourceIconCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "rgba(201,149,106,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  sourceBtnIcon: { fontSize: 22 },
-  sourceBtnText: { flex: 1 },
-  sourceBtnTitle: {
+  sourceIconText: { fontSize: 19 },
+  sourceCardBody: { flex: 1 },
+  sourceCardTitle: {
+    fontSize: 14,
     color: ThreadlyColors.warmWhite,
-    fontSize: 15,
     fontWeight: "600",
+    marginBottom: 2,
   },
-  sourceBtnTitlePrimary: {
-    color: ThreadlyColors.roseGoldLight,
-  },
-  sourceBtnSub: {
-    color: ThreadlyColors.warmWhiteMuted,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  sourceBtnArrow: {
-    color: ThreadlyColors.warmWhiteMuted,
-    fontSize: 18,
-  },
-  sourceBtnArrowPrimary: {
-    color: ThreadlyColors.roseGold,
-  },
-  pickerFootnote: {
-    color: ThreadlyColors.warmWhiteMuted,
+  sourceCardTitlePrimary: { color: ThreadlyColors.roseGoldLight },
+  sourceCardDesc: {
     fontSize: 11,
+    color: ThreadlyColors.warmWhiteSubtle,
+  },
+  sourceArrow: {
+    fontSize: 16,
+    color: ThreadlyColors.warmWhiteMuted,
+  },
+  sourceArrowPrimary: { color: ThreadlyColors.roseGold },
+  pickerNote: {
+    fontSize: 11,
+    color: ThreadlyColors.warmWhiteSubtle,
     textAlign: "center",
-    paddingHorizontal: 32,
-    paddingTop: 16,
-    opacity: 0.6,
-    letterSpacing: 0.3,
+    marginTop: 18,
+    opacity: 0.55,
   },
 
-  // ── Analyzing ──
-  analysisHeader: {
-    alignItems: "center",
-    paddingTop: 60,
-    paddingBottom: 20,
-    gap: 8,
+  // Analysis
+  analysisWrap: {
+    flex: 1,
+    paddingHorizontal: 22,
+    paddingTop: 14,
   },
-  analysisHeaderTitle: {
-    fontFamily: "Georgia",
-    fontSize: 13,
-    letterSpacing: 4,
-    color: ThreadlyColors.warmWhite,
-  },
-  analysisHeaderSub: {
-    color: ThreadlyColors.warmWhiteMuted,
-    fontSize: 12,
-    letterSpacing: 0.5,
-  },
-  analysisImageWrap: {
-    marginHorizontal: 32,
-    height: ANALYSIS_IMAGE_H,
-    borderRadius: ThreadlyRadius.xl,
+  scanImageContainer: {
+    width: "100%",
+    height: 210,
+    borderRadius: ThreadlyRadius.lg,
     overflow: "hidden",
+    marginBottom: 14,
     position: "relative",
   },
-  analysisImage: {
-    width: "100%",
-    height: "100%",
+  scanImage: { width: "100%", height: "100%" },
+  scanGlowBorder: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: ThreadlyRadius.lg,
+    borderWidth: 1.5,
+    borderColor: ThreadlyColors.roseGold,
   },
   scanLine: {
     position: "absolute",
     left: 0,
     right: 0,
     height: 2,
-    backgroundColor: ThreadlyColors.roseGold,
-    opacity: 0.85,
-    shadowColor: ThreadlyColors.roseGold,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 10,
+    top: 0,
   },
-  analysisGlowBorder: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: ThreadlyRadius.xl,
-    borderWidth: 1.5,
-    borderColor: ThreadlyColors.roseGold,
-  },
-  stepList: {
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    gap: 12,
-  },
-  stepRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 14,
-  },
-  stepIconWrap: {
-    width: 22,
-    height: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 1,
-  },
-  stepIconDone: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepCheckmark: {
-    color: ThreadlyColors.black,
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  stepIconActive: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1.5,
-    borderColor: ThreadlyColors.roseGold,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  activeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: ThreadlyColors.roseGold,
-  },
-  stepIconPending: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-  },
-  stepTextWrap: { flex: 1 },
-  stepLabel: {
-    color: ThreadlyColors.warmWhiteMuted,
-    fontSize: 13,
-    fontWeight: "500",
-  },
-  stepLabelDone: {
-    color: ThreadlyColors.warmWhite,
-  },
-  stepLabelActive: {
-    color: ThreadlyColors.roseGoldLight,
-    fontWeight: "600",
-  },
-  stepDetail: {
-    color: ThreadlyColors.warmWhiteMuted,
-    fontSize: 11,
-    marginTop: 2,
-    opacity: 0.7,
-  },
-
-  // ── Reveal ──
-  revealScroll: {
-    paddingBottom: 20,
-  },
-  revealHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingTop: 60,
-    paddingHorizontal: 24,
-    paddingBottom: 16,
-  },
-  revealHeaderCenter: {
-    alignItems: "center",
-    gap: 6,
-  },
-  revealTitle: {
-    fontFamily: "Georgia",
-    fontSize: 13,
-    letterSpacing: 4,
-    color: ThreadlyColors.warmWhite,
-  },
-  revealCard: {
-    marginHorizontal: 20,
-    borderRadius: ThreadlyRadius.xl,
-    overflow: "hidden",
-    position: "relative",
-  },
-  revealCardBorder: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: ThreadlyRadius.xl,
-    borderWidth: 0.5,
-    borderColor: ThreadlyColors.roseGold,
-    opacity: 0.4,
-    zIndex: 10,
-  },
-  revealImageWrap: {
-    height: 280,
-    position: "relative",
-  },
-  revealImage: {
-    width: "100%",
-    height: "100%",
-  },
-  matchBadge: {
+  scanLineGrad: { flex: 1, height: 2 },
+  corner: {
     position: "absolute",
-    top: 16,
-    right: 16,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
+    width: 18,
+    height: 18,
+    borderColor: ThreadlyColors.roseGoldLight,
+    borderWidth: 2,
   },
-  matchBadgeText: {
-    color: ThreadlyColors.black,
-    fontSize: 15,
-    fontWeight: "800",
-    lineHeight: 18,
-  },
-  matchBadgeLabel: {
-    color: ThreadlyColors.black,
-    fontSize: 9,
-    fontWeight: "600",
-    letterSpacing: 0.5,
-  },
-  styleTagBadge: {
+  cornerTL: { top: 8, left: 8, borderRightWidth: 0, borderBottomWidth: 0 },
+  cornerTR: { top: 8, right: 8, borderLeftWidth: 0, borderBottomWidth: 0 },
+  cornerBL: { bottom: 8, left: 8, borderRightWidth: 0, borderTopWidth: 0 },
+  cornerBR: { bottom: 8, right: 8, borderLeftWidth: 0, borderTopWidth: 0 },
+  aiLabel: {
     position: "absolute",
-    bottom: 16,
-    left: 16,
-    backgroundColor: ThreadlyColors.black + "CC",
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderWidth: 0.5,
-    borderColor: ThreadlyColors.roseGold + "66",
-  },
-  styleTagText: {
-    color: ThreadlyColors.roseGoldLight,
-    fontSize: 11,
-    letterSpacing: 1,
-  },
-  revealIdentity: {
-    padding: 20,
-    paddingBottom: 12,
-    gap: 3,
-  },
-  revealBrand: {
-    color: ThreadlyColors.roseGold,
-    fontSize: 10,
-    letterSpacing: 3,
-    fontWeight: "600",
-  },
-  revealItemName: {
-    color: ThreadlyColors.warmWhite,
-    fontSize: 22,
-    fontFamily: "Georgia",
-    fontWeight: "400",
-    lineHeight: 28,
-  },
-  revealCategory: {
-    color: ThreadlyColors.warmWhiteMuted,
-    fontSize: 13,
-  },
-  dnaRow: {
-    flexDirection: "row",
-    marginHorizontal: 20,
-    marginBottom: 16,
-    backgroundColor: ThreadlyColors.charcoal + "88",
-    borderRadius: ThreadlyRadius.md,
-    padding: 16,
-    alignItems: "center",
-  },
-  dnaSection: { flex: 1, gap: 6 },
-  dnaSectionLabel: {
-    color: ThreadlyColors.warmWhiteMuted,
-    fontSize: 9,
-    letterSpacing: 2,
-  },
-  dnaColorRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  dnaColorSwatch: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 0.5,
-    borderColor: ThreadlyColors.charcoalLight,
-  },
-  dnaColorName: {
-    color: ThreadlyColors.warmWhite,
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  dnaDivider: {
-    width: 0.5,
-    height: 40,
-    backgroundColor: ThreadlyColors.charcoalLight,
-    marginHorizontal: 16,
-  },
-  dnaOutfitCount: {
-    color: ThreadlyColors.warmWhite,
-    fontSize: 20,
-    fontWeight: "700",
-  },
-  dnaOutfitSub: {
-    color: ThreadlyColors.warmWhiteMuted,
-    fontSize: 11,
-  },
-  pairsSection: {
-    paddingHorizontal: 20,
-    marginBottom: 14,
-    gap: 10,
-  },
-  pairsSectionLabel: {
-    color: ThreadlyColors.warmWhiteMuted,
-    fontSize: 9,
-    letterSpacing: 2,
-  },
-  pairsChips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  pairsChip: {
-    backgroundColor: ThreadlyColors.charcoal,
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 0.5,
-    borderColor: ThreadlyColors.charcoalLight,
-  },
-  pairsChipText: {
-    color: ThreadlyColors.warmWhite,
-    fontSize: 12,
-  },
-  trendingRow: {
+    bottom: 8,
+    left: 10,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 20,
-    marginBottom: 14,
+    gap: 5,
+    backgroundColor: "rgba(10,10,10,0.72)",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 20,
   },
-  trendingDot: {
-    width: 6,
-    height: 6,
+  aiLabelDot: {
+    width: 5,
+    height: 5,
     borderRadius: 3,
     backgroundColor: ThreadlyColors.roseGold,
   },
-  trendingText: {
-    color: ThreadlyColors.warmWhiteMuted,
-    fontSize: 12,
-  },
-  trendingHighlight: {
+  aiLabelText: {
+    fontSize: 8,
+    fontWeight: "700",
     color: ThreadlyColors.roseGoldLight,
-    fontWeight: "600",
+    letterSpacing: 1.8,
   },
-  insightRow: {
+  progressTrack: {
+    height: 2,
+    backgroundColor: "rgba(255,255,255,0.07)",
+    borderRadius: 1,
+    marginBottom: 18,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 1,
+  },
+  stepsList: { flex: 1 },
+  stepRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: ThreadlyRadius.md,
-    padding: 14,
+    marginBottom: 13,
+    gap: 11,
+  },
+  stepBullet: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepBulletDone: {
+    backgroundColor: "rgba(201,149,106,0.18)",
+    borderColor: ThreadlyColors.roseGold,
+  },
+  stepBulletActive: {
+    borderColor: ThreadlyColors.roseGoldLight,
+    backgroundColor: "rgba(201,149,106,0.07)",
+  },
+  stepBulletText: {
+    fontSize: 10,
+    color: ThreadlyColors.warmWhiteSubtle,
+    fontWeight: "600",
+  },
+  stepBulletTextDone: { color: ThreadlyColors.roseGoldLight },
+  stepTextCol: { flex: 1 },
+  stepLabel: {
+    fontSize: 13,
+    color: ThreadlyColors.warmWhiteSubtle,
+  },
+  stepLabelDone: { color: ThreadlyColors.warmWhite },
+  stepLabelActive: { color: ThreadlyColors.warmWhite, fontWeight: "600" },
+  stepSub: {
+    fontSize: 10,
+    color: ThreadlyColors.roseGoldLight,
+    marginTop: 1,
+    opacity: 0.8,
+  },
+  stepDots: {
+    fontSize: 11,
+    color: ThreadlyColors.roseGold,
+    letterSpacing: 2,
+  },
+
+  // Reveal
+  revealWrap: { flex: 1 },
+  revealScroll: {
+    paddingHorizontal: 22,
+    paddingTop: 14,
+    paddingBottom: 28,
+  },
+  revealSuccessRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 14,
+  },
+  revealSuccessDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: ThreadlyColors.roseGold,
+  },
+  revealSuccessLabel: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: ThreadlyColors.roseGoldLight,
+    letterSpacing: 2.2,
+  },
+  revealTopRow: {
+    flexDirection: "row",
+    gap: 14,
+    marginBottom: 18,
+  },
+  revealImgWrap: {
+    width: 110,
+    height: 148,
+    borderRadius: ThreadlyRadius.lg,
     overflow: "hidden",
     position: "relative",
   },
-  insightBorder: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: ThreadlyRadius.md,
-    borderWidth: 0.5,
-    borderColor: ThreadlyColors.roseGold,
-    opacity: 0.3,
+  revealImg: { width: "100%", height: "100%" },
+  matchBadge: {
+    position: "absolute",
+    bottom: 7,
+    left: 7,
+    borderRadius: 10,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    alignItems: "center",
+    overflow: "hidden",
   },
-  insightIcon: {
-    color: ThreadlyColors.roseGold,
-    fontSize: 14,
+  matchBadgeNum: {
+    fontSize: 13,
+    fontFamily: "Georgia",
+    color: "#0A0A0A",
+    fontWeight: "700",
   },
-  insightText: {
-    flex: 1,
+  matchBadgeSub: {
+    fontSize: 7,
+    color: "#0A0A0A",
+    letterSpacing: 0.5,
+    fontWeight: "600",
+  },
+  revealMeta: { flex: 1, paddingTop: 2 },
+  revealItemName: {
+    fontSize: 16,
+    fontFamily: "Georgia",
+    color: ThreadlyColors.warmWhite,
+    marginBottom: 3,
+    lineHeight: 21,
+  },
+  revealBrand: {
+    fontSize: 11,
+    color: ThreadlyColors.roseGoldLight,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    marginBottom: 8,
+  },
+  revealCatChip: {
+    backgroundColor: "rgba(255,255,255,0.06)",
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.09)",
+    alignSelf: "flex-start",
+    marginBottom: 6,
+  },
+  revealCatText: {
+    fontSize: 10,
     color: ThreadlyColors.warmWhiteMuted,
-    fontSize: 12,
-    lineHeight: 18,
+    fontWeight: "600",
   },
-  insightHighlight: {
+  styleTagChip: {
+    backgroundColor: "rgba(201,149,106,0.1)",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(201,149,106,0.22)",
+    alignSelf: "flex-start",
+    marginBottom: 8,
+  },
+  styleTagText: {
+    fontSize: 10,
     color: ThreadlyColors.roseGoldLight,
     fontWeight: "600",
   },
-  revealActions: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    gap: 12,
+  occasionRow: { flexDirection: "row", flexWrap: "wrap", gap: 5 },
+  occasionChip: {
+    backgroundColor: "rgba(255,255,255,0.04)",
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.07)",
   },
-  addBtn: {
-    height: 56,
-    borderRadius: ThreadlyRadius.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-  },
-  addBtnText: {
-    color: ThreadlyColors.black,
-    fontSize: 16,
+  occasionText: { fontSize: 9, color: ThreadlyColors.warmWhiteSubtle },
+
+  sectionBlock: { marginBottom: 14 },
+  sectionLabel: {
+    fontSize: 8,
     fontWeight: "700",
-    letterSpacing: 0.5,
+    color: ThreadlyColors.warmWhiteSubtle,
+    letterSpacing: 2.2,
+    marginBottom: 9,
   },
-  retryBtn: {
+  colorDnaCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: ThreadlyRadius.md,
+    padding: 13,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+  colorSwatch: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+  colorDnaInfo: { flex: 1 },
+  colorDnaName: {
+    fontSize: 13,
+    color: ThreadlyColors.warmWhite,
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  colorDnaHex: {
+    fontSize: 10,
+    color: ThreadlyColors.warmWhiteSubtle,
+    fontFamily: "monospace",
+  },
+  colorDnaFitBadge: {
+    backgroundColor: "rgba(201,149,106,0.12)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  colorDnaFitText: {
+    fontSize: 9,
+    color: ThreadlyColors.roseGoldLight,
+    fontWeight: "600",
+  },
+
+  intelRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 14,
+  },
+  intelCard: {
+    flex: 1,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: ThreadlyRadius.md,
+    padding: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+  intelNum: {
+    fontSize: 18,
+    fontFamily: "Georgia",
+    color: ThreadlyColors.roseGoldLight,
+    marginBottom: 3,
+  },
+  intelCardLabel: {
+    fontSize: 8,
+    color: ThreadlyColors.warmWhiteSubtle,
+    textAlign: "center",
+    lineHeight: 12,
+    letterSpacing: 0.3,
+  },
+
+  pairsRow: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
+  pairsChip: {
+    backgroundColor: "rgba(255,255,255,0.05)",
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.07)",
+  },
+  pairsChipText: {
+    fontSize: 11,
+    color: ThreadlyColors.warmWhiteMuted,
+  },
+
+  trendCard: {
+    borderRadius: ThreadlyRadius.lg,
+    padding: 14,
+    marginBottom: 18,
+    overflow: "hidden",
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    borderWidth: 1,
+    borderColor: "rgba(201,149,106,0.18)",
+  },
+  trendCardTopBorder: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: ThreadlyColors.roseGold,
+    opacity: 0.45,
+  },
+  trendCardIcon: {
+    fontSize: 15,
+    color: ThreadlyColors.roseGold,
+    marginTop: 1,
+  },
+  trendCardBody: { flex: 1 },
+  trendCardText: {
+    fontSize: 12,
+    color: ThreadlyColors.warmWhiteMuted,
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  trendCardSub: {
+    fontSize: 12,
+    color: ThreadlyColors.warmWhiteSubtle,
+    lineHeight: 18,
+  },
+  trendCardHighlight: {
+    color: ThreadlyColors.roseGoldLight,
+    fontWeight: "600",
+  },
+
+  addBtn: {
     height: 52,
     borderRadius: ThreadlyRadius.pill,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    position: "relative",
+    marginBottom: 11,
   },
-  retryBtnBorder: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: ThreadlyRadius.pill,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
+  addBtnText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#0A0A0A",
+    letterSpacing: 0.3,
   },
-  retryBtnText: {
-    color: ThreadlyColors.warmWhiteMuted,
-    fontSize: 15,
-    fontWeight: "500",
+  rescanBtn: {
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  rescanBtnText: {
+    fontSize: 12,
+    color: ThreadlyColors.warmWhiteSubtle,
   },
 });
