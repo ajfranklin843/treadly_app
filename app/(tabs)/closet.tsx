@@ -4,8 +4,8 @@
  * Wired to ClosetScanModal — the "holy shit" product moment.
  */
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { ALL_PRODUCT_IMAGES, pickImage } from "@/lib/images";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { VIBE_DEAL_POOL, pickVibeImage } from "@/lib/images";
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from "@/constants/threadly";
 import { ClosetScanModal, ScannedItem } from "@/components/closet-scan-modal";
+import { ItemIntelligenceSheet, WardrobeItem } from "@/components/item-intelligence-sheet";
 import { getStyleProfile } from "@/lib/onboarding-store";
 
 const { width } = Dimensions.get("window");
@@ -40,19 +41,20 @@ type ClosetItem = {
   isNew?: boolean;
 };
 
+// Initial items use vibe-matched images from VIBE_DEAL_POOL (default vibe; overridden once profile loads)
 const INITIAL_ITEMS: ClosetItem[] = [
-  { id: "1", name: "Camel Blazer", cat: "Outerwear", worn: 12, image: pickImage(ALL_PRODUCT_IMAGES, 0) },
-  { id: "2", name: "Black Tee", cat: "Tops", worn: 28, image: pickImage(ALL_PRODUCT_IMAGES, 1) },
-  { id: "3", name: "Wide-Leg Trousers", cat: "Bottoms", worn: 9, image: pickImage(ALL_PRODUCT_IMAGES, 2) },
-  { id: "4", name: "White Linen Shirt", cat: "Tops", worn: 15, image: pickImage(ALL_PRODUCT_IMAGES, 3) },
-  { id: "5", name: "Straight-Leg Jeans", cat: "Bottoms", worn: 22, image: pickImage(ALL_PRODUCT_IMAGES, 4) },
-  { id: "6", name: "Midi Slip Dress", cat: "Dresses", worn: 6, image: pickImage(ALL_PRODUCT_IMAGES, 5) },
-  { id: "7", name: "White Sneakers", cat: "Shoes", worn: 31, image: pickImage(ALL_PRODUCT_IMAGES, 6) },
-  { id: "8", name: "Leather Tote", cat: "Bags", worn: 18, image: pickImage(ALL_PRODUCT_IMAGES, 7) },
-  { id: "9", name: "Trench Coat", cat: "Outerwear", worn: 7, image: pickImage(ALL_PRODUCT_IMAGES, 8) },
-  { id: "10", name: "Silk Blouse", cat: "Tops", worn: 5, image: pickImage(ALL_PRODUCT_IMAGES, 9) },
-  { id: "11", name: "Mini Skirt", cat: "Bottoms", worn: 4, image: pickImage(ALL_PRODUCT_IMAGES, 10) },
-  { id: "12", name: "Gold Hoops", cat: "Accessories", worn: 42, image: pickImage(ALL_PRODUCT_IMAGES, 11) },
+  { id: "1",  name: "Camel Blazer",        cat: "Outerwear",   worn: 12, image: pickVibeImage(VIBE_DEAL_POOL, "Quiet Luxury", 0) },
+  { id: "2",  name: "Black Tee",           cat: "Tops",        worn: 28, image: pickVibeImage(VIBE_DEAL_POOL, "Minimal", 1) },
+  { id: "3",  name: "Wide-Leg Trousers",   cat: "Bottoms",     worn: 9,  image: pickVibeImage(VIBE_DEAL_POOL, "Old Money", 2) },
+  { id: "4",  name: "White Linen Shirt",   cat: "Tops",        worn: 15, image: pickVibeImage(VIBE_DEAL_POOL, "Clean Girl", 0) },
+  { id: "5",  name: "Straight-Leg Jeans",  cat: "Bottoms",     worn: 22, image: pickVibeImage(VIBE_DEAL_POOL, "Casual Luxe", 1) },
+  { id: "6",  name: "Midi Slip Dress",     cat: "Dresses",     worn: 6,  image: pickVibeImage(VIBE_DEAL_POOL, "Chic", 2) },
+  { id: "7",  name: "White Sneakers",      cat: "Shoes",       worn: 31, image: pickVibeImage(VIBE_DEAL_POOL, "Streetwear", 0) },
+  { id: "8",  name: "Leather Tote",        cat: "Bags",        worn: 18, image: pickVibeImage(VIBE_DEAL_POOL, "Old Money", 3) },
+  { id: "9",  name: "Trench Coat",         cat: "Outerwear",   worn: 7,  image: pickVibeImage(VIBE_DEAL_POOL, "Quiet Luxury", 1) },
+  { id: "10", name: "Silk Blouse",         cat: "Tops",        worn: 5,  image: pickVibeImage(VIBE_DEAL_POOL, "Chic", 0) },
+  { id: "11", name: "Mini Skirt",          cat: "Bottoms",     worn: 4,  image: pickVibeImage(VIBE_DEAL_POOL, "Minimal", 3) },
+  { id: "12", name: "Gold Hoops",          cat: "Accessories", worn: 42, image: pickVibeImage(VIBE_DEAL_POOL, "Clean Girl", 2) },
 ];
 
 const COLOR_DNA = [
@@ -76,6 +78,10 @@ export default function ClosetScreen() {
   const [showScanModal, setShowScanModal] = useState(false);
   const [closetItems, setClosetItems] = useState<ClosetItem[]>(INITIAL_ITEMS);
   const [userVibe, setUserVibe] = useState("Minimal");
+  const [selectedItem, setSelectedItem] = useState<WardrobeItem | null>(null);
+  const [showIntelSheet, setShowIntelSheet] = useState(false);
+  // Recently learned: scanned items stored in order, most recent first
+  const [recentlyLearned, setRecentlyLearned] = useState<ScannedItem[]>([]);
 
   // Load user vibe from profile
   useEffect(() => {
@@ -97,12 +103,54 @@ export default function ClosetScreen() {
     };
     // Prepend the new item so it appears first in the grid
     setClosetItems(prev => [newItem, ...prev]);
+    // Add to recently learned (keep last 10)
+    setRecentlyLearned(prev => [scanned, ...prev].slice(0, 10));
     hapticSuccess();
   }, []);
 
-  const filtered = activeCategory === "All"
-    ? closetItems
-    : closetItems.filter(i => i.cat === activeCategory);
+  const handleItemTap = useCallback((item: ClosetItem) => {
+    hapticLight();
+    setSelectedItem({
+      id: item.id,
+      image: item.image,
+      category: item.cat,
+      label: item.name,
+      matchPct: 87,
+      outfitCount: Math.max(4, item.worn),
+      closetIqBoost: 3,
+      pairsWell: ["Straight-Leg Jeans", "Silk Blouse", "Loafers", "Trench Coat"],
+      occasions: ["Casual", "Work", "Date Night"],
+      aestheticTags: ["Quiet Luxury", "Minimal", "Timeless"],
+      trendingIn: userVibe,
+    });
+    setShowIntelSheet(true);
+  }, [userVibe]);
+
+  const handleScannedItemTap = useCallback((scanned: ScannedItem) => {
+    hapticLight();
+    setSelectedItem({
+      id: scanned.id,
+      image: scanned.image,
+      category: scanned.category,
+      label: scanned.name,
+      brand: scanned.brand,
+      colorHex: scanned.colorHex,
+      colorName: scanned.color,
+      matchPct: scanned.matchScore,
+      outfitCount: scanned.outfitCount,
+      closetIqBoost: scanned.closetIQ,
+      pairsWell: scanned.pairsWith,
+      occasions: scanned.occasions,
+      aestheticTags: [scanned.styleTag, userVibe, "Timeless"],
+      trendingIn: scanned.trendingIn,
+    });
+    setShowIntelSheet(true);
+  }, [userVibe]);
+
+  const filtered = useMemo(() =>
+    activeCategory === "All" ? closetItems : closetItems.filter(i => i.cat === activeCategory),
+    [activeCategory, closetItems]
+  );
 
   return (
     <ScreenContainer containerClassName="bg-[#0A0A0A]" edges={["top", "left", "right"]}>
@@ -207,10 +255,15 @@ export default function ClosetScreen() {
           ))}
         </ScrollView>
 
+        {/* Recently Learned Row */}
+        {recentlyLearned.length > 0 && (
+          <RecentlyLearnedRow items={recentlyLearned} onItemTap={handleScannedItemTap} />
+        )}
+
         {/* Items Grid */}
         <View style={styles.itemGrid}>
           {filtered.map((item, idx) => (
-            <AnimatedItemCard key={item.id} item={item} width={ITEM_W} isNew={item.isNew} index={idx}>
+            <AnimatedItemCard key={item.id} item={item} width={ITEM_W} isNew={item.isNew} index={idx} onPress={() => handleItemTap(item)}>
               <View style={styles.itemImageWrap}>
                 <Image source={{ uri: item.image }} style={styles.itemImage} resizeMode="cover" />
                 {item.isNew && (
@@ -239,6 +292,13 @@ export default function ClosetScreen() {
         onClose={() => setShowScanModal(false)}
         onItemAdded={handleItemAdded}
         userVibe={userVibe}
+      />
+
+      {/* Item Intelligence Sheet */}
+      <ItemIntelligenceSheet
+        item={selectedItem}
+        visible={showIntelSheet}
+        onClose={() => setShowIntelSheet(false)}
       />
     </ScreenContainer>
   );
@@ -326,12 +386,14 @@ function AnimatedItemCard({
   width: cardWidth,
   isNew = false,
   index,
+  onPress,
 }: {
   children: React.ReactNode;
   item: { id: string };
   width: number;
   isNew?: boolean;
   index: number;
+  onPress?: () => void;
 }) {
   const { scale, onPressIn, onPressOut } = useScalePress(0.96);
   const entranceOpacity = useRef(new Animated.Value(isNew ? 0 : 1)).current;
@@ -347,7 +409,7 @@ function AnimatedItemCard({
   }, [isNew]);
 
   return (
-    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={() => hapticLight()}>
+    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress ?? (() => hapticLight())}>
       <Animated.View
         style={[
           styles.itemCard,
@@ -360,6 +422,103 @@ function AnimatedItemCard({
         ]}
       >
         {children}
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+// ─── Recently Learned Row ────────────────────────────────────────────────────
+
+function RecentlyLearnedRow({
+  items,
+  onItemTap,
+}: {
+  items: ScannedItem[];
+  onItemTap: (item: ScannedItem) => void;
+}) {
+  const entranceY = useRef(new Animated.Value(20)).current;
+  const entranceOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(entranceY, { toValue: 0, duration: 400, useNativeDriver: true }),
+      Animated.timing(entranceOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        styles.recentSection,
+        { transform: [{ translateY: entranceY }], opacity: entranceOpacity },
+      ]}
+    >
+      <View style={styles.recentHeader}>
+        <Text style={styles.recentLabel}>RECENTLY LEARNED</Text>
+        <View style={styles.recentBadge}>
+          <Text style={styles.recentBadgeText}>✦ THREADLY KNOWS</Text>
+        </View>
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.recentList}
+      >
+        {items.map((item, idx) => (
+          <RecentItemCard key={item.id} item={item} index={idx} onPress={() => onItemTap(item)} />
+        ))}
+      </ScrollView>
+    </Animated.View>
+  );
+}
+
+function RecentItemCard({
+  item,
+  index,
+  onPress,
+}: {
+  item: ScannedItem;
+  index: number;
+  onPress: () => void;
+}) {
+  const { scale, onPressIn, onPressOut } = useScalePress(0.95);
+  const cardOpacity = useRef(new Animated.Value(0)).current;
+  const cardY = useRef(new Animated.Value(12)).current;
+
+  useEffect(() => {
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(cardOpacity, { toValue: 1, duration: 350, useNativeDriver: true }),
+        Animated.timing(cardY, { toValue: 0, duration: 350, useNativeDriver: true }),
+      ]).start();
+    }, index * 80);
+  }, []);
+
+  return (
+    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress}>
+      <Animated.View
+        style={[
+          styles.recentCard,
+          { transform: [{ scale }, { translateY: cardY }], opacity: cardOpacity },
+        ]}
+      >
+        <Image source={{ uri: item.image }} style={styles.recentImage} resizeMode="cover" />
+        <LinearGradient
+          colors={["transparent", "rgba(10,10,10,0.85)"]}
+          style={StyleSheet.absoluteFill}
+        />
+        {/* Match score badge */}
+        <View style={styles.recentMatchBadge}>
+          <Text style={styles.recentMatchText}>{item.matchScore}%</Text>
+        </View>
+        {/* NEW badge */}
+        <View style={styles.recentNewBadge}>
+          <Text style={styles.recentNewText}>NEW</Text>
+        </View>
+        <View style={styles.recentCardInfo}>
+          <Text style={styles.recentCardName} numberOfLines={1}>{item.name}</Text>
+          <Text style={styles.recentCardBrand}>{item.brand}</Text>
+        </View>
       </Animated.View>
     </Pressable>
   );
@@ -535,4 +694,99 @@ const styles = StyleSheet.create({
   itemInfo: { padding: 8 },
   itemName: { fontSize: 11, color: ThreadlyColors.warmWhite, fontWeight: "600", marginBottom: 2 },
   itemCat: { fontSize: 9, color: ThreadlyColors.warmWhiteSubtle, letterSpacing: 0.5 },
+
+  // Recently Learned
+  recentSection: {
+    marginBottom: 20,
+  },
+  recentHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: ThreadlySpacing.screenPadding,
+    marginBottom: 12,
+  },
+  recentLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "rgba(255,255,255,0.35)",
+    letterSpacing: 2,
+  },
+  recentBadge: {
+    backgroundColor: "rgba(201,149,106,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(201,149,106,0.3)",
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  recentBadgeText: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: ThreadlyColors.roseGold,
+    letterSpacing: 1,
+  },
+  recentList: {
+    paddingHorizontal: ThreadlySpacing.screenPadding,
+    gap: 10,
+  },
+  recentCard: {
+    width: 120,
+    height: 160,
+    borderRadius: ThreadlyRadius.lg,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(201,149,106,0.4)",
+    position: "relative",
+  },
+  recentImage: {
+    width: "100%",
+    height: "100%",
+  },
+  recentMatchBadge: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "rgba(201,149,106,0.85)",
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  recentMatchText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#0A0A0A",
+  },
+  recentNewBadge: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    backgroundColor: ThreadlyColors.roseGold,
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  recentNewText: {
+    fontSize: 7,
+    fontWeight: "800",
+    color: "#0A0A0A",
+    letterSpacing: 0.5,
+  },
+  recentCardInfo: {
+    position: "absolute",
+    bottom: 8,
+    left: 8,
+    right: 8,
+  },
+  recentCardName: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: ThreadlyColors.warmWhite,
+    marginBottom: 1,
+  },
+  recentCardBrand: {
+    fontSize: 9,
+    color: "rgba(255,255,255,0.5)",
+    letterSpacing: 0.5,
+  },
 });

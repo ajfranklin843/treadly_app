@@ -22,15 +22,7 @@ import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from "@/constants/thr
 import { usePersonalization } from "@/lib/personalization";
 import { resetOnboarding } from "@/lib/onboarding-store";
 import { useScalePress, useImageFade, hapticLight, hapticSuccess } from "@/lib/animations";
-import {
-  HERO_IMAGES,
-  OUTFIT_IMAGES,
-  TREND_IMAGES,
-  DEAL_IMAGES,
-  ALL_OUTFIT_IMAGES,
-  ALL_TREND_IMAGES,
-  pickImage,
-} from "@/lib/images";
+import { HERO_IMAGES } from "@/lib/images";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const CARD_W = SCREEN_W - 48;
@@ -111,42 +103,36 @@ export default function HomeScreen() {
     });
   }, []);
 
-  // Derive hero image from vibe using sectionTitle as proxy
-  const heroImage = (() => {
-    const t = p.sectionTitle.toLowerCase();
-    if (t.includes("old money")) return HERO_IMAGES.oldMoney;
-    if (t.includes("clean")) return HERO_IMAGES.cleanGirl;
-    if (t.includes("minimal")) return HERO_IMAGES.minimal;
-    if (t.includes("chic") || t.includes("parisian")) return HERO_IMAGES.chic;
-    if (t.includes("street")) return HERO_IMAGES.streetwear;
-    if (t.includes("casual")) return HERO_IMAGES.casualLuxury;
-    return HERO_IMAGES.quietLuxury;
-  })();
+  // Hero image — directly from personalization engine (vibe-matched)
+  const heroImage = p.heroImage ?? HERO_IMAGES.quietLuxury;
 
-  const picks = p.outfits.slice(0, 5).map((r, i) => ({
+  // Outfit picks — images already vibe-matched in personalization engine
+  const picks = p.outfits.slice(0, 5).map((r) => ({
     id: r.id,
     label: r.title,
     brand: r.vibeTag,
     match: r.matchPct,
-    image: pickImage(ALL_OUTFIT_IMAGES, i + 7),
+    image: r.image,
     attribution: r.attribution,
   }));
 
-  const trends = p.trends.slice(0, 6).map((t, i) => ({
+  // Trend cards — images already vibe-matched in personalization engine
+  const trends = p.trends.slice(0, 6).map((t) => ({
     id: t.id,
     title: t.title,
     subtitle: t.sub,
-    image: pickImage(ALL_TREND_IMAGES, i),
+    image: t.image,
   }));
 
-  const deals = p.deals.slice(0, 5).map((d, i) => ({
+  // Deal cards — images already vibe-matched in personalization engine
+  const deals = p.deals.slice(0, 5).map((d) => ({
     id: d.id,
     brand: d.brand,
     item: d.item,
     original: `$${d.original}`,
     sale: `$${d.sale}`,
     savings: `${d.off}% off`,
-    image: pickImage(Object.values(DEAL_IMAGES), i + 2),
+    image: d.image,
   }));
 
   if (p.isLoading) {

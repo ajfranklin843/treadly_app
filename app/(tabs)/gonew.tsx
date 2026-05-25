@@ -9,7 +9,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { usePersonalization } from '@/lib/personalization';
-import { ALL_OUTFIT_IMAGES, ALL_PRODUCT_IMAGES, pickImage } from '@/lib/images';
+import { VIBE_OUTFIT_POOL, VIBE_DEAL_POOL, pickVibeImage } from '@/lib/images';
 import {
   View,
   Text,
@@ -45,42 +45,21 @@ const BASE_BUILD_STEPS = [
   "Staying within your budget",
 ];
 
-const MISSING_PIECES = [
-  {
-    id: "1",
-    brand: "ZARA",
-    item: "Tailored Blazer",
-    original: 129,
-    sale: 78,
-    off: 40,
-    image: pickImage(ALL_PRODUCT_IMAGES, 0),
-  },
-  {
-    id: "2",
-    brand: "COS",
-    item: "Silk Midi Skirt",
-    original: 95,
-    sale: 57,
-    off: 40,
-    image: pickImage(ALL_PRODUCT_IMAGES, 3),
-  },
-  {
-    id: "3",
-    brand: "MANGO",
-    item: "Leather Loafers",
-    original: 89,
-    sale: 54,
-    off: 39,
-    image: pickImage(ALL_PRODUCT_IMAGES, 6),
-  },
-];
-
-const OUTFIT_IMAGE = pickImage(ALL_OUTFIT_IMAGES, 2);
+// MISSING_PIECES and OUTFIT_IMAGE are now derived dynamically per vibe in the component
 
 export default function GoNewScreen() {
   const p = usePersonalization();
   const [state, setState] = useState<GoNewState>("idle");
   const [selectedOccasion, setSelectedOccasion] = useState<string | null>(null);
+
+  // Vibe-matched outfit image and missing pieces
+  const primaryVibe = p.outfits[0]?.vibeTag ?? 'default';
+  const outfitImage = pickVibeImage(VIBE_OUTFIT_POOL, primaryVibe, 0);
+  const missingPieces = useMemo(() => [
+    { id: '1', brand: 'ZARA',  item: 'Tailored Blazer',  original: 129, sale: 78, off: 40, image: pickVibeImage(VIBE_DEAL_POOL, primaryVibe, 0) },
+    { id: '2', brand: 'COS',   item: 'Silk Midi Skirt',  original: 95,  sale: 57, off: 40, image: pickVibeImage(VIBE_DEAL_POOL, primaryVibe, 1) },
+    { id: '3', brand: 'MANGO', item: 'Leather Loafers',  original: 89,  sale: 54, off: 39, image: pickVibeImage(VIBE_DEAL_POOL, primaryVibe, 2) },
+  ], [primaryVibe]);
 
   const buildSteps = useMemo(() => {
     if (p.isLoading) return BASE_BUILD_STEPS;
@@ -155,7 +134,7 @@ export default function GoNewScreen() {
       )}
       {state === "ready" && (
         <Animated.View style={[{ flex: 1 }, { opacity: fadeAnim }]}>
-          <ReadyState onReset={reset} />
+          <ReadyState onReset={reset} outfitImage={outfitImage} missingPieces={missingPieces} />
         </Animated.View>
       )}
     </ScreenContainer>
@@ -381,7 +360,7 @@ function ReadyActionButton({ label, onPress }: { label: string; onPress: () => v
 
 // ─── Ready State ─────────────────────────────────────────────────────────────
 
-function ReadyState({ onReset }: { onReset: () => void }) {
+function ReadyState({ onReset, outfitImage, missingPieces }: { onReset: () => void; outfitImage: string; missingPieces: Array<{ id: string; brand: string; item: string; original: number; sale: number; off: number; image: string }> }) {
   return (
     <ScrollView
       style={styles.scroll}
@@ -402,7 +381,7 @@ function ReadyState({ onReset }: { onReset: () => void }) {
 
         <View style={styles.outfitImageWrap}>
           <Image
-            source={{ uri: OUTFIT_IMAGE }}
+            source={{ uri: outfitImage }}
             style={styles.outfitImage}
             resizeMode="cover"
           />
@@ -428,7 +407,7 @@ function ReadyState({ onReset }: { onReset: () => void }) {
         <Text style={styles.missingHeaderLabel}>MISSING PIECES. FOUND FOR LESS.</Text>
       </View>
 
-      {MISSING_PIECES.map(piece => (
+      {missingPieces.map(piece => (
         <MissingPieceCard key={piece.id} piece={piece} />
       ))}
 

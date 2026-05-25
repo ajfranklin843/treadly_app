@@ -6,7 +6,7 @@
 
 import { useState, useMemo, useRef } from "react";
 import { usePersonalization } from '@/lib/personalization';
-import { ALL_PRODUCT_IMAGES, pickImage } from '@/lib/images';
+import { VIBE_DEAL_POOL, pickVibeImage } from '@/lib/images';
 import {
   View,
   Text,
@@ -32,7 +32,8 @@ const { width } = Dimensions.get("window");
 
 const BASE_FILTER_TABS = ["All", "Work", "Date Night", "Casual", "Vacation", "Events"];
 
-const DEALS = [
+// Static fallback deals — images are injected dynamically per vibe in the component
+const DEALS_META = [
   {
     id: "1",
     brand: "ZARA",
@@ -41,7 +42,6 @@ const DEALS = [
     original: 110,
     sale: 59,
     off: 46,
-    image: pickImage(ALL_PRODUCT_IMAGES, 0),
     tag: "BEST MATCH",
     expiry: "2h left",
   },
@@ -53,7 +53,6 @@ const DEALS = [
     original: 80,
     sale: 44,
     off: 45,
-    image: pickImage(ALL_PRODUCT_IMAGES, 4),
     tag: "TRENDING",
     expiry: "24h left",
   },
@@ -65,7 +64,6 @@ const DEALS = [
     original: 95,
     sale: 55,
     off: 42,
-    image: pickImage(ALL_PRODUCT_IMAGES, 6),
     tag: "HOT DEAL",
     expiry: "6h left",
   },
@@ -77,7 +75,6 @@ const DEALS = [
     original: 22,
     sale: 14,
     off: 36,
-    image: pickImage(ALL_PRODUCT_IMAGES, 11),
     tag: "YOUR STYLE",
     expiry: "48h left",
   },
@@ -89,7 +86,6 @@ const DEALS = [
     original: 45,
     sale: 25,
     off: 44,
-    image: pickImage(ALL_PRODUCT_IMAGES, 2),
     tag: "QUIET LUXURY",
     expiry: "12h left",
   },
@@ -101,7 +97,6 @@ const DEALS = [
     original: 148,
     sale: 89,
     off: 40,
-    image: pickImage(ALL_PRODUCT_IMAGES, 7),
     tag: "INVESTMENT",
     expiry: "3d left",
   },
@@ -128,9 +123,17 @@ export default function ShopScreen() {
     return merged.slice(0, 6);
   }, [p.isLoading, p.outfits]);
 
-  // Use personalized deals when available, fall back to static DEALS
+  // Derive primary vibe for image matching
+  const primaryVibe = p.outfits[0]?.vibeTag ?? 'default';
+
+  // Use personalized deals when available, fall back to static DEALS_META with vibe-matched images
   const displayDeals = useMemo(() => {
-    if (p.isLoading || p.deals.length < 2) return DEALS;
+    if (p.isLoading || p.deals.length < 2) {
+      return DEALS_META.map((d, i) => ({
+        ...d,
+        image: pickVibeImage(VIBE_DEAL_POOL, primaryVibe, i),
+      }));
+    }
     return p.deals.map((d, i) => ({
       id: d.id,
       brand: d.brand,
@@ -143,7 +146,7 @@ export default function ShopScreen() {
       tag: i === 0 ? 'BEST MATCH' : i === 1 ? 'YOUR BRANDS' : 'DEAL ALERT',
       expiry: d.expiry,
     }));
-  }, [p.isLoading, p.deals]);
+  }, [p.isLoading, p.deals, primaryVibe]);
 
   return (
     <ScreenContainer containerClassName="bg-[#0A0A0A]" edges={["top", "left", "right"]}>
@@ -285,7 +288,7 @@ export default function ShopScreen() {
   );
 }
 
-function DealCard({ deal }: { deal: typeof DEALS[0] }) {
+function DealCard({ deal }: { deal: typeof DEALS_META[0] & { image: string } }) {
   const { scale, onPressIn, onPressOut } = useScalePress(0.97);
   const { imageOpacity, onImageLoad } = useImageFade();
   const glowOpacity = useRef(new Animated.Value(0)).current;

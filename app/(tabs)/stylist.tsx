@@ -5,7 +5,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { usePersonalization } from '@/lib/personalization';
-import { ALL_PRODUCT_IMAGES, ALL_OUTFIT_IMAGES, pickImage } from '@/lib/images';
+import { VIBE_STYLIST_POOL, VIBE_OUTFIT_POOL, pickVibeImage } from '@/lib/images';
 import { useScalePress, useImageFade, hapticLight, hapticSuccess } from '@/lib/animations';
 import {
   View,
@@ -66,47 +66,54 @@ const SUGGESTION_CHIPS = [
   "Work outfit that still feels like me",
 ];
 
-const MOCK_RESPONSES: Record<string, Message> = {
-  default: {
-    id: "r1",
-    role: "stylist",
-    text: "I love that. Based on your closet, here's what I'd pull together — you already own 80% of this look. The only missing piece is a blazer, and I found one at 46% off.",
-    cards: [
-      { id: "c1", brand: "ZARA", item: "Tailored Blazer", price: 78, image: pickImage(ALL_PRODUCT_IMAGES, 0) },
-      { id: "c2", brand: "YOUR CLOSET", item: "Straight-Leg Jeans", price: 0, image: pickImage(ALL_PRODUCT_IMAGES, 4) },
-      { id: "c3", brand: "YOUR CLOSET", item: "White Linen Shirt", price: 0, image: pickImage(ALL_PRODUCT_IMAGES, 3) },
-    ],
-    timestamp: "now",
-  },
-  rooftop: {
-    id: "r2",
-    role: "stylist",
-    text: "Rooftop dinner — I'm thinking elevated but effortless. Your camel blazer is perfect here. Pair it with the midi slip dress from your closet and these heels I found at 42% off.",
-    cards: [
-      { id: "c4", brand: "YOUR CLOSET", item: "Camel Blazer", price: 0, image: pickImage(ALL_PRODUCT_IMAGES, 0) },
-      { id: "c5", brand: "YOUR CLOSET", item: "Midi Slip Dress", price: 0, image: pickImage(ALL_PRODUCT_IMAGES, 5) },
-      { id: "c6", brand: "ALDO", item: "Pointed Slingback", price: 55, image: pickImage(ALL_PRODUCT_IMAGES, 6) },
-    ],
-    timestamp: "now",
-  },
-  deals: {
-    id: "r3",
-    role: "stylist",
-    text: "Under $50 and on-trend? I've got you. These three pieces all match your style profile and are currently on sale. Together they build 4 different looks.",
-    cards: [
-      { id: "c7", brand: "H&M", item: "Linen Trousers", price: 25, image: pickImage(ALL_PRODUCT_IMAGES, 2) },
-      { id: "c8", brand: "MANGO", item: "Gold Hoops", price: 14, image: pickImage(ALL_PRODUCT_IMAGES, 11) },
-      { id: "c9", brand: "COS", item: "White Sneakers", price: 28, image: pickImage(ALL_PRODUCT_IMAGES, 9) },
-    ],
-    timestamp: "now",
-  },
-};
+// MOCK_RESPONSES are built dynamically in the component using vibe-matched images
+// See buildMockResponses() below
+type MockResponses = Record<string, Message>;
 
-function getResponse(text: string): Message {
+function buildMockResponses(vibe: string): MockResponses {
+  return {
+    default: {
+      id: "r1",
+      role: "stylist",
+      text: "I love that. Based on your closet, here's what I'd pull together — you already own 80% of this look. The only missing piece is a blazer, and I found one at 46% off.",
+      cards: [
+        { id: "c1", brand: "ZARA", item: "Tailored Blazer", price: 78, image: pickVibeImage(VIBE_STYLIST_POOL, vibe, 0) },
+        { id: "c2", brand: "YOUR CLOSET", item: "Straight-Leg Jeans", price: 0, image: pickVibeImage(VIBE_OUTFIT_POOL, vibe, 1) },
+        { id: "c3", brand: "YOUR CLOSET", item: "White Linen Shirt", price: 0, image: pickVibeImage(VIBE_STYLIST_POOL, vibe, 2) },
+      ],
+      timestamp: "now",
+    },
+    rooftop: {
+      id: "r2",
+      role: "stylist",
+      text: "Rooftop dinner — I'm thinking elevated but effortless. Your camel blazer is perfect here. Pair it with the midi slip dress from your closet and these heels I found at 42% off.",
+      cards: [
+        { id: "c4", brand: "YOUR CLOSET", item: "Camel Blazer", price: 0, image: pickVibeImage(VIBE_OUTFIT_POOL, vibe, 0) },
+        { id: "c5", brand: "YOUR CLOSET", item: "Midi Slip Dress", price: 0, image: pickVibeImage(VIBE_STYLIST_POOL, vibe, 1) },
+        { id: "c6", brand: "ALDO", item: "Pointed Slingback", price: 55, image: pickVibeImage(VIBE_STYLIST_POOL, vibe, 3) },
+      ],
+      timestamp: "now",
+    },
+    deals: {
+      id: "r3",
+      role: "stylist",
+      text: "Under $50 and on-trend? I've got you. These three pieces all match your style profile and are currently on sale. Together they build 4 different looks.",
+      cards: [
+        { id: "c7", brand: "H&M", item: "Linen Trousers", price: 25, image: pickVibeImage(VIBE_STYLIST_POOL, vibe, 2) },
+        { id: "c8", brand: "MANGO", item: "Gold Hoops", price: 14, image: pickVibeImage(VIBE_OUTFIT_POOL, vibe, 3) },
+        { id: "c9", brand: "COS", item: "White Sneakers", price: 28, image: pickVibeImage(VIBE_STYLIST_POOL, vibe, 4) },
+      ],
+      timestamp: "now",
+    },
+  };
+}
+
+function getResponse(text: string, vibe: string): Message {
+  const responses = buildMockResponses(vibe);
   const lower = text.toLowerCase();
-  if (lower.includes("rooftop") || lower.includes("dinner")) return { ...MOCK_RESPONSES.rooftop, id: Date.now().toString(), timestamp: "now" };
-  if (lower.includes("deal") || lower.includes("$50") || lower.includes("under")) return { ...MOCK_RESPONSES.deals, id: Date.now().toString(), timestamp: "now" };
-  return { ...MOCK_RESPONSES.default, id: Date.now().toString(), timestamp: "now" };
+  if (lower.includes("rooftop") || lower.includes("dinner")) return { ...responses.rooftop, id: Date.now().toString(), timestamp: "now" };
+  if (lower.includes("deal") || lower.includes("$50") || lower.includes("under")) return { ...responses.deals, id: Date.now().toString(), timestamp: "now" };
+  return { ...responses.default, id: Date.now().toString(), timestamp: "now" };
 }
 
 export default function StylistScreen() {
@@ -151,6 +158,8 @@ export default function StylistScreen() {
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
+  const primaryVibe = p.outfits[0]?.vibeTag ?? 'default';
+
   const sendMessage = (text: string) => {
     if (!text.trim()) return;
     const userMsg: Message = { id: Date.now().toString(), role: "user", text: text.trim(), timestamp: "now" };
@@ -159,7 +168,7 @@ export default function StylistScreen() {
     setIsTyping(true);
     setTimeout(() => {
       setIsTyping(false);
-      setMessages(prev => [...prev, getResponse(text)]);
+      setMessages(prev => [...prev, getResponse(text, primaryVibe)]);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     }, 1400);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);

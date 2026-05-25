@@ -180,3 +180,14 @@
 - [ ] Dynamic vibe-matched imagery on Home outfit picks (Old Money, Chic, Clean Girl, etc.)
 - [x] Reset onboarding long-press shortcut on THREADLY wordmark with haptic + glow
 - [ ] Premium image motion polish (parallax, fade-in, shimmer, card entrance animations)
+
+## Phase 13 — Living Intelligence System
+
+- [x] Expand images library with 100+ vibe-specific editorial Unsplash URLs (Old Money, Chic, Clean Girl, Streetwear, Vacation + wardrobe/accessories/deals/trends)
+- [x] Build vibe→image mapping: Home outfit picks, trend cards, deal cards, hero images all dynamically matched to user's style vibe
+- [x] Wire dynamic imagery across Home, Shop, Stylist, and Go New screens — remove all index-based random fallbacks
+- [x] Build ItemIntelligenceSheet component — premium bottom-sheet for wardrobe items (image, color DNA, match %, pairs well, occasions, aesthetic tags, trending, Build Outfit CTA)
+- [x] Wire ItemIntelligenceSheet into Closet grid — tap any item to open its intelligence card
+- [x] Build Recently Learned row in Closet tab — horizontal scan history strip with match scores and AI insights
+- [ ] Persist scanned items to AsyncStorage so Recently Learned survives app restarts
+- [x] TypeScript clean, 12 tests passing
