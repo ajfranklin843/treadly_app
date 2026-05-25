@@ -13,20 +13,70 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { saveStyleProfile } from '@/lib/onboarding-store';
 import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from '@/constants/threadly';
-import { ALL_OUTFIT_IMAGES, HERO_IMAGES, pickImage } from '@/lib/images';
+import { VIBE_IMAGES, HERO_IMAGES } from '@/lib/images';
 
 const { width } = Dimensions.get('window');
 const CARD_W = (width - ThreadlySpacing.screenPadding * 2 - 12) / 2;
 
+// Each vibe card uses a semantically correct editorial image from the centralized VIBE_IMAGES pool.
+// VIBE_IMAGES uses camelCase keys matching the object definition in images.ts.
 const STYLE_VIBES = [
-  { id: 'minimal', label: 'Minimal', sub: 'Clean, quiet, intentional', image: pickImage(ALL_OUTFIT_IMAGES, 0), color: '#E8E4E0' },
-  { id: 'clean-girl', label: 'Clean Girl', sub: 'Effortless, dewy, polished', image: pickImage(ALL_OUTFIT_IMAGES, 1), color: '#F2D4C8' },
-  { id: 'old-money', label: 'Old Money', sub: 'Timeless, tailored, quiet luxury', image: pickImage(ALL_OUTFIT_IMAGES, 2), color: '#C8B89A' },
-  { id: 'streetwear', label: 'Streetwear', sub: 'Bold, urban, statement', image: pickImage(ALL_OUTFIT_IMAGES, 3), color: '#2A2A2A' },
-  { id: 'chic', label: 'Parisian Chic', sub: 'Effortless French elegance', image: pickImage(ALL_OUTFIT_IMAGES, 4), color: '#D4A090' },
-  { id: 'casual-luxury', label: 'Casual Luxury', sub: 'Elevated basics, premium feel', image: pickImage(ALL_OUTFIT_IMAGES, 5), color: '#B8A898' },
-  { id: 'romantic', label: 'Romantic', sub: 'Soft, feminine, dreamy', image: pickImage(ALL_OUTFIT_IMAGES, 6), color: '#E8C8C0' },
-  { id: 'power', label: 'Power Dressing', sub: 'Structured, confident, bold', image: pickImage(Object.values(HERO_IMAGES), 2), color: '#1A1A2E' },
+  {
+    id: 'minimal',
+    label: 'Minimal',
+    sub: 'Clean, quiet, intentional',
+    image: VIBE_IMAGES.minimal,
+    color: '#E8E4E0',
+  },
+  {
+    id: 'clean-girl',
+    label: 'Clean Girl',
+    sub: 'Effortless, dewy, polished',
+    image: VIBE_IMAGES.cleanGirl,
+    color: '#F2D4C8',
+  },
+  {
+    id: 'old-money',
+    label: 'Old Money',
+    sub: 'Timeless, tailored, quiet luxury',
+    image: VIBE_IMAGES.oldMoney,
+    color: '#C8B89A',
+  },
+  {
+    id: 'streetwear',
+    label: 'Streetwear',
+    sub: 'Bold, urban, statement',
+    image: VIBE_IMAGES.streetwear,
+    color: '#2A2A2A',
+  },
+  {
+    id: 'chic',
+    label: 'Parisian Chic',
+    sub: 'Effortless French elegance',
+    image: VIBE_IMAGES.chic,
+    color: '#D4A090',
+  },
+  {
+    id: 'casual-luxury',
+    label: 'Casual Luxe',
+    sub: 'Elevated basics, premium feel',
+    image: VIBE_IMAGES.casualLuxury,
+    color: '#B8A898',
+  },
+  {
+    id: 'romantic',
+    label: 'Romantic',
+    sub: 'Soft, feminine, dreamy',
+    image: HERO_IMAGES.softGlam,
+    color: '#E8C8C0',
+  },
+  {
+    id: 'power',
+    label: 'Power Dressing',
+    sub: 'Structured, confident, bold',
+    image: HERO_IMAGES.editorial,
+    color: '#1A1A2E',
+  },
 ];
 
 export default function Step1Screen() {

@@ -29,6 +29,8 @@ const MAPPING: IconMapping = {
   "bag.fill": "shopping-bag",
   "tag.fill": "local-offer",
   "arrow.right": "arrow-forward",
+  "looks.fill": "collections",
+  "bookmark.fill": "bookmark",
 };
 
 export function IconSymbol({

@@ -268,6 +268,14 @@ export default function HomeScreen() {
           )}
         />
 
+        {/* ── Daily Engagement ── */}
+        <DailyEngagementSection
+          vibe={p.heroTagline}
+          outfitCount={picks.length}
+          onGoCloset={() => { hapticLight(); router.push("/(tabs)/closet"); }}
+          onGoLooks={() => { hapticLight(); router.push("/(tabs)/looks"); }}
+        />
+
         {/* ── Go New CTA ── */}
         <GoNewCTA onPress={() => { hapticLight(); router.push("/(tabs)/gonew"); }} />
 
@@ -536,6 +544,143 @@ function DealCard({
     </Pressable>
   );
 }
+
+// ─── Daily Engagement Section ───────────────────────────────────────────────
+
+function DailyEngagementSection({
+  vibe, outfitCount, onGoCloset, onGoLooks,
+}: {
+  vibe: string; outfitCount: number;
+  onGoCloset: () => void; onGoLooks: () => void;
+}) {
+  const fade = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(fade, { toValue: 1, duration: 500, delay: 400, useNativeDriver: true }).start();
+  }, []);
+
+  const today = new Date();
+  const dayName = today.toLocaleDateString("en-US", { weekday: "long" });
+
+  return (
+    <Animated.View style={[engStyles.wrap, { opacity: fade }]}>
+      <View style={engStyles.headerRow}>
+        <Text style={engStyles.label}>YOUR WARDROBE TODAY</Text>
+        <Text style={engStyles.dayLabel}>{dayName}</Text>
+      </View>
+
+      <View style={engStyles.cards}>
+        {/* Closet IQ card */}
+        <EngCard
+          icon="◈"
+          title="Closet IQ"
+          value="87"
+          unit="/ 100"
+          sub="Top 12% of users"
+          accent
+          onPress={onGoCloset}
+        />
+        {/* Outfit potential card */}
+        <EngCard
+          icon="✦"
+          title="Outfit Potential"
+          value={String(outfitCount * 8)}
+          unit="looks"
+          sub="From your wardrobe"
+          onPress={onGoCloset}
+        />
+      </View>
+
+      <View style={engStyles.cards}>
+        {/* Saved looks card */}
+        <EngCard
+          icon="♡"
+          title="Saved Looks"
+          value="3"
+          unit="collections"
+          sub="Tap to view"
+          onPress={onGoLooks}
+        />
+        {/* Vibe match card */}
+        <EngCard
+          icon="◆"
+          title="Style Vibe"
+          value="94%"
+          unit=""
+          sub={`${vibe.slice(0, 22)}`}
+          onPress={onGoCloset}
+        />
+      </View>
+
+      {/* Daily insight */}
+      <View style={engStyles.insightRow}>
+        <LinearGradient
+          colors={["rgba(201,149,106,0.08)", "rgba(201,149,106,0.03)"]}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={engStyles.insightBorder} />
+        <Text style={engStyles.insightIcon}>✦</Text>
+        <Text style={engStyles.insightText}>
+          Threadly has analyzed your wardrobe and found {outfitCount * 8}+ outfit combinations ready to wear today.
+        </Text>
+      </View>
+    </Animated.View>
+  );
+}
+
+function EngCard({
+  icon, title, value, unit, sub, accent, onPress,
+}: {
+  icon: string; title: string; value: string; unit: string;
+  sub: string; accent?: boolean; onPress: () => void;
+}) {
+  const { scale, onPressIn, onPressOut } = useScalePress(0.96);
+  return (
+    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress} style={{ flex: 1 }}>
+      <Animated.View style={[engStyles.card, { transform: [{ scale }] }]}>
+        <LinearGradient colors={["#1A1A1A", "#141414"]} style={StyleSheet.absoluteFill} />
+        <View style={engStyles.cardBorder} />
+        <Text style={[engStyles.cardIcon, accent && engStyles.cardIconAccent]}>{icon}</Text>
+        <Text style={engStyles.cardTitle}>{title}</Text>
+        <View style={engStyles.cardValueRow}>
+          <Text style={[engStyles.cardValue, accent && engStyles.cardValueAccent]}>{value}</Text>
+          {unit ? <Text style={engStyles.cardUnit}>{unit}</Text> : null}
+        </View>
+        <Text style={engStyles.cardSub}>{sub}</Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+const engStyles = StyleSheet.create({
+  wrap: { paddingHorizontal: 24, marginTop: 8, marginBottom: 8 },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  label: { fontSize: 9, fontWeight: "700", color: ThreadlyColors.roseGold, letterSpacing: 2 },
+  dayLabel: { fontSize: 11, color: "rgba(255,255,255,0.3)" },
+  cards: { flexDirection: "row", gap: 10, marginBottom: 10 },
+  card: {
+    flex: 1, borderRadius: 16, overflow: "hidden",
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
+    padding: 14,
+  },
+  cardBorder: { position: "absolute", top: 0, left: 0, right: 0, height: 1, backgroundColor: ThreadlyColors.roseGold, opacity: 0.15 },
+  cardIcon: { fontSize: 16, color: "rgba(255,255,255,0.3)", marginBottom: 8 },
+  cardIconAccent: { color: ThreadlyColors.roseGold },
+  cardTitle: { fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: "600", letterSpacing: 0.5, marginBottom: 6 },
+  cardValueRow: { flexDirection: "row", alignItems: "baseline", gap: 3, marginBottom: 4 },
+  cardValue: { fontSize: 26, fontFamily: "Georgia", color: ThreadlyColors.warmWhite, lineHeight: 28 },
+  cardValueAccent: { color: ThreadlyColors.roseGold },
+  cardUnit: { fontSize: 11, color: "rgba(255,255,255,0.35)" },
+  cardSub: { fontSize: 10, color: "rgba(255,255,255,0.3)", lineHeight: 14 },
+  insightRow: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    borderRadius: 14, overflow: "hidden",
+    borderWidth: 1, borderColor: "rgba(201,149,106,0.2)",
+    padding: 12,
+  },
+  insightBorder: { position: "absolute", top: 0, left: 0, right: 0, height: 1, backgroundColor: ThreadlyColors.roseGold, opacity: 0.25 },
+  insightIcon: { fontSize: 14, color: ThreadlyColors.roseGold },
+  insightText: { flex: 1, fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 17, fontStyle: "italic" },
+});
 
 // ─── Go New CTA ───────────────────────────────────────────────────────────────
 

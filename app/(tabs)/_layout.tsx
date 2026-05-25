@@ -50,6 +50,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="looks"
+        options={{
+          title: "Looks",
+          tabBarIcon: ({ color }) => <IconSymbol size={22} name="looks.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="gonew"
         options={{
           title: "",

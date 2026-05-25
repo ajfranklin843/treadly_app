@@ -7,6 +7,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { usePersonalization } from '@/lib/personalization';
 import { VIBE_STYLIST_POOL, VIBE_OUTFIT_POOL, pickVibeImage } from '@/lib/images';
 import { useScalePress, useImageFade, hapticLight, hapticSuccess } from '@/lib/animations';
+import { trpc } from '@/lib/trpc';
 import {
   View,
   Text,
@@ -160,18 +161,57 @@ export default function StylistScreen() {
 
   const primaryVibe = p.outfits[0]?.vibeTag ?? 'default';
 
-  const sendMessage = (text: string) => {
+  // tRPC mutation for real LLM responses
+  const chatMutation = trpc.stylist.chat.useMutation();
+
+  const sendMessage = async (text: string) => {
     if (!text.trim()) return;
     const userMsg: Message = { id: Date.now().toString(), role: "user", text: text.trim(), timestamp: "now" };
-    setMessages(prev => [...prev, userMsg]);
+    const currentMessages = [...messages, userMsg];
+    setMessages(currentMessages);
     setInput("");
     setIsTyping(true);
-    setTimeout(() => {
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+
+    // Build conversation history for context (last 10 messages)
+    const history = currentMessages.slice(-10).map(m => ({
+      role: m.role === 'stylist' ? 'assistant' as const : 'user' as const,
+      content: m.text,
+    }));
+
+    try {
+      const result = await chatMutation.mutateAsync({
+        message: text.trim(),
+        vibe: primaryVibe,
+        history: history.slice(0, -1), // exclude the message we just sent (sent separately)
+      });
+
+      // Map LLM cards to RecoCard format with vibe-matched images
+      const cards: RecoCard[] = result.cards.map((c: { brand: string; label: string; reason: string }, i: number) => ({
+        id: `llm-${Date.now()}-${i}`,
+        brand: c.brand || 'THREADLY PICK',
+        item: c.label || 'Style Pick',
+        price: 0,
+        image: pickVibeImage(VIBE_STYLIST_POOL, primaryVibe, i),
+      }));
+
+      const stylistMsg: Message = {
+        id: Date.now().toString(),
+        role: 'stylist',
+        text: result.text,
+        cards: cards.length > 0 ? cards : undefined,
+        timestamp: 'now',
+      };
+
+      setIsTyping(false);
+      setMessages(prev => [...prev, stylistMsg]);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+    } catch {
+      // Fallback to mock response if LLM fails
       setIsTyping(false);
       setMessages(prev => [...prev, getResponse(text, primaryVibe)]);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-    }, 1400);
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+    }
   };
 
   return (

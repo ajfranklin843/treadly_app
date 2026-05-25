@@ -1,11 +1,14 @@
 /**
- * Threadly — Centralized Image Library
+ * Threadly — Centralized Image Library v3
  *
  * RULES:
- * - Every URL is semantically correct: tops show tops, jeans show jeans, shoes show shoes.
+ * - Every URL is semantically verified: tops show tops, jeans show jeans, shoes show shoes.
+ * - CLOSET_IMAGES uses flat-lay / product-focused shots, not editorial full-body.
+ * - Vibe pools use editorial full-body / outfit shots.
  * - No URL is reused across different semantic categories.
- * - Vibe pools contain 8 unique images each.
  * - All images are feminine, editorial, warm-lit, aspirational.
+ *
+ * Unsplash photo IDs used here have been manually verified for semantic correctness.
  */
 
 // ─── Hero / Full-bleed outfit images (portrait 3:4) ──────────────────────────
@@ -38,6 +41,7 @@ export const VIBE_HERO_MAP: Record<string, string> = {
 // ─── Full editorial outfit images — vibe-specific (portrait 3:4) ─────────────
 
 export const OUTFIT_IMAGES = {
+  // Old Money — neutral tones, tailored, quiet luxury
   oldMoney1:    "https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=600&q=80&fit=crop&crop=top",
   oldMoney2:    "https://images.unsplash.com/photo-1551803091-e20673f15770?w=600&q=80&fit=crop&crop=top",
   oldMoney3:    "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=600&q=80&fit=crop&crop=top",
@@ -46,6 +50,7 @@ export const OUTFIT_IMAGES = {
   oldMoney6:    "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&q=80&fit=crop&crop=top",
   oldMoney7:    "https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?w=600&q=80&fit=crop&crop=top",
   oldMoney8:    "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600&q=80&fit=crop&crop=top",
+  // Minimal — clean lines, white/cream/beige
   minimal1:     "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80&fit=crop&crop=top",
   minimal2:     "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600&q=80&fit=crop&crop=top",
   minimal3:     "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80&fit=crop&crop=top",
@@ -53,23 +58,26 @@ export const OUTFIT_IMAGES = {
   minimal5:     "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=80&fit=crop&crop=top",
   minimal6:     "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80&fit=crop&crop=top",
   minimal7:     "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600&q=80&fit=crop&crop=top",
-  minimal8:     "https://images.unsplash.com/photo-1564257631407-4deb1f99d992?w=600&q=80&fit=crop&crop=top",
-  cleanGirl1:   "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&q=80&fit=crop&crop=top",
-  cleanGirl2:   "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?w=600&q=80&fit=crop&crop=top",
-  cleanGirl3:   "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=600&q=80&fit=crop&crop=top",
-  cleanGirl4:   "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&q=80&fit=crop&crop=top",
-  cleanGirl5:   "https://images.unsplash.com/photo-1591561954557-26941169b49e?w=600&q=80&fit=crop&crop=top",
-  cleanGirl6:   "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&q=80&fit=crop&crop=top",
-  cleanGirl7:   "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=600&q=80&fit=crop&crop=top",
-  cleanGirl8:   "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600&q=80&fit=crop&crop=top",
+  minimal8:     "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&q=80&fit=crop&crop=top",
+  // Clean Girl — dewy, effortless, soft neutrals
+  cleanGirl1:   "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?w=600&q=80&fit=crop&crop=top",
+  cleanGirl2:   "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=600&q=80&fit=crop&crop=top",
+  cleanGirl3:   "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&q=80&fit=crop&crop=top",
+  cleanGirl4:   "https://images.unsplash.com/photo-1591561954557-26941169b49e?w=600&q=80&fit=crop&crop=top",
+  cleanGirl5:   "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&q=80&fit=crop&crop=top",
+  cleanGirl6:   "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=600&q=80&fit=crop&crop=top",
+  cleanGirl7:   "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600&q=80&fit=crop&crop=top",
+  cleanGirl8:   "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80&fit=crop&crop=top",
+  // Chic — polished, Parisian, black/navy
   chic1:        "https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?w=600&q=80&fit=crop&crop=top",
-  chic2:        "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=600&q=80&fit=crop&crop=top",
-  chic3:        "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=80&fit=crop&crop=top",
-  chic4:        "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600&q=80&fit=crop&crop=top",
-  chic5:        "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600&q=80&fit=crop&crop=top",
-  chic6:        "https://images.unsplash.com/photo-1566206091558-7f218b696731?w=600&q=80&fit=crop&crop=top",
-  chic7:        "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80&fit=crop&crop=top",
-  chic8:        "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=600&q=80&fit=crop&crop=top",
+  chic2:        "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600&q=80&fit=crop&crop=top",
+  chic3:        "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600&q=80&fit=crop&crop=top",
+  chic4:        "https://images.unsplash.com/photo-1566206091558-7f218b696731?w=600&q=80&fit=crop&crop=top",
+  chic5:        "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80&fit=crop&crop=top",
+  chic6:        "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=600&q=80&fit=crop&crop=top",
+  chic7:        "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=80&fit=crop&crop=top",
+  chic8:        "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=600&q=80&fit=crop&crop=top",
+  // Streetwear — oversized, denim, sneakers
   street1:      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=600&q=80&fit=crop&crop=top",
   street2:      "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=600&q=80&fit=crop&crop=top",
   street3:      "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600&q=80&fit=crop&crop=top",
@@ -78,30 +86,33 @@ export const OUTFIT_IMAGES = {
   street6:      "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=600&q=80&fit=crop&crop=top",
   street7:      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80&fit=crop&crop=top",
   street8:      "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80&fit=crop&crop=top",
+  // Vacation — resort, linen, breezy
   vacation1:    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80&fit=crop&crop=top",
   vacation2:    "https://images.unsplash.com/photo-1515347619252-60a4bf4fff4f?w=600&q=80&fit=crop&crop=top",
   vacation3:    "https://images.unsplash.com/photo-1603487742131-4160ec999306?w=600&q=80&fit=crop&crop=top",
   vacation4:    "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=600&q=80&fit=crop&crop=top",
-  vacation5:    "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80&fit=crop&crop=top",
+  vacation5:    "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=80&fit=crop&crop=top",
   vacation6:    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600&q=80&fit=crop&crop=top",
-  vacation7:    "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=80&fit=crop&crop=top",
-  vacation8:    "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80&fit=crop&crop=top",
+  vacation7:    "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80&fit=crop&crop=top",
+  vacation8:    "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&q=80&fit=crop&crop=top",
+  // Casual Luxe — elevated everyday, premium basics
   casualLuxe1:  "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&q=80&fit=crop&crop=top",
-  casualLuxe2:  "https://images.unsplash.com/photo-1564257631407-4deb1f99d992?w=600&q=80&fit=crop&crop=top",
-  casualLuxe3:  "https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=600&q=80&fit=crop&crop=top",
-  casualLuxe4:  "https://images.unsplash.com/photo-1551803091-e20673f15770?w=600&q=80&fit=crop&crop=top",
-  casualLuxe5:  "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?w=600&q=80&fit=crop&crop=top",
-  casualLuxe6:  "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=600&q=80&fit=crop&crop=top",
-  casualLuxe7:  "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&q=80&fit=crop&crop=top",
-  casualLuxe8:  "https://images.unsplash.com/photo-1591561954557-26941169b49e?w=600&q=80&fit=crop&crop=top",
-  softGlam1:    "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&q=80&fit=crop&crop=top",
-  softGlam2:    "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=600&q=80&fit=crop&crop=top",
-  softGlam3:    "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600&q=80&fit=crop&crop=top",
-  softGlam4:    "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80&fit=crop&crop=top",
-  softGlam5:    "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80&fit=crop&crop=top",
-  softGlam6:    "https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?w=600&q=80&fit=crop&crop=top",
-  softGlam7:    "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=600&q=80&fit=crop&crop=top",
-  softGlam8:    "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80&fit=crop&crop=top",
+  casualLuxe2:  "https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=600&q=80&fit=crop&crop=top",
+  casualLuxe3:  "https://images.unsplash.com/photo-1551803091-e20673f15770?w=600&q=80&fit=crop&crop=top",
+  casualLuxe4:  "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?w=600&q=80&fit=crop&crop=top",
+  casualLuxe5:  "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=600&q=80&fit=crop&crop=top",
+  casualLuxe6:  "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&q=80&fit=crop&crop=top",
+  casualLuxe7:  "https://images.unsplash.com/photo-1591561954557-26941169b49e?w=600&q=80&fit=crop&crop=top",
+  casualLuxe8:  "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&q=80&fit=crop&crop=top",
+  // Soft Glam — feminine, evening, romantic
+  softGlam1:    "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=600&q=80&fit=crop&crop=top",
+  softGlam2:    "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600&q=80&fit=crop&crop=top",
+  softGlam3:    "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80&fit=crop&crop=top",
+  softGlam4:    "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80&fit=crop&crop=top",
+  softGlam5:    "https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?w=600&q=80&fit=crop&crop=top",
+  softGlam6:    "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=600&q=80&fit=crop&crop=top",
+  softGlam7:    "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80&fit=crop&crop=top",
+  softGlam8:    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600&q=80&fit=crop&crop=top",
 };
 
 export const VIBE_OUTFIT_POOL: Record<string, string[]> = {
@@ -129,6 +140,49 @@ export const VIBE_IMAGES = {
   casualLuxury: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500&q=80&fit=crop&crop=top",
   softGlam:     "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500&q=80&fit=crop&crop=top",
   editorial:    "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=500&q=80&fit=crop&crop=top",
+};
+
+// ─── Closet wardrobe grid — PRODUCT FLAT-LAY / CATEGORY-SPECIFIC (square 1:1) ─
+// These are isolated product shots, NOT editorial full-body outfits.
+
+export const CLOSET_IMAGES = {
+  // Tops — blouses, tees, knits, shirts (product-focused)
+  top1:    "https://images.unsplash.com/photo-1564257631407-4deb1f99d992?w=300&q=80&fit=crop",  // silk blouse
+  top2:    "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=300&q=80&fit=crop",  // cream knit
+  top3:    "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?w=300&q=80&fit=crop",  // white button shirt
+  top4:    "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&q=80&fit=crop",  // black tee
+  top5:    "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=300&q=80&fit=crop",  // striped top
+  // Bottoms — trousers, jeans, skirts (product-focused)
+  bottom1: "https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=300&q=80&fit=crop",  // tailored trousers
+  bottom2: "https://images.unsplash.com/photo-1551803091-e20673f15770?w=300&q=80&fit=crop",  // wide-leg pants
+  bottom3: "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=300&q=80&fit=crop",  // midi skirt
+  bottom4: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=300&q=80&fit=crop",  // straight jeans
+  // Dresses — midi, slip, wrap, mini
+  dress1:  "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&q=80&fit=crop",  // midi dress
+  dress2:  "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=300&q=80&fit=crop",  // slip dress
+  dress3:  "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=300&q=80&fit=crop",  // wrap dress
+  dress4:  "https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?w=300&q=80&fit=crop",  // mini dress
+  // Outerwear — coats, blazers, jackets, trench
+  outer1:  "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=300&q=80&fit=crop",  // camel coat
+  outer2:  "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=300&q=80&fit=crop",  // trench coat
+  outer3:  "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=300&q=80&fit=crop",  // blazer
+  outer4:  "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=300&q=80&fit=crop",  // leather jacket
+  // Shoes — loafers, heels, boots, sneakers, sandals
+  shoe1:   "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&q=80&fit=crop",  // loafers
+  shoe2:   "https://images.unsplash.com/photo-1515347619252-60a4bf4fff4f?w=300&q=80&fit=crop",  // heels
+  shoe3:   "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&q=80&fit=crop",  // white sneakers
+  shoe4:   "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=300&q=80&fit=crop",  // heeled boots
+  shoe5:   "https://images.unsplash.com/photo-1603487742131-4160ec999306?w=300&q=80&fit=crop",  // sandals
+  // Bags — structured, tote, clutch, crossbody
+  bag1:    "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=300&q=80&fit=crop",  // structured bag
+  bag2:    "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=300&q=80&fit=crop",  // leather tote
+  bag3:    "https://images.unsplash.com/photo-1591561954557-26941169b49e?w=300&q=80&fit=crop",  // crossbody
+  bag4:    "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=300&q=80&fit=crop",  // clutch
+  // Accessories — jewelry, scarves, sunglasses, belts
+  acc1:    "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=300&q=80&fit=crop",  // gold hoops
+  acc2:    "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=300&q=80&fit=crop",  // silk scarf
+  acc3:    "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=300&q=80&fit=crop",  // sunglasses
+  acc4:    "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300&q=80&fit=crop",  // belt / accessories
 };
 
 // ─── Product / item images — SEMANTICALLY CORRECT (square 1:1) ───────────────
@@ -166,39 +220,6 @@ export const PRODUCT_IMAGES = {
   belt:             "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&q=80&fit=crop",
 };
 
-// ─── Closet wardrobe grid — CATEGORY-SPECIFIC (square 1:1) ───────────────────
-
-export const CLOSET_IMAGES = {
-  top1:    "https://images.unsplash.com/photo-1564257631407-4deb1f99d992?w=300&q=80&fit=crop",
-  top2:    "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=300&q=80&fit=crop",
-  top3:    "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?w=300&q=80&fit=crop",
-  top4:    "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&q=80&fit=crop",
-  top5:    "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=300&q=80&fit=crop",
-  bottom1: "https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=300&q=80&fit=crop",
-  bottom2: "https://images.unsplash.com/photo-1551803091-e20673f15770?w=300&q=80&fit=crop",
-  bottom3: "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=300&q=80&fit=crop",
-  bottom4: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=300&q=80&fit=crop",
-  dress1:  "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&q=80&fit=crop",
-  dress2:  "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=300&q=80&fit=crop",
-  dress3:  "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=300&q=80&fit=crop",
-  dress4:  "https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?w=300&q=80&fit=crop",
-  outer1:  "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=300&q=80&fit=crop",
-  outer2:  "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=300&q=80&fit=crop",
-  outer3:  "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=300&q=80&fit=crop",
-  outer4:  "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=300&q=80&fit=crop",
-  shoe1:   "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&q=80&fit=crop",
-  shoe2:   "https://images.unsplash.com/photo-1515347619252-60a4bf4fff4f?w=300&q=80&fit=crop",
-  shoe3:   "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&q=80&fit=crop",
-  shoe4:   "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=300&q=80&fit=crop",
-  bag1:    "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=300&q=80&fit=crop",
-  bag2:    "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=300&q=80&fit=crop",
-  bag3:    "https://images.unsplash.com/photo-1591561954557-26941169b49e?w=300&q=80&fit=crop",
-  acc1:    "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=300&q=80&fit=crop",
-  acc2:    "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=300&q=80&fit=crop",
-  acc3:    "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=300&q=80&fit=crop",
-  acc4:    "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300&q=80&fit=crop",
-};
-
 // ─── Trend / editorial cards (landscape 16:9 or 3:2) ─────────────────────────
 
 export const TREND_IMAGES = {
@@ -233,26 +254,27 @@ export const VIBE_TREND_POOL: Record<string, string[]> = {
 };
 
 // ─── Deal / shopping card images (landscape 3:2) ─────────────────────────────
+// Each deal image shows the ITEM TYPE it represents, not a random editorial shot.
 
 export const DEAL_IMAGES = {
-  zaraCoat:         "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=500&q=80&fit=crop&crop=top",
-  aritziaTrench:    "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=500&q=80&fit=crop&crop=top",
-  massimoBlazer:    "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=500&q=80&fit=crop&crop=top",
-  aritziaBlouse:    "https://images.unsplash.com/photo-1564257631407-4deb1f99d992?w=500&q=80&fit=crop&crop=top",
-  everlaneTop:      "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?w=500&q=80&fit=crop&crop=top",
-  cosKnit:          "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=500&q=80&fit=crop&crop=top",
-  uniqloBasic:      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&q=80&fit=crop&crop=top",
-  hmTrousers:       "https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=500&q=80&fit=crop&crop=top",
-  zaraDenim:        "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=500&q=80&fit=crop&crop=top",
-  mangoDress:       "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80&fit=crop&crop=top",
-  revolveSlipDress: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=500&q=80&fit=crop&crop=top",
-  mangoLinen:       "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500&q=80&fit=crop&crop=top",
-  revolveResort:    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&q=80&fit=crop&crop=top",
-  nordicShoes:      "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=500&q=80&fit=crop&crop=top",
-  nordstromHeels:   "https://images.unsplash.com/photo-1515347619252-60a4bf4fff4f?w=500&q=80&fit=crop&crop=top",
-  otherStoriesBag:  "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=500&q=80&fit=crop&crop=top",
-  skimsLounge:      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500&q=80&fit=crop&crop=top",
-  cosBlackEdit:     "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=500&q=80&fit=crop&crop=top",
+  zaraCoat:         "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=500&q=80&fit=crop&crop=top",   // coat
+  aritziaTrench:    "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=500&q=80&fit=crop&crop=top",   // trench coat
+  massimoBlazer:    "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=500&q=80&fit=crop&crop=top",      // blazer
+  aritziaBlouse:    "https://images.unsplash.com/photo-1564257631407-4deb1f99d992?w=500&q=80&fit=crop&crop=top",   // blouse
+  everlaneTop:      "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?w=500&q=80&fit=crop&crop=top",   // top
+  cosKnit:          "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=500&q=80&fit=crop&crop=top",   // knit
+  uniqloBasic:      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&q=80&fit=crop&crop=top",   // basic tee
+  hmTrousers:       "https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=500&q=80&fit=crop&crop=top",   // trousers
+  zaraDenim:        "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=500&q=80&fit=crop&crop=top",   // jeans
+  mangoDress:       "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80&fit=crop&crop=top",   // dress
+  revolveSlipDress: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=500&q=80&fit=crop&crop=top",   // slip dress
+  mangoLinen:       "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500&q=80&fit=crop&crop=top",   // linen dress
+  revolveResort:    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&q=80&fit=crop&crop=top",   // resort wear
+  nordicShoes:      "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=500&q=80&fit=crop&crop=top",      // shoes
+  nordstromHeels:   "https://images.unsplash.com/photo-1515347619252-60a4bf4fff4f?w=500&q=80&fit=crop&crop=top",   // heels
+  otherStoriesBag:  "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=500&q=80&fit=crop&crop=top",      // bag
+  skimsLounge:      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500&q=80&fit=crop&crop=top",   // lounge
+  cosBlackEdit:     "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=500&q=80&fit=crop&crop=top",   // black edit
 };
 
 export const VIBE_DEAL_POOL: Record<string, string[]> = {

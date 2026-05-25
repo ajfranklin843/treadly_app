@@ -200,3 +200,45 @@
 - [x] Wire closet-history store into Closet tab — load on mount, persist on scan, clear on reset onboarding
 - [x] Update onboarding Step 1 vibe cards to use premium vibe-matched editorial images from VIBE_OUTFIT_POOL
 - [x] TypeScript clean, 12 tests passing
+
+## Phase 15 — Living Wardrobe System
+
+- [ ] Full image intelligence audit — rebuild all pools with semantically verified, category-correct URLs
+- [ ] Build worn-tracking store (AsyncStorage) — persist worn counts, last worn date, favorites
+- [ ] Wire "Mark as Worn Today" into ItemIntelligenceSheet with animated confirmation + haptic
+- [ ] Add Closet search bar with live filtering
+- [ ] Add Closet sort menu (Most Worn, Recently Added, By Color, By Category, Favorites, Style Match)
+- [ ] Build OutfitBuilderSheet — pin item, compatible pieces from closet, outfit combos, missing pieces, save look
+- [ ] Wire OutfitBuilderSheet into ItemIntelligenceSheet "Build Outfit with This" CTA
+- [ ] TypeScript clean, 12 tests passing
+
+## Phase 15 — Style Operating System
+
+- [ ] Closet search bar with live filtering
+- [ ] Closet sort menu (Most Worn, Recently Added, Favorites, By Color, By Category, Best Match)
+- [ ] Wire worn-tracking store into closet item worn counts (live sync from AsyncStorage)
+- [ ] Build OutfitBuilderSheet — anchor item, compatible closet pieces, occasion switching, style confidence score, missing pieces, save look CTA
+- [ ] Wire OutfitBuilderSheet into ItemIntelligenceSheet "Build Outfit with This" CTA
+- [ ] Build saved-looks store (AsyncStorage) — save, load, delete looks
+- [ ] Build Saved Looks tab in Closet — collection cards with look previews
+- [ ] Add Daily Engagement section to Home — Today's Look, wardrobe insights, compatibility score, "3 new ways to wear this"
+- [ ] Add OpenAI integration to Stylist — warm conversational responses with outfit reasoning and style explanations
+- [ ] TypeScript clean, 12 tests passing
+
+## Phase 15 — COMPLETED (Style Operating System)
+
+- [x] Full image intelligence audit — rebuilt all pools with semantically verified, category-correct URLs
+- [x] Build worn-tracking store (AsyncStorage) — persist worn counts, last worn date, favorites
+- [x] Wire "Mark as Worn Today" into ItemIntelligenceSheet with animated confirmation + haptic
+- [x] Add Closet search bar with live filtering
+- [x] Add Closet sort menu (Most Worn, Recently Added, By Color, By Category, Favorites, Style Match)
+- [x] Build OutfitBuilderSheet — anchor item, compatible closet pieces, occasion switching, style confidence score, missing pieces, save look
+- [x] Wire OutfitBuilderSheet into Closet via ItemIntelligenceSheet "Build Outfit with This" CTA
+- [x] Build saved-looks store (AsyncStorage) — save, load, delete looks
+- [x] Build Saved Looks tab — collection cards with look previews, empty state
+- [x] Add Looks tab to navigation
+- [x] Add Daily Engagement section to Home (Closet IQ, Outfit Potential, Saved Looks, Style Vibe cards)
+- [x] Add LLM integration to Stylist — real conversational responses via tRPC server procedure with fallback
+- [x] Fix reset onboarding to clear all demo data (scan history, worn counts, saved looks)
+- [x] Fix onboarding step1 to use correct VIBE_IMAGES camelCase keys
+- [x] TypeScript clean (0 errors), 12 tests passing

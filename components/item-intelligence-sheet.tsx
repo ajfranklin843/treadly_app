@@ -6,17 +6,19 @@
  *
  * Sections:
  * - Large editorial item image with gradient overlay
+ * - Worn count + last worn date + favorite toggle
  * - Style classification + color DNA swatch
- * - Style Match % + Closet IQ boost
+ * - Style Match % + Closet IQ boost + Outfit Combos
  * - "Already works with X looks" intelligence line
  * - Pairs Well With chip row
  * - Occasions this item covers
  * - Aesthetic tags
  * - "Trending in your vibe" badge
+ * - Mark as Worn Today CTA (with animated confirmation)
  * - Build Outfit + Go New using this item CTAs
  */
 
-import React, { useRef, useEffect, useCallback } from "react";
+import React, { useRef, useEffect, useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -31,10 +33,17 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from "@/constants/threadly";
-import { useImageFade, hapticLight, hapticSuccess } from "@/lib/animations";
+import { useImageFade, hapticLight, hapticSuccess, hapticMedium } from "@/lib/animations";
 import { router } from "expo-router";
+import {
+  markAsWorn,
+  toggleFavorite,
+  loadWornStore,
+  formatLastWorn,
+  type WornRecord,
+} from "@/lib/worn-tracking-store";
 
-const { height: SCREEN_H, width: SCREEN_W } = Dimensions.get("window");
+const { height: SCREEN_H } = Dimensions.get("window");
 const SHEET_HEIGHT = SCREEN_H * 0.88;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -54,12 +63,14 @@ export interface WardrobeItem {
   aestheticTags?: string[];
   trendingIn?: string;
   closetIqBoost?: number;
+  wornCount?: number;
 }
 
 interface ItemIntelligenceSheetProps {
   item: WardrobeItem | null;
   visible: boolean;
   onClose: () => void;
+  onBuildOutfit?: (item: WardrobeItem) => void;
 }
 
 // ─── Fade Image ───────────────────────────────────────────────────────────────
@@ -98,12 +109,75 @@ function Chip({ label, accent }: { label: string; accent?: boolean }) {
   );
 }
 
+// ─── Mark as Worn Button ──────────────────────────────────────────────────────
+
+function MarkAsWornButton({
+  onPress,
+  confirmed,
+  loading,
+}: {
+  onPress: () => void;
+  confirmed: boolean;
+  loading: boolean;
+}) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const checkOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (confirmed) {
+      Animated.sequence([
+        Animated.timing(scaleAnim, { toValue: 0.94, duration: 80, useNativeDriver: true }),
+        Animated.spring(scaleAnim, { toValue: 1, damping: 12, stiffness: 200, useNativeDriver: true }),
+      ]).start();
+      Animated.timing(checkOpacity, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+    }
+  }, [confirmed]);
+
+  return (
+    <TouchableOpacity
+      style={[styles.wornBtn, confirmed && styles.wornBtnConfirmed]}
+      onPress={onPress}
+      activeOpacity={0.85}
+      disabled={loading}
+    >
+      <Animated.View style={[styles.wornBtnInner, { transform: [{ scale: scaleAnim }] }]}>
+        {confirmed ? (
+          <Animated.Text style={[styles.wornBtnText, styles.wornBtnTextConfirmed, { opacity: checkOpacity }]}>
+            ✓ Worn Today — Closet IQ Updated
+          </Animated.Text>
+        ) : (
+          <Text style={styles.wornBtnText}>
+            {loading ? "Updating..." : "Mark as Worn Today"}
+          </Text>
+        )}
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
+
 // ─── Main Sheet ───────────────────────────────────────────────────────────────
 
-export function ItemIntelligenceSheet({ item, visible, onClose }: ItemIntelligenceSheetProps) {
+export function ItemIntelligenceSheet({ item, visible, onClose, onBuildOutfit }: ItemIntelligenceSheetProps) {
   const insets = useSafeAreaInsets();
   const slideAnim = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
+
+  const [wornRecord, setWornRecord] = useState<WornRecord | null>(null);
+  const [wornConfirmed, setWornConfirmed] = useState(false);
+  const [wornLoading, setWornLoading] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  // Load worn record when sheet opens
+  useEffect(() => {
+    if (visible && item) {
+      setWornConfirmed(false);
+      loadWornStore().then((store) => {
+        const record = store[item.id] ?? null;
+        setWornRecord(record);
+        setIsFavorite(record?.isFavorite ?? false);
+      });
+    }
+  }, [visible, item?.id]);
 
   useEffect(() => {
     if (visible) {
@@ -143,14 +217,38 @@ export function ItemIntelligenceSheet({ item, visible, onClose }: ItemIntelligen
 
   const handleBuildOutfit = useCallback(() => {
     hapticSuccess();
-    onClose();
-    setTimeout(() => router.push("/(tabs)/gonew"), 300);
-  }, [onClose]);
+    if (item && onBuildOutfit) {
+      onClose();
+      setTimeout(() => onBuildOutfit(item), 300);
+    } else {
+      onClose();
+      setTimeout(() => router.push("/(tabs)/gonew"), 300);
+    }
+  }, [onClose, item, onBuildOutfit]);
+
+  const handleMarkAsWorn = useCallback(async () => {
+    if (!item || wornConfirmed) return;
+    setWornLoading(true);
+    hapticMedium();
+    const updated = await markAsWorn(item.id, wornRecord?.wornCount ?? item.wornCount ?? 0);
+    setWornRecord(updated);
+    setWornLoading(false);
+    setWornConfirmed(true);
+    hapticSuccess();
+  }, [item, wornRecord, wornConfirmed]);
+
+  const handleToggleFavorite = useCallback(async () => {
+    if (!item) return;
+    hapticLight();
+    const updated = await toggleFavorite(item.id, wornRecord?.wornCount ?? item.wornCount ?? 0);
+    setWornRecord(updated);
+    setIsFavorite(updated.isFavorite);
+  }, [item, wornRecord]);
 
   if (!item) return null;
 
   // Derive intelligence data from item (with smart defaults)
-  const matchPct = item.matchPct ?? 87;
+  const matchPct = wornRecord?.styleMatchScore ?? item.matchPct ?? 87;
   const outfitCount = item.outfitCount ?? 12;
   const closetIqBoost = item.closetIqBoost ?? 3;
   const colorHex = item.colorHex ?? "#C4A882";
@@ -159,6 +257,8 @@ export function ItemIntelligenceSheet({ item, visible, onClose }: ItemIntelligen
   const occasions = item.occasions ?? ["Casual", "Work", "Date Night"];
   const aestheticTags = item.aestheticTags ?? ["Quiet Luxury", "Minimal", "Timeless"];
   const trendingIn = item.trendingIn ?? "your aesthetic";
+  const wornCount = wornRecord?.wornCount ?? item.wornCount ?? 0;
+  const lastWornStr = formatLastWorn(wornRecord?.lastWornDate ?? null);
 
   return (
     <Modal
@@ -206,6 +306,16 @@ export function ItemIntelligenceSheet({ item, visible, onClose }: ItemIntelligen
               <Text style={styles.closeBtnText}>✕</Text>
             </Pressable>
 
+            {/* Favorite button */}
+            <Pressable
+              style={({ pressed }) => [styles.favoriteBtn, pressed && { opacity: 0.6 }]}
+              onPress={handleToggleFavorite}
+            >
+              <Text style={[styles.favoriteBtnText, isFavorite && styles.favoriteBtnActive]}>
+                {isFavorite ? "♥" : "♡"}
+              </Text>
+            </Pressable>
+
             {/* Trending badge */}
             {trendingIn && (
               <View style={styles.trendingBadge}>
@@ -221,13 +331,26 @@ export function ItemIntelligenceSheet({ item, visible, onClose }: ItemIntelligen
             </View>
           </View>
 
+          {/* Worn Memory Row */}
+          <View style={styles.wornMemoryRow}>
+            <View style={styles.wornMemoryStat}>
+              <Text style={styles.wornMemoryValue}>{wornCount}</Text>
+              <Text style={styles.wornMemoryLabel}>Times Worn</Text>
+            </View>
+            <View style={styles.wornMemoryDivider} />
+            <View style={styles.wornMemoryStat}>
+              <Text style={styles.wornMemoryValue}>{matchPct}%</Text>
+              <Text style={styles.wornMemoryLabel}>Style Match</Text>
+            </View>
+            <View style={styles.wornMemoryDivider} />
+            <View style={[styles.wornMemoryStat, { flex: 2 }]}>
+              <Text style={styles.wornMemoryValue} numberOfLines={1}>{lastWornStr}</Text>
+              <Text style={styles.wornMemoryLabel}>Last Worn</Text>
+            </View>
+          </View>
+
           {/* Intelligence Cards Row */}
           <View style={styles.intelCardsRow}>
-            {/* Style Match */}
-            <View style={styles.intelCard}>
-              <Text style={styles.intelCardValue}>{matchPct}%</Text>
-              <Text style={styles.intelCardLabel}>Style Match</Text>
-            </View>
             {/* Works With */}
             <View style={[styles.intelCard, styles.intelCardMid]}>
               <Text style={styles.intelCardValue}>{outfitCount}</Text>
@@ -294,6 +417,15 @@ export function ItemIntelligenceSheet({ item, visible, onClose }: ItemIntelligen
                 <Chip key={i} label={t} />
               ))}
             </View>
+          </View>
+
+          {/* Mark as Worn */}
+          <View style={[styles.section, { marginTop: 24 }]}>
+            <MarkAsWornButton
+              onPress={handleMarkAsWorn}
+              confirmed={wornConfirmed}
+              loading={wornLoading}
+            />
           </View>
 
           {/* CTAs */}
@@ -380,6 +512,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  favoriteBtn: {
+    position: "absolute",
+    top: 16,
+    right: 56,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  favoriteBtnText: {
+    fontSize: 16,
+    color: "rgba(255,255,255,0.6)",
+  },
+  favoriteBtnActive: {
+    color: ThreadlyColors.roseGold,
+  },
   trendingBadge: {
     position: "absolute",
     top: 16,
@@ -423,11 +573,47 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
+  // ── Worn Memory Row ──
+  wornMemoryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 20,
+    marginTop: 16,
+    backgroundColor: "#1A1A1A",
+    borderRadius: ThreadlyRadius.md,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+  wornMemoryStat: {
+    flex: 1,
+    alignItems: "center",
+  },
+  wornMemoryValue: {
+    fontSize: 16,
+    fontFamily: "Georgia",
+    color: ThreadlyColors.roseGold,
+    fontWeight: "600",
+  },
+  wornMemoryLabel: {
+    fontSize: 9,
+    color: "rgba(255,255,255,0.35)",
+    letterSpacing: 1,
+    marginTop: 3,
+    textTransform: "uppercase",
+  },
+  wornMemoryDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+
   // ── Intelligence Cards ──
   intelCardsRow: {
     flexDirection: "row",
     marginHorizontal: 20,
-    marginTop: 16,
+    marginTop: 10,
     gap: 8,
   },
   intelCard: {
@@ -575,10 +761,37 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
+  // ── Mark as Worn Button ──
+  wornBtn: {
+    borderRadius: ThreadlyRadius.xl,
+    borderWidth: 1,
+    borderColor: "rgba(201,149,106,0.4)",
+    backgroundColor: "rgba(201,149,106,0.08)",
+    overflow: "hidden",
+  },
+  wornBtnConfirmed: {
+    borderColor: "rgba(74,222,128,0.4)",
+    backgroundColor: "rgba(74,222,128,0.08)",
+  },
+  wornBtnInner: {
+    paddingVertical: 15,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  wornBtnText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: ThreadlyColors.roseGold,
+    letterSpacing: 0.3,
+  },
+  wornBtnTextConfirmed: {
+    color: "#4ADE80",
+  },
+
   // ── CTAs ──
   ctaSection: {
     marginHorizontal: 20,
-    marginTop: 28,
+    marginTop: 16,
     gap: 12,
   },
   primaryCta: {

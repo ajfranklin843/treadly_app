@@ -68,5 +68,12 @@ export async function getStyleProfile(): Promise<StyleProfile> {
 }
 
 export async function resetOnboarding(): Promise<void> {
-  await AsyncStorage.multiRemove([ONBOARDING_KEY, PROFILE_KEY]);
+  // Clear all Threadly demo/session data so the app feels fresh after reset
+  await AsyncStorage.multiRemove([
+    ONBOARDING_KEY,
+    PROFILE_KEY,
+    "@threadly_closet_history",
+    "@threadly/worn_tracking",
+    "@threadly_saved_looks",
+  ]);
 }
