@@ -1,117 +1,91 @@
 /**
- * Threadly — Home Feed
- * The daily AI stylist experience: Today's Look, trend discovery, deals, and the Go New CTA.
- * Emotional outcome: "My stylist already knows what I need today."
+ * Threadly — Home
+ * The AI stylist daily feed. Deck-faithful visual benchmark.
+ * Emotional outcome: "She knows exactly what I need today."
  */
 
-import { useState } from "react";
 import {
   View,
   Text,
-  ScrollView,
-  TouchableOpacity,
   StyleSheet,
+  TouchableOpacity,
+  ScrollView,
   FlatList,
   Dimensions,
+  Image,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import {
   ThreadlyColors,
   ThreadlySpacing,
   ThreadlyRadius,
-  ThreadlyShadow,
 } from "@/constants/threadly";
+import { useRouter } from "expo-router";
 
 const { width } = Dimensions.get("window");
-const CARD_W = width * 0.62;
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const TODAY_LOOK = {
-  occasion: "Work Meeting",
-  matchScore: 92,
-  ownedPercent: 78,
-  palette: ["#2C2416", "#6B5B4E", "#C9956A", "#FAF7F4", "#8B7355"],
-  items: ["Camel Blazer", "Black Tee", "Wide-Leg Trousers", "Heeled Mules", "Mini Bag"],
-  missingCount: 1,
-  missingFrom: "$14",
-};
-
-const OUTFIT_CARDS = [
+const TREND_CARDS = [
   {
     id: "1",
-    title: "Modern Minimal",
-    occasion: "Work",
-    matchScore: 95,
-    ownedPct: 80,
-    missingItems: 2,
-    fromPrice: 54,
-    palette: ["#1A1A1A", "#C9956A", "#FAF7F4"],
-    tag: "TRENDING",
+    label: "TRENDING NOW",
+    title: "Quiet Luxury",
+    sub: "Understated elegance is everywhere",
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
   },
   {
     id: "2",
-    title: "Casual Chic",
-    occasion: "Weekend",
-    matchScore: 88,
-    ownedPct: 100,
-    missingItems: 0,
-    fromPrice: 0,
-    palette: ["#3A2520", "#E8B89A", "#F2D4C8"],
-    tag: "YOU OWN IT",
+    label: "THIS WEEK",
+    title: "Coastal Chic",
+    sub: "Breezy, effortless, editorial",
+    image: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=600&q=80",
   },
   {
     id: "3",
-    title: "Date Night",
-    occasion: "Evening",
-    matchScore: 82,
-    ownedPct: 60,
-    missingItems: 3,
-    fromPrice: 38,
-    palette: ["#0A0A0A", "#C9956A", "#8B7355"],
-    tag: "HOT NOW",
+    label: "RISING",
+    title: "Power Dressing",
+    sub: "Structured silhouettes return",
+    image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600&q=80",
+  },
+];
+
+const DEAL_ALERTS = [
+  {
+    id: "1",
+    brand: "ZARA",
+    item: "Oversized Blazer",
+    original: 110,
+    sale: 59,
+    off: 46,
+    image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=300&q=80",
+    expiry: "2h left",
   },
   {
-    id: "4",
-    title: "Sunday Brunch",
-    occasion: "Casual",
-    matchScore: 91,
-    ownedPct: 90,
-    missingItems: 1,
-    fromPrice: 22,
-    palette: ["#F2D4C8", "#E8B89A", "#C9956A"],
-    tag: "EASY WIN",
+    id: "2",
+    brand: "MANGO",
+    item: "Straight-Leg Jeans",
+    original: 80,
+    sale: 44,
+    off: 45,
+    image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&q=80",
+    expiry: "24h left",
+  },
+  {
+    id: "3",
+    brand: "ALDO",
+    item: "Slingback Heels",
+    original: 95,
+    sale: 55,
+    off: 42,
+    image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&q=80",
+    expiry: "6h left",
   },
 ];
 
-const DEALS = [
-  { id: "1", brand: "ZARA", item: "Oversized Blazer", original: 110, sale: 59, off: 46, color: "#C4A882" },
-  { id: "2", brand: "MANGO", item: "Straight-Leg Jeans", original: 80, sale: 44, off: 45, color: "#4A4A5A" },
-  { id: "3", brand: "AMAZON", item: "Gold Hoop Earrings", original: 22, sale: 14, off: 36, color: "#C9956A" },
-  { id: "4", brand: "TARGET", item: "White Sneakers", original: 40, sale: 28, off: 30, color: "#F5F5F0" },
-];
-
-const TRENDS = [
-  { id: "1", label: "Quiet Luxury", heat: 98, desc: "Understated, elevated basics" },
-  { id: "2", label: "Coastal Grandmother", heat: 87, desc: "Linen, neutrals, effortless" },
-  { id: "3", label: "Office Siren", heat: 94, desc: "Power dressing, reimagined" },
-  { id: "4", label: "Mob Wife Aesthetic", heat: 91, desc: "Maximalist, fur, drama" },
-];
-
-// ─── Screen ───────────────────────────────────────────────────────────────────
+const OUTFIT_IMAGE = "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=700&q=80";
 
 export default function HomeScreen() {
-  const [savedLooks, setSavedLooks] = useState<Set<string>>(new Set());
-
-  const toggleSave = (id: string) => {
-    setSavedLooks(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
+  const router = useRouter();
 
   return (
     <ScreenContainer containerClassName="bg-[#0A0A0A]" edges={["top", "left", "right"]}>
@@ -120,61 +94,59 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Header ── */}
-        <View style={styles.header}>
+        {/* ── Branded Header ── */}
+        <View style={styles.brandHeader}>
           <View>
-            <Text style={styles.greeting}>Good morning ✦</Text>
-            <Text style={styles.headline}>Your AI Stylist{"\n"}is ready.</Text>
+            <Text style={styles.wordmark}>THREADLY</Text>
+            <Text style={styles.tagline}>The AI stylist that shops smarter.</Text>
           </View>
           <TouchableOpacity style={styles.notifBtn} activeOpacity={0.7}>
-            <Text style={styles.notifIcon}>🔔</Text>
+            <Text style={styles.notifIcon}>♡</Text>
             <View style={styles.notifDot} />
           </TouchableOpacity>
         </View>
 
-        {/* ── Today's Look Card ── */}
-        <TouchableOpacity activeOpacity={0.92} style={styles.todayCard}>
-          <LinearGradient
-            colors={["#1E1A16", "#2A2218"]}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.todayBorderAccent} />
-
-          <View style={styles.todayTop}>
-            <View>
-              <Text style={styles.todayLabel}>TODAY'S LOOK</Text>
-              <Text style={styles.todaySubLabel}>Curated for you</Text>
+        {/* ── Today's Look Hero ── */}
+        <View style={styles.heroCard}>
+          <View style={styles.heroImageWrap}>
+            <Image source={{ uri: OUTFIT_IMAGE }} style={styles.heroImage} resizeMode="cover" />
+            <LinearGradient
+              colors={["transparent", "rgba(10,10,10,0.85)"]}
+              style={StyleSheet.absoluteFill}
+            />
+            {/* Top badge */}
+            <View style={styles.heroBadge}>
+              <Text style={styles.heroBadgeText}>✦ TODAY'S LOOK</Text>
             </View>
-            <View style={styles.matchBadge}>
-              <Text style={styles.matchScore}>{TODAY_LOOK.matchScore}%</Text>
-              <Text style={styles.matchLabel}>match</Text>
-            </View>
-          </View>
-
-          {/* Color Palette */}
-          <View style={styles.paletteRow}>
-            {TODAY_LOOK.palette.map((c, i) => (
-              <View key={i} style={[styles.paletteDot, { backgroundColor: c }]} />
-            ))}
-          </View>
-
-          {/* Items */}
-          <View style={styles.todayItems}>
-            {TODAY_LOOK.items.map((item, i) => (
-              <View key={i} style={styles.todayItemRow}>
-                <View style={styles.todayItemDot} />
-                <Text style={styles.todayItemText}>{item}</Text>
+            {/* Bottom overlay */}
+            <View style={styles.heroOverlay}>
+              <View style={styles.heroOverlayLeft}>
+                <Text style={styles.heroLookName}>The Boardroom Edit</Text>
+                <Text style={styles.heroLookSub}>Curated for your 9am meeting</Text>
               </View>
-            ))}
+              <View style={styles.heroMatchBadge}>
+                <Text style={styles.heroMatchPct}>94%</Text>
+                <Text style={styles.heroMatchLabel}>match</Text>
+              </View>
+            </View>
           </View>
 
-          <View style={styles.todayFooter}>
-            <View style={styles.ownedTag}>
-              <Text style={styles.ownedTagText}>You own {TODAY_LOOK.ownedPercent}% of this look</Text>
+          {/* Owned indicator */}
+          <View style={styles.heroFooter}>
+            <LinearGradient colors={["#1A1410", "#1A1A1A"]} style={StyleSheet.absoluteFill} />
+            <View style={styles.heroFooterContent}>
+              <View style={styles.ownedRow}>
+                <View style={styles.ownedBar}>
+                  <View style={[styles.ownedFill, { width: "80%" }]} />
+                </View>
+                <Text style={styles.ownedText}>You own 80% of this look</Text>
+              </View>
+              <TouchableOpacity style={styles.heroViewBtn} activeOpacity={0.85}>
+                <Text style={styles.heroViewBtnText}>View Look →</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.occasionTag}>{TODAY_LOOK.occasion}</Text>
           </View>
-        </TouchableOpacity>
+        </View>
 
         {/* ── Go New CTA ── */}
         <TouchableOpacity
@@ -186,637 +158,313 @@ export default function HomeScreen() {
             colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={styles.goNewCtaGradient}
-          >
-            <View style={styles.goNewCtaContent}>
-              <View>
-                <Text style={styles.goNewCtaTitle}>Go New ✦</Text>
-                <Text style={styles.goNewCtaSub}>Build a fresh look from your closet</Text>
-              </View>
-              <Text style={styles.goNewCtaArrow}>→</Text>
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.goNewCtaContent}>
+            <View>
+              <Text style={styles.goNewCtaTitle}>Go New ✦</Text>
+              <Text style={styles.goNewCtaSub}>Build a fresh look from your closet</Text>
             </View>
-          </LinearGradient>
+            <View style={styles.goNewCtaArrow}>
+              <Text style={styles.goNewCtaArrowText}>→</Text>
+            </View>
+          </View>
         </TouchableOpacity>
 
-        {/* ── AI Recommended Outfits ── */}
+        {/* ── Trend Cards ── */}
         <View style={styles.sectionHeader}>
-          <View>
-            <Text style={styles.sectionTitle}>AI Recommended For You</Text>
-            <Text style={styles.sectionSub}>Built from your closet</Text>
-          </View>
-          <TouchableOpacity activeOpacity={0.7}>
-            <Text style={styles.seeAll}>See all →</Text>
-          </TouchableOpacity>
+          <Text style={styles.sectionLabel}>TRENDING NOW</Text>
+          <Text style={styles.sectionTitle}>What's moving in fashion</Text>
         </View>
 
         <FlatList
-          data={OUTFIT_CARDS}
-          keyExtractor={item => item.id}
+          data={TREND_CARDS}
+          keyExtractor={t => t.id}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.outfitList}
-          renderItem={({ item }) => (
-            <OutfitCard
-              item={item}
-              saved={savedLooks.has(item.id)}
-              onSave={() => toggleSave(item.id)}
-            />
+          contentContainerStyle={styles.trendList}
+          renderItem={({ item: trend }) => (
+            <TouchableOpacity style={styles.trendCard} activeOpacity={0.88}>
+              <Image source={{ uri: trend.image }} style={styles.trendImage} resizeMode="cover" />
+              <LinearGradient
+                colors={["transparent", "rgba(10,10,10,0.9)"]}
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={styles.trendOverlay}>
+                <Text style={styles.trendLabel}>{trend.label}</Text>
+                <Text style={styles.trendTitle}>{trend.title}</Text>
+                <Text style={styles.trendSub}>{trend.sub}</Text>
+              </View>
+            </TouchableOpacity>
           )}
         />
 
-        {/* ── Deals Found For You ── */}
+        {/* ── Deal Alerts ── */}
         <View style={styles.sectionHeader}>
-          <View>
-            <Text style={styles.sectionTitle}>Deals Found For You</Text>
-            <Text style={styles.sectionSub}>On pieces that complete your looks</Text>
-          </View>
-          <TouchableOpacity activeOpacity={0.7} onPress={() => router.push("/(tabs)/shop")}>
-            <Text style={styles.seeAll}>See all →</Text>
+          <Text style={styles.sectionLabel}>DEAL ALERTS</Text>
+          <Text style={styles.sectionTitle}>Pieces for your looks, on sale now</Text>
+        </View>
+
+        <FlatList
+          data={DEAL_ALERTS}
+          keyExtractor={d => d.id}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.dealList}
+          renderItem={({ item: deal }) => (
+            <TouchableOpacity style={styles.dealCard} activeOpacity={0.88}>
+              <View style={styles.dealImageWrap}>
+                <Image source={{ uri: deal.image }} style={styles.dealImage} resizeMode="cover" />
+                <View style={styles.dealOffBadge}>
+                  <Text style={styles.dealOffText}>-{deal.off}%</Text>
+                </View>
+              </View>
+              <View style={styles.dealInfo}>
+                <Text style={styles.dealBrand}>{deal.brand}</Text>
+                <Text style={styles.dealItem} numberOfLines={1}>{deal.item}</Text>
+                <View style={styles.dealPricing}>
+                  <Text style={styles.dealOriginal}>${deal.original}</Text>
+                  <Text style={styles.dealSale}>${deal.sale}</Text>
+                </View>
+                <Text style={styles.dealExpiry}>{deal.expiry}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+
+        {/* ── AI Insight ── */}
+        <View style={styles.insightCard}>
+          <LinearGradient colors={["#1A1410", "#1A1A1A"]} style={StyleSheet.absoluteFill} />
+          <View style={styles.insightBorder} />
+          <Text style={styles.insightIcon}>✦</Text>
+          <Text style={styles.insightTitle}>Stylist Insight</Text>
+          <Text style={styles.insightText}>
+            "Your most-worn color is black (38%), but you're missing a strong neutral blazer. Adding one would unlock 12 new outfit combinations from what you already own."
+          </Text>
+          <TouchableOpacity style={styles.insightBtn} activeOpacity={0.8}>
+            <Text style={styles.insightBtnText}>Ask your stylist →</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.dealsList}>
-          {DEALS.map(deal => (
-            <DealRow key={deal.id} deal={deal} />
-          ))}
-        </View>
-
-        {/* ── Trending Now ── */}
-        <View style={styles.sectionHeader}>
-          <View>
-            <Text style={styles.sectionTitle}>Trending Now</Text>
-            <Text style={styles.sectionSub}>What's hot this week</Text>
-          </View>
-        </View>
-
-        <View style={styles.trendGrid}>
-          {TRENDS.map(trend => (
-            <TrendCard key={trend.id} trend={trend} />
-          ))}
-        </View>
-
-        {/* ── Style Intelligence Banner ── */}
-        <TouchableOpacity
-          style={styles.intelligenceBanner}
-          activeOpacity={0.88}
-          onPress={() => router.push("/(tabs)/stylist")}
-        >
-          <LinearGradient
-            colors={["#1A0E08", "#2A1A10"]}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.intelligenceBannerBorder} />
-          <Text style={styles.intelligenceLabel}>✦ YOUR AI STYLIST</Text>
-          <Text style={styles.intelligenceTitle}>
-            "Build me a look for a{"\n"}rooftop dinner under $80."
-          </Text>
-          <Text style={styles.intelligenceCta}>Start a conversation →</Text>
-        </TouchableOpacity>
-
-        <View style={{ height: 32 }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </ScreenContainer>
   );
 }
 
-// ─── Outfit Card ──────────────────────────────────────────────────────────────
-
-function OutfitCard({
-  item,
-  saved,
-  onSave,
-}: {
-  item: typeof OUTFIT_CARDS[0];
-  saved: boolean;
-  onSave: () => void;
-}) {
-  return (
-    <TouchableOpacity style={styles.outfitCard} activeOpacity={0.88}>
-      {/* Color swatch background */}
-      <View style={styles.outfitCardVisual}>
-        <LinearGradient
-          colors={["#1A1A1A", "#252525"]}
-          style={StyleSheet.absoluteFill}
-        />
-        {/* Palette swatches */}
-        <View style={styles.outfitSwatches}>
-          {item.palette.map((c, i) => (
-            <View
-              key={i}
-              style={[
-                styles.outfitSwatch,
-                { backgroundColor: c, width: 28 + i * 4, height: 28 + i * 4 },
-              ]}
-            />
-          ))}
-        </View>
-        {/* Tag */}
-        <View style={styles.outfitTag}>
-          <Text style={styles.outfitTagText}>{item.tag}</Text>
-        </View>
-        {/* Match */}
-        <View style={styles.outfitMatch}>
-          <Text style={styles.outfitMatchText}>{item.matchScore}%</Text>
-        </View>
-        {/* Save */}
-        <TouchableOpacity
-          style={styles.outfitSaveBtn}
-          onPress={onSave}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.outfitSaveIcon, saved && { color: ThreadlyColors.roseGold }]}>
-            {saved ? "♥" : "♡"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.outfitCardInfo}>
-        <Text style={styles.outfitTitle}>{item.title}</Text>
-        <Text style={styles.outfitOccasion}>{item.occasion}</Text>
-        <View style={styles.outfitCardFooter}>
-          {item.missingItems === 0 ? (
-            <Text style={styles.outfitOwned}>✓ You own it</Text>
-          ) : (
-            <Text style={styles.outfitMissing}>+ {item.missingItems} items from ${item.fromPrice}</Text>
-          )}
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-}
-
-// ─── Deal Row ─────────────────────────────────────────────────────────────────
-
-function DealRow({ deal }: { deal: typeof DEALS[0] }) {
-  return (
-    <TouchableOpacity style={styles.dealRow} activeOpacity={0.85}>
-      <View style={[styles.dealColorBar, { backgroundColor: deal.color }]} />
-      <View style={styles.dealInfo}>
-        <Text style={styles.dealBrand}>{deal.brand}</Text>
-        <Text style={styles.dealItem}>{deal.item}</Text>
-        <View style={styles.dealPricing}>
-          <Text style={styles.dealOriginal}>${deal.original}</Text>
-          <Text style={styles.dealSale}>${deal.sale}</Text>
-        </View>
-      </View>
-      <View style={styles.dealOffBadge}>
-        <Text style={styles.dealOffText}>-{deal.off}%</Text>
-      </View>
-    </TouchableOpacity>
-  );
-}
-
-// ─── Trend Card ───────────────────────────────────────────────────────────────
-
-function TrendCard({ trend }: { trend: typeof TRENDS[0] }) {
-  const heatColor = trend.heat >= 95 ? ThreadlyColors.roseGold : trend.heat >= 90 ? ThreadlyColors.roseGoldLight : ThreadlyColors.warmWhiteMuted;
-  return (
-    <TouchableOpacity style={styles.trendCard} activeOpacity={0.85}>
-      <View style={styles.trendCardInner}>
-        <View style={styles.trendHeatRow}>
-          <View style={[styles.trendHeatDot, { backgroundColor: heatColor }]} />
-          <Text style={[styles.trendHeat, { color: heatColor }]}>{trend.heat}</Text>
-        </View>
-        <Text style={styles.trendLabel}>{trend.label}</Text>
-        <Text style={styles.trendDesc}>{trend.desc}</Text>
-      </View>
-    </TouchableOpacity>
-  );
-}
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
-  scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 24 },
+  scroll: { flex: 1, backgroundColor: ThreadlyColors.black },
+  scrollContent: { paddingBottom: 32 },
 
-  // Header
-  header: {
+  // ── Branded Header ──
+  brandHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "center",
     paddingHorizontal: ThreadlySpacing.screenPadding,
     paddingTop: 20,
     paddingBottom: 20,
   },
-  greeting: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: ThreadlyColors.roseGold,
-    letterSpacing: 1.5,
-    marginBottom: 6,
-  },
-  headline: {
+  wordmark: {
     fontSize: 28,
     fontFamily: "Georgia",
     color: ThreadlyColors.warmWhite,
-    lineHeight: 34,
+    letterSpacing: 6,
+    marginBottom: 3,
+  },
+  tagline: {
+    fontSize: 12,
+    color: ThreadlyColors.warmWhiteSubtle,
+    fontStyle: "italic",
+    letterSpacing: 0.3,
   },
   notifBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 40, height: 40, borderRadius: 20,
     backgroundColor: ThreadlyColors.charcoal,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 1, borderColor: "rgba(201,149,106,0.2)",
+    position: "relative",
   },
-  notifIcon: { fontSize: 16 },
+  notifIcon: { fontSize: 18, color: ThreadlyColors.roseGold },
   notifDot: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    position: "absolute", top: 8, right: 8,
+    width: 8, height: 8, borderRadius: 4,
     backgroundColor: ThreadlyColors.roseGold,
-    borderWidth: 1.5,
-    borderColor: ThreadlyColors.charcoal,
+    borderWidth: 1.5, borderColor: ThreadlyColors.charcoal,
   },
 
-  // Today's Look Card
-  todayCard: {
+  // ── Hero Card ──
+  heroCard: {
     marginHorizontal: ThreadlySpacing.screenPadding,
     borderRadius: ThreadlyRadius.xl,
     overflow: "hidden",
-    padding: 20,
-    marginBottom: 16,
     borderWidth: 1,
     borderColor: "rgba(201,149,106,0.2)",
-    ...ThreadlyShadow.card,
+    marginBottom: 20,
+    shadowColor: ThreadlyColors.roseGold,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 6,
   },
-  todayBorderAccent: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 2,
-    backgroundColor: ThreadlyColors.roseGold,
-    opacity: 0.6,
-  },
-  todayTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 14,
-  },
-  todayLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: ThreadlyColors.roseGold,
-    letterSpacing: 2,
-    marginBottom: 2,
-  },
-  todaySubLabel: {
-    fontSize: 12,
-    color: ThreadlyColors.warmWhiteSubtle,
-  },
-  matchBadge: { alignItems: "flex-end" },
-  matchScore: {
-    fontSize: 28,
-    fontFamily: "Georgia",
-    color: ThreadlyColors.roseGoldLight,
-    lineHeight: 30,
-  },
-  matchLabel: {
-    fontSize: 10,
-    color: ThreadlyColors.warmWhiteSubtle,
-    letterSpacing: 1,
-  },
-  paletteRow: {
-    flexDirection: "row",
-    gap: 6,
-    marginBottom: 14,
-  },
-  paletteDot: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.1)",
-  },
-  todayItems: { gap: 6, marginBottom: 16 },
-  todayItemRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  todayItemDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: ThreadlyColors.roseGoldDim,
-  },
-  todayItemText: {
-    fontSize: 14,
-    color: ThreadlyColors.warmWhiteMuted,
-  },
-  todayFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  ownedTag: {
-    backgroundColor: "rgba(201,149,106,0.12)",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+  heroImageWrap: { height: 340, position: "relative" },
+  heroImage: { width: "100%", height: "100%" },
+  heroBadge: {
+    position: "absolute", top: 14, left: 14,
+    backgroundColor: "rgba(10,10,10,0.75)",
+    paddingHorizontal: 12, paddingVertical: 5,
     borderRadius: ThreadlyRadius.pill,
-    borderWidth: 1,
-    borderColor: "rgba(201,149,106,0.25)",
+    borderWidth: 1, borderColor: "rgba(201,149,106,0.35)",
   },
-  ownedTagText: {
-    fontSize: 11,
-    color: ThreadlyColors.roseGoldLight,
-    fontWeight: "600",
+  heroBadgeText: { fontSize: 9, fontWeight: "700", color: ThreadlyColors.roseGoldLight, letterSpacing: 1.5 },
+  heroOverlay: {
+    position: "absolute", bottom: 0, left: 0, right: 0,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    padding: 16,
   },
-  occasionTag: {
-    fontSize: 11,
-    color: ThreadlyColors.warmWhiteSubtle,
-    fontStyle: "italic",
+  heroOverlayLeft: { flex: 1, marginRight: 12 },
+  heroLookName: { fontSize: 22, fontFamily: "Georgia", color: ThreadlyColors.warmWhite, marginBottom: 4 },
+  heroLookSub: { fontSize: 12, color: "rgba(250,247,244,0.7)", fontStyle: "italic" },
+  heroMatchBadge: {
+    backgroundColor: "rgba(10,10,10,0.8)",
+    borderRadius: ThreadlyRadius.lg,
+    padding: 10, alignItems: "center",
+    borderWidth: 1, borderColor: "rgba(201,149,106,0.35)",
+    minWidth: 56,
   },
+  heroMatchPct: { fontSize: 20, fontFamily: "Georgia", color: ThreadlyColors.roseGoldLight, lineHeight: 22 },
+  heroMatchLabel: { fontSize: 9, color: ThreadlyColors.warmWhiteSubtle, letterSpacing: 0.5 },
+  heroFooter: {
+    overflow: "hidden",
+    borderTopWidth: 1,
+    borderTopColor: ThreadlyColors.charcoalLight,
+  },
+  heroFooterContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 14,
+    gap: 12,
+  },
+  ownedRow: { flex: 1, gap: 6 },
+  ownedBar: {
+    height: 3,
+    backgroundColor: ThreadlyColors.charcoalLight,
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  ownedFill: { height: "100%", backgroundColor: ThreadlyColors.roseGold, borderRadius: 2 },
+  ownedText: { fontSize: 11, color: ThreadlyColors.warmWhiteSubtle, fontStyle: "italic" },
+  heroViewBtn: {
+    paddingHorizontal: 14, paddingVertical: 8,
+    borderRadius: ThreadlyRadius.pill,
+    borderWidth: 1, borderColor: "rgba(201,149,106,0.35)",
+  },
+  heroViewBtnText: { fontSize: 12, color: ThreadlyColors.roseGoldLight, fontWeight: "600" },
 
-  // Go New CTA
+  // ── Go New CTA ──
   goNewCta: {
     marginHorizontal: ThreadlySpacing.screenPadding,
-    borderRadius: ThreadlyRadius.lg,
+    borderRadius: ThreadlyRadius.xl,
     overflow: "hidden",
     marginBottom: 28,
-    ...ThreadlyShadow.roseGlow,
+    shadowColor: ThreadlyColors.roseGold,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 14,
+    elevation: 8,
   },
-  goNewCtaGradient: { padding: 18 },
   goNewCtaContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 18,
   },
-  goNewCtaTitle: {
-    fontSize: 18,
-    fontFamily: "Georgia",
-    color: ThreadlyColors.black,
-    marginBottom: 3,
-  },
-  goNewCtaSub: {
-    fontSize: 12,
-    color: "rgba(10,10,10,0.65)",
-  },
+  goNewCtaTitle: { fontSize: 22, fontFamily: "Georgia", color: ThreadlyColors.black, marginBottom: 3 },
+  goNewCtaSub: { fontSize: 12, color: "rgba(10,10,10,0.65)" },
   goNewCtaArrow: {
-    fontSize: 22,
-    color: ThreadlyColors.black,
-    fontWeight: "300",
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: "rgba(10,10,10,0.15)",
+    alignItems: "center", justifyContent: "center",
   },
+  goNewCtaArrowText: { fontSize: 20, color: ThreadlyColors.black, fontWeight: "700" },
 
-  // Section headers
+  // ── Section Header ──
   sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
     paddingHorizontal: ThreadlySpacing.screenPadding,
     marginBottom: 14,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: ThreadlyColors.warmWhite,
-    marginBottom: 2,
-  },
-  sectionSub: {
-    fontSize: 11,
-    color: ThreadlyColors.warmWhiteSubtle,
-  },
-  seeAll: {
-    fontSize: 12,
-    color: ThreadlyColors.roseGold,
-    fontWeight: "600",
-  },
+  sectionLabel: { fontSize: 9, fontWeight: "700", color: ThreadlyColors.roseGold, letterSpacing: 2, marginBottom: 4 },
+  sectionTitle: { fontSize: 18, fontFamily: "Georgia", color: ThreadlyColors.warmWhite },
 
-  // Outfit cards (horizontal)
-  outfitList: {
-    paddingLeft: ThreadlySpacing.screenPadding,
-    paddingRight: 8,
-    gap: 12,
-    marginBottom: 28,
+  // ── Trend Cards ──
+  trendList: { paddingLeft: ThreadlySpacing.screenPadding, paddingRight: 8, gap: 12, marginBottom: 28 },
+  trendCard: {
+    width: width * 0.62,
+    height: 200,
+    borderRadius: ThreadlyRadius.xl,
+    overflow: "hidden",
+    borderWidth: 1, borderColor: ThreadlyColors.charcoalLight,
+    position: "relative",
   },
-  outfitCard: {
-    width: CARD_W,
+  trendImage: { width: "100%", height: "100%" },
+  trendOverlay: {
+    position: "absolute", bottom: 0, left: 0, right: 0,
+    padding: 14,
+  },
+  trendLabel: { fontSize: 8, fontWeight: "700", color: ThreadlyColors.roseGoldLight, letterSpacing: 1.5, marginBottom: 4 },
+  trendTitle: { fontSize: 18, fontFamily: "Georgia", color: ThreadlyColors.warmWhite, marginBottom: 3 },
+  trendSub: { fontSize: 11, color: "rgba(250,247,244,0.65)", fontStyle: "italic" },
+
+  // ── Deal Alerts ──
+  dealList: { paddingLeft: ThreadlySpacing.screenPadding, paddingRight: 8, gap: 12, marginBottom: 28 },
+  dealCard: {
+    width: 140,
     backgroundColor: ThreadlyColors.charcoal,
     borderRadius: ThreadlyRadius.xl,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
+    borderWidth: 1, borderColor: ThreadlyColors.charcoalLight,
   },
-  outfitCardVisual: {
-    height: 160,
-    position: "relative",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  outfitSwatches: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-  },
-  outfitSwatch: {
-    borderRadius: 100,
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.08)",
-  },
-  outfitTag: {
-    position: "absolute",
-    top: 10,
-    left: 10,
-    backgroundColor: "rgba(201,149,106,0.15)",
-    borderWidth: 1,
-    borderColor: "rgba(201,149,106,0.3)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: ThreadlyRadius.pill,
-  },
-  outfitTagText: {
-    fontSize: 9,
-    fontWeight: "700",
-    color: ThreadlyColors.roseGoldLight,
-    letterSpacing: 1,
-  },
-  outfitMatch: {
-    position: "absolute",
-    bottom: 10,
-    right: 10,
-    backgroundColor: "rgba(10,10,10,0.6)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: ThreadlyRadius.pill,
-  },
-  outfitMatchText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: ThreadlyColors.roseGoldLight,
-  },
-  outfitSaveBtn: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    width: 30,
-    height: 30,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  outfitSaveIcon: {
-    fontSize: 20,
-    color: ThreadlyColors.warmWhiteSubtle,
-  },
-  outfitCardInfo: {
-    padding: 14,
-  },
-  outfitTitle: {
-    fontSize: 15,
-    fontFamily: "Georgia",
-    color: ThreadlyColors.warmWhite,
-    marginBottom: 3,
-  },
-  outfitOccasion: {
-    fontSize: 11,
-    color: ThreadlyColors.warmWhiteSubtle,
-    marginBottom: 10,
-  },
-  outfitCardFooter: {},
-  outfitOwned: {
-    fontSize: 11,
-    color: ThreadlyColors.success,
-    fontWeight: "600",
-  },
-  outfitMissing: {
-    fontSize: 11,
-    color: ThreadlyColors.roseGoldLight,
-    fontWeight: "600",
-  },
-
-  // Deals
-  dealsList: {
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    gap: 10,
-    marginBottom: 28,
-  },
-  dealRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: ThreadlyColors.charcoal,
-    borderRadius: ThreadlyRadius.lg,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-  },
-  dealColorBar: {
-    width: 5,
-    alignSelf: "stretch",
-  },
-  dealInfo: {
-    flex: 1,
-    padding: 14,
-  },
-  dealBrand: {
-    fontSize: 9,
-    fontWeight: "700",
-    color: ThreadlyColors.warmWhiteSubtle,
-    letterSpacing: 1.5,
-    marginBottom: 3,
-  },
-  dealItem: {
-    fontSize: 14,
-    color: ThreadlyColors.warmWhite,
-    fontWeight: "600",
-    marginBottom: 5,
-  },
-  dealPricing: { flexDirection: "row", alignItems: "center", gap: 8 },
-  dealOriginal: {
-    fontSize: 12,
-    color: ThreadlyColors.warmWhiteSubtle,
-    textDecorationLine: "line-through",
-  },
-  dealSale: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: ThreadlyColors.success,
-  },
+  dealImageWrap: { height: 140, position: "relative" },
+  dealImage: { width: "100%", height: "100%" },
   dealOffBadge: {
-    marginRight: 14,
-    backgroundColor: "rgba(74,155,111,0.15)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: ThreadlyRadius.md,
-    borderWidth: 1,
-    borderColor: "rgba(74,155,111,0.25)",
+    position: "absolute", top: 8, right: 8,
+    backgroundColor: ThreadlyColors.success,
+    paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: ThreadlyRadius.pill,
   },
-  dealOffText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: ThreadlyColors.success,
-  },
+  dealOffText: { fontSize: 10, fontWeight: "700", color: "#fff" },
+  dealInfo: { padding: 10 },
+  dealBrand: { fontSize: 7, fontWeight: "700", color: ThreadlyColors.warmWhiteSubtle, letterSpacing: 1.5, marginBottom: 3 },
+  dealItem: { fontSize: 12, color: ThreadlyColors.warmWhite, fontWeight: "600", marginBottom: 5 },
+  dealPricing: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
+  dealOriginal: { fontSize: 10, color: ThreadlyColors.warmWhiteSubtle, textDecorationLine: "line-through" },
+  dealSale: { fontSize: 14, fontFamily: "Georgia", color: ThreadlyColors.success },
+  dealExpiry: { fontSize: 9, color: ThreadlyColors.warmWhiteSubtle },
 
-  // Trends
-  trendGrid: {
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginBottom: 28,
-  },
-  trendCard: {
-    width: (width - ThreadlySpacing.screenPadding * 2 - 10) / 2,
-    backgroundColor: ThreadlyColors.charcoal,
-    borderRadius: ThreadlyRadius.lg,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-    overflow: "hidden",
-  },
-  trendCardInner: { padding: 14 },
-  trendHeatRow: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 6 },
-  trendHeatDot: { width: 6, height: 6, borderRadius: 3 },
-  trendHeat: { fontSize: 11, fontWeight: "700", letterSpacing: 0.5 },
-  trendLabel: {
-    fontSize: 14,
-    fontFamily: "Georgia",
-    color: ThreadlyColors.warmWhite,
-    marginBottom: 4,
-  },
-  trendDesc: {
-    fontSize: 11,
-    color: ThreadlyColors.warmWhiteSubtle,
-    lineHeight: 15,
-  },
-
-  // Intelligence Banner
-  intelligenceBanner: {
+  // ── AI Insight ──
+  insightCard: {
     marginHorizontal: ThreadlySpacing.screenPadding,
     borderRadius: ThreadlyRadius.xl,
     overflow: "hidden",
-    padding: 22,
-    borderWidth: 1,
-    borderColor: "rgba(201,149,106,0.2)",
+    borderWidth: 1, borderColor: "rgba(201,149,106,0.2)",
+    padding: 20,
   },
-  intelligenceBannerBorder: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: ThreadlyColors.roseGold,
-    opacity: 0.4,
+  insightBorder: { position: "absolute", top: 0, left: 0, right: 0, height: 1, backgroundColor: ThreadlyColors.roseGold, opacity: 0.4 },
+  insightIcon: { fontSize: 18, color: ThreadlyColors.roseGold, marginBottom: 8 },
+  insightTitle: { fontSize: 14, fontFamily: "Georgia", color: ThreadlyColors.warmWhite, marginBottom: 10 },
+  insightText: {
+    fontSize: 13, color: ThreadlyColors.warmWhiteSubtle,
+    lineHeight: 20, fontStyle: "italic", marginBottom: 14,
   },
-  intelligenceLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: ThreadlyColors.roseGold,
-    letterSpacing: 2,
-    marginBottom: 10,
+  insightBtn: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 14, paddingVertical: 8,
+    borderRadius: ThreadlyRadius.pill,
+    borderWidth: 1, borderColor: "rgba(201,149,106,0.3)",
   },
-  intelligenceTitle: {
-    fontSize: 18,
-    fontFamily: "Georgia",
-    color: ThreadlyColors.warmWhite,
-    lineHeight: 26,
-    marginBottom: 14,
-    fontStyle: "italic",
-  },
-  intelligenceCta: {
-    fontSize: 13,
-    color: ThreadlyColors.roseGoldLight,
-    fontWeight: "600",
-  },
+  insightBtnText: { fontSize: 12, color: ThreadlyColors.roseGoldLight, fontWeight: "600" },
 });

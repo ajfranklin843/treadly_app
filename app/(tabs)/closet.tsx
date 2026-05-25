@@ -1,8 +1,6 @@
 /**
  * Threadly — Closet
- * Digital wardrobe with AI intelligence. Not just an organizer —
- * a living style data layer that powers every recommendation.
- * Emotional outcome: "My closet finally makes sense."
+ * Digital wardrobe with AI intelligence.
  */
 
 import { useState } from "react";
@@ -13,6 +11,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  Image,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
@@ -20,54 +19,52 @@ import {
   ThreadlyColors,
   ThreadlySpacing,
   ThreadlyRadius,
-  ThreadlyShadow,
 } from "@/constants/threadly";
 
 const { width } = Dimensions.get("window");
-const ITEM_W = (width - ThreadlySpacing.screenPadding * 2 - 12) / 3;
+const GRID_GAP = 10;
+const GRID_COLS = 3;
+const ITEM_W = (width - ThreadlySpacing.screenPadding * 2 - GRID_GAP * (GRID_COLS - 1)) / GRID_COLS;
 
-const CATEGORIES = ["All", "Tops", "Bottoms", "Dresses", "Shoes", "Bags", "Accessories"];
+const CATEGORIES = ["All", "Tops", "Bottoms", "Dresses", "Outerwear", "Shoes", "Bags", "Accessories"];
 
-const WARDROBE_ITEMS = [
-  { id: "1", name: "Camel Blazer", category: "Tops", color: "#C4A882", brand: "Zara", worn: 12, cost: 89 },
-  { id: "2", name: "Black Tee", category: "Tops", color: "#1A1A1A", brand: "Everlane", worn: 28, cost: 35 },
-  { id: "3", name: "White Shirt", category: "Tops", color: "#FAF7F4", brand: "Uniqlo", worn: 18, cost: 30 },
-  { id: "4", name: "Silk Blouse", category: "Tops", color: "#E8C4B4", brand: "Mango", worn: 3, cost: 65 },
-  { id: "5", name: "Wide-Leg Trousers", category: "Bottoms", color: "#2C2416", brand: "Arket", worn: 15, cost: 95 },
-  { id: "6", name: "Straight Jeans", category: "Bottoms", color: "#4A4A5A", brand: "Levi's", worn: 22, cost: 80 },
-  { id: "7", name: "Mini Skirt", category: "Bottoms", color: "#C9956A", brand: "Zara", worn: 2, cost: 45 },
-  { id: "8", name: "Midi Dress", category: "Dresses", color: "#8B7355", brand: "& Other Stories", worn: 8, cost: 120 },
-  { id: "9", name: "Black Dress", category: "Dresses", color: "#0A0A0A", brand: "COS", worn: 14, cost: 110 },
-  { id: "10", name: "Heeled Mules", category: "Shoes", color: "#C4A882", brand: "Steve Madden", worn: 10, cost: 75 },
-  { id: "11", name: "White Sneakers", category: "Shoes", color: "#F5F5F0", brand: "Adidas", worn: 30, cost: 90 },
-  { id: "12", name: "Mini Bag", category: "Bags", color: "#C9956A", brand: "Coach", worn: 20, cost: 180 },
-  { id: "13", name: "Tote Bag", category: "Bags", color: "#8B7355", brand: "Cuyana", worn: 25, cost: 150 },
-  { id: "14", name: "Gold Hoops", category: "Accessories", color: "#C9956A", brand: "Mejuri", worn: 35, cost: 55 },
-  { id: "15", name: "Silk Scarf", category: "Accessories", color: "#E8B89A", brand: "Zara", worn: 2, cost: 25 },
+const CLOSET_ITEMS = [
+  { id: "1", name: "Camel Blazer", cat: "Outerwear", worn: 12, image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=300&q=80" },
+  { id: "2", name: "Black Tee", cat: "Tops", worn: 28, image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&q=80" },
+  { id: "3", name: "Wide-Leg Trousers", cat: "Bottoms", worn: 9, image: "https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=300&q=80" },
+  { id: "4", name: "White Linen Shirt", cat: "Tops", worn: 15, image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=300&q=80" },
+  { id: "5", name: "Straight-Leg Jeans", cat: "Bottoms", worn: 22, image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&q=80" },
+  { id: "6", name: "Midi Slip Dress", cat: "Dresses", worn: 6, image: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=300&q=80" },
+  { id: "7", name: "White Sneakers", cat: "Shoes", worn: 31, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&q=80" },
+  { id: "8", name: "Leather Tote", cat: "Bags", worn: 18, image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=300&q=80" },
+  { id: "9", name: "Trench Coat", cat: "Outerwear", worn: 7, image: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=300&q=80" },
+  { id: "10", name: "Silk Blouse", cat: "Tops", worn: 5, image: "https://images.unsplash.com/photo-1564257631407-4deb1f99d992?w=300&q=80" },
+  { id: "11", name: "Mini Skirt", cat: "Bottoms", worn: 4, image: "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=300&q=80" },
+  { id: "12", name: "Gold Hoops", cat: "Accessories", worn: 42, image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=300&q=80" },
 ];
 
-const ANALYSIS = {
-  totalItems: 47,
-  totalValue: 3240,
-  costPerWear: 8.2,
-  topColors: [
-    { name: "Neutral", hex: "#C4A882", pct: 38 },
-    { name: "Black", hex: "#1A1A1A", pct: 28 },
-    { name: "White", hex: "#FAF7F4", pct: 18 },
-    { name: "Blush", hex: "#E8C4B4", pct: 10 },
-    { name: "Denim", hex: "#4A4A5A", pct: 6 },
-  ],
-  styleProfile: ["Minimal", "Classic", "Elevated Casual"],
-  topBrands: ["Zara", "Everlane", "Uniqlo", "Mango", "Levi's"],
-  underused: 12,
-};
+const COLOR_DNA = [
+  { hex: "#1A1A1A", label: "Black", pct: 38 },
+  { hex: "#C4A882", label: "Camel", pct: 22 },
+  { hex: "#FAF7F4", label: "White", pct: 18 },
+  { hex: "#8B7355", label: "Tan", pct: 12 },
+  { hex: "#C9956A", label: "Rose", pct: 10 },
+];
+
+const BRAND_BREAKDOWN = [
+  { brand: "Zara", count: 14, pct: 35 },
+  { brand: "Mango", count: 8, pct: 20 },
+  { brand: "H&M", count: 6, pct: 15 },
+  { brand: "Uniqlo", count: 5, pct: 12 },
+  { brand: "Other", count: 7, pct: 18 },
+];
 
 export default function ClosetScreen() {
   const [activeCategory, setActiveCategory] = useState("All");
 
   const filtered = activeCategory === "All"
-    ? WARDROBE_ITEMS
-    : WARDROBE_ITEMS.filter(i => i.category === activeCategory);
+    ? CLOSET_ITEMS
+    : CLOSET_ITEMS.filter(i => i.cat === activeCategory);
 
   return (
     <ScreenContainer containerClassName="bg-[#0A0A0A]" edges={["top", "left", "right"]}>
@@ -79,89 +76,88 @@ export default function ClosetScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.eyebrow}>YOUR WARDROBE</Text>
-            <Text style={styles.headline}>My Closet</Text>
+            <Text style={styles.headerLabel}>YOUR CLOSET</Text>
+            <Text style={styles.headerTitle}>Wardrobe Intelligence</Text>
           </View>
-          <TouchableOpacity style={styles.scanBtn} activeOpacity={0.85}>
-            <LinearGradient
-              colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
-              style={styles.scanBtnGradient}
-            >
-              <Text style={styles.scanBtnText}>⊕  Scan Item</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+          <View style={styles.headerStats}>
+            <Text style={styles.headerStatNum}>{CLOSET_ITEMS.length}</Text>
+            <Text style={styles.headerStatLabel}>items</Text>
+          </View>
         </View>
 
-        {/* Stats Strip */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.statsStrip}
-        >
-          {[
-            { value: ANALYSIS.totalItems.toString(), label: "Items" },
-            { value: `$${ANALYSIS.totalValue.toLocaleString()}`, label: "Total Value" },
-            { value: `$${ANALYSIS.costPerWear}`, label: "Cost/Wear" },
-            { value: ANALYSIS.underused.toString(), label: "Underused" },
-          ].map((stat, i) => (
-            <View key={i} style={styles.statChip}>
-              <Text style={styles.statChipValue}>{stat.value}</Text>
-              <Text style={styles.statChipLabel}>{stat.label}</Text>
+        {/* Scan CTA */}
+        <TouchableOpacity style={styles.scanCard} activeOpacity={0.88}>
+          <LinearGradient colors={["#1A0E08", "#2A1A10"]} style={StyleSheet.absoluteFill} />
+          <View style={styles.scanCardBorder} />
+          <View style={styles.scanCardContent}>
+            <View style={styles.scanIcon}>
+              <Text style={styles.scanIconText}>+</Text>
             </View>
-          ))}
-        </ScrollView>
+            <View style={styles.scanCardText}>
+              <Text style={styles.scanCardTitle}>Scan a New Item</Text>
+              <Text style={styles.scanCardSub}>Point your camera at any garment</Text>
+            </View>
+            <Text style={styles.scanCardArrow}>→</Text>
+          </View>
+        </TouchableOpacity>
 
-        {/* AI Intelligence Card */}
-        <View style={styles.intelligenceCard}>
+        {/* AI Analysis */}
+        <View style={styles.analysisCard}>
           <LinearGradient colors={["#1A1410", "#1A1A1A"]} style={StyleSheet.absoluteFill} />
-          <View style={styles.intelligenceCardBorder} />
+          <View style={styles.analysisCardBorder} />
+          <Text style={styles.analysisLabel}>CLOSET ANALYSIS</Text>
+          <Text style={styles.analysisTitle}>Your Wardrobe DNA</Text>
 
-          <Text style={styles.intelligenceEyebrow}>✦ CLOSET INTELLIGENCE</Text>
+          <View style={styles.styleProfileRow}>
+            <Text style={styles.styleProfileKey}>Style Profile</Text>
+            <View style={styles.styleProfileTags}>
+              {["Classic", "Minimal", "Feminine"].map(tag => (
+                <View key={tag} style={styles.styleTag}>
+                  <Text style={styles.styleTagText}>{tag}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
 
-          {/* Color DNA */}
-          <Text style={styles.intelligenceLabel}>Your Color DNA</Text>
-          <View style={styles.colorBars}>
-            {ANALYSIS.topColors.map((c, i) => (
-              <View key={i} style={styles.colorBarItem}>
-                <View style={[styles.colorBarFill, {
-                  backgroundColor: c.hex,
-                  height: 36 + c.pct * 0.7,
-                }]} />
-                <Text style={styles.colorBarPct}>{c.pct}%</Text>
-                <Text style={styles.colorBarName}>{c.name}</Text>
+          <View style={styles.matchRow}>
+            {[
+              { label: "Work", score: 98 },
+              { label: "Date Night", score: 92 },
+              { label: "Weekend", score: 87 },
+            ].map(m => (
+              <View key={m.label} style={styles.matchCard}>
+                <Text style={styles.matchScore}>{m.score}%</Text>
+                <Text style={styles.matchLabel}>{m.label}</Text>
               </View>
             ))}
           </View>
 
-          {/* Style Profile */}
-          <Text style={[styles.intelligenceLabel, { marginTop: 18 }]}>Style Profile</Text>
-          <View style={styles.tagRow}>
-            {ANALYSIS.styleProfile.map((tag, i) => (
-              <View key={i} style={styles.roseTag}>
-                <Text style={styles.roseTagText}>{tag}</Text>
+          <Text style={styles.colorDnaLabel}>Color DNA</Text>
+          <View style={styles.colorDnaRow}>
+            {COLOR_DNA.map(c => (
+              <View key={c.hex} style={styles.colorDnaItem}>
+                <View style={[
+                  styles.colorDnaDot,
+                  { backgroundColor: c.hex },
+                  c.hex === "#FAF7F4" ? { borderWidth: 1, borderColor: ThreadlyColors.charcoalLight } : {},
+                ]} />
+                <Text style={styles.colorDnaName}>{c.label}</Text>
+                <Text style={styles.colorDnaPct}>{c.pct}%</Text>
               </View>
             ))}
           </View>
 
-          {/* Top Brands */}
-          <Text style={[styles.intelligenceLabel, { marginTop: 14 }]}>Your Brands</Text>
-          <View style={styles.tagRow}>
-            {ANALYSIS.topBrands.map((brand, i) => (
-              <View key={i} style={styles.grayTag}>
-                <Text style={styles.grayTagText}>{brand}</Text>
+          <Text style={styles.brandLabel}>Top Brands</Text>
+          <View style={styles.brandList}>
+            {BRAND_BREAKDOWN.map(b => (
+              <View key={b.brand} style={styles.brandRow}>
+                <Text style={styles.brandName}>{b.brand}</Text>
+                <View style={styles.brandBarWrap}>
+                  <View style={[styles.brandBar, { width: `${b.pct}%` }]} />
+                </View>
+                <Text style={styles.brandCount}>{b.count}</Text>
               </View>
             ))}
-          </View>
-
-          {/* Insight */}
-          <View style={styles.insightRow}>
-            <Text style={styles.insightIcon}>✦</Text>
-            <Text style={styles.insightText}>
-              {ANALYSIS.underused} items worn less than 3 times.{" "}
-              <Text style={styles.insightHighlight}>
-                Your AI can build new looks from them today.
-              </Text>
-            </Text>
           </View>
         </View>
 
@@ -169,7 +165,8 @@ export default function ClosetScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryStrip}
+          contentContainerStyle={styles.categoryList}
+          style={styles.categoryScroll}
         >
           {CATEGORIES.map(cat => (
             <TouchableOpacity
@@ -178,323 +175,172 @@ export default function ClosetScreen() {
               onPress={() => setActiveCategory(cat)}
               activeOpacity={0.7}
             >
-              <Text style={[
-                styles.categoryChipText,
-                activeCategory === cat && styles.categoryChipTextActive,
-              ]}>
+              <Text style={[styles.categoryChipText, activeCategory === cat && styles.categoryChipTextActive]}>
                 {cat}
               </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
 
-        {/* Grid Header */}
-        <View style={styles.gridHeader}>
-          <Text style={styles.gridCount}>{filtered.length} items</Text>
-          <TouchableOpacity activeOpacity={0.7}>
-            <Text style={styles.sortBtn}>Sort ↕</Text>
-          </TouchableOpacity>
+        {/* Items Grid */}
+        <View style={styles.itemGrid}>
+          {filtered.map(item => (
+            <TouchableOpacity key={item.id} style={[styles.itemCard, { width: ITEM_W }]} activeOpacity={0.85}>
+              <View style={styles.itemImageWrap}>
+                <Image source={{ uri: item.image }} style={styles.itemImage} resizeMode="cover" />
+                <View style={styles.itemWornBadge}>
+                  <Text style={styles.itemWornText}>{item.worn}x</Text>
+                </View>
+              </View>
+              <View style={styles.itemInfo}>
+                <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+                <Text style={styles.itemCat}>{item.cat}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* Wardrobe Grid */}
-        <View style={styles.grid}>
-          {filtered.map(item => {
-            const cpw = (item.cost / Math.max(item.worn, 1)).toFixed(1);
-            const isUnderused = item.worn < 4;
-            return (
-              <TouchableOpacity key={item.id} style={styles.wardrobeItem} activeOpacity={0.85}>
-                <View style={[styles.wardrobeItemSwatch, { backgroundColor: item.color }]}>
-                  {isUnderused && <View style={styles.underusedDot} />}
-                </View>
-                <View style={styles.wardrobeItemInfo}>
-                  <Text style={styles.wardrobeItemName} numberOfLines={1}>{item.name}</Text>
-                  <Text style={styles.wardrobeItemBrand} numberOfLines={1}>{item.brand}</Text>
-                  <Text style={styles.wardrobeItemCpw}>${cpw}/wear</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {/* Scan CTA */}
-        <TouchableOpacity style={styles.bigScanCta} activeOpacity={0.85}>
-          <LinearGradient colors={["#1A1A1A", "#252525"]} style={StyleSheet.absoluteFill} />
-          <View style={styles.bigScanCtaBorder} />
-          <Text style={styles.bigScanIcon}>◈</Text>
-          <Text style={styles.bigScanTitle}>Scan your closet</Text>
-          <Text style={styles.bigScanSub}>
-            Point your camera at any item.{"\n"}AI identifies brand, category & color instantly.
-          </Text>
-          <View style={styles.bigScanBadge}>
-            <Text style={styles.bigScanBadgeText}>Tap to start</Text>
-          </View>
-        </TouchableOpacity>
-
-        <View style={{ height: 32 }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 24 },
-
+  scroll: { flex: 1, backgroundColor: ThreadlyColors.black },
+  scrollContent: { paddingBottom: 32 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
     paddingHorizontal: ThreadlySpacing.screenPadding,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingTop: 24,
+    paddingBottom: 20,
   },
-  eyebrow: {
-    fontSize: 10,
+  headerLabel: {
+    fontSize: 9,
     fontWeight: "700",
     color: ThreadlyColors.roseGold,
     letterSpacing: 2,
     marginBottom: 4,
   },
-  headline: {
-    fontSize: 28,
-    fontFamily: "Georgia",
-    color: ThreadlyColors.warmWhite,
-  },
-  scanBtn: { borderRadius: ThreadlyRadius.pill, overflow: "hidden", ...ThreadlyShadow.roseGlow },
-  scanBtnGradient: { paddingHorizontal: 16, paddingVertical: 10 },
-  scanBtnText: { fontSize: 13, fontWeight: "700", color: ThreadlyColors.black },
-
-  statsStrip: {
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    gap: 10,
-    marginBottom: 20,
-  },
-  statChip: {
+  headerTitle: { fontSize: 26, fontFamily: "Georgia", color: ThreadlyColors.warmWhite },
+  headerStats: {
+    alignItems: "center",
     backgroundColor: ThreadlyColors.charcoal,
     borderRadius: ThreadlyRadius.lg,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    alignItems: "center",
+    paddingVertical: 10,
     borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-    minWidth: 80,
+    borderColor: "rgba(201,149,106,0.2)",
   },
-  statChipValue: {
-    fontSize: 18,
-    fontFamily: "Georgia",
-    color: ThreadlyColors.roseGoldLight,
-    marginBottom: 2,
-  },
-  statChipLabel: {
-    fontSize: 10,
-    color: ThreadlyColors.warmWhiteSubtle,
-    letterSpacing: 0.5,
-  },
-
-  intelligenceCard: {
+  headerStatNum: { fontSize: 22, fontFamily: "Georgia", color: ThreadlyColors.roseGoldLight, lineHeight: 24 },
+  headerStatLabel: { fontSize: 9, color: ThreadlyColors.warmWhiteSubtle, letterSpacing: 1 },
+  scanCard: {
     marginHorizontal: ThreadlySpacing.screenPadding,
     borderRadius: ThreadlyRadius.xl,
     overflow: "hidden",
-    padding: 20,
     borderWidth: 1,
     borderColor: "rgba(201,149,106,0.2)",
     marginBottom: 20,
   },
-  intelligenceCardBorder: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 2,
-    backgroundColor: ThreadlyColors.roseGold,
-    opacity: 0.4,
+  scanCardBorder: {
+    position: "absolute", top: 0, left: 0, right: 0, height: 1,
+    backgroundColor: ThreadlyColors.roseGold, opacity: 0.4,
   },
-  intelligenceEyebrow: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: ThreadlyColors.roseGold,
-    letterSpacing: 2,
-    marginBottom: 16,
-  },
-  intelligenceLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: ThreadlyColors.warmWhiteSubtle,
-    letterSpacing: 1,
-    marginBottom: 10,
-  },
-
-  colorBars: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 8,
-    height: 76,
-  },
-  colorBarItem: { alignItems: "center", gap: 4, flex: 1 },
-  colorBarFill: {
-    width: "100%",
-    borderRadius: ThreadlyRadius.sm,
-    minHeight: 8,
-  },
-  colorBarPct: { fontSize: 10, color: ThreadlyColors.warmWhiteSubtle },
-  colorBarName: { fontSize: 8, color: ThreadlyColors.warmWhiteSubtle2, textAlign: "center" },
-
-  tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  roseTag: {
-    backgroundColor: "rgba(201,149,106,0.12)",
-    borderRadius: ThreadlyRadius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderWidth: 1,
-    borderColor: "rgba(201,149,106,0.25)",
-  },
-  roseTagText: { fontSize: 12, color: ThreadlyColors.roseGoldLight, fontWeight: "600" },
-  grayTag: {
-    backgroundColor: ThreadlyColors.charcoalMid,
-    borderRadius: ThreadlyRadius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-  },
-  grayTagText: { fontSize: 12, color: ThreadlyColors.warmWhiteMuted },
-
-  insightRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    backgroundColor: "rgba(201,149,106,0.06)",
-    borderRadius: ThreadlyRadius.lg,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "rgba(201,149,106,0.15)",
-    marginTop: 16,
-  },
-  insightIcon: { fontSize: 12, color: ThreadlyColors.roseGold, marginTop: 2 },
-  insightText: { flex: 1, fontSize: 13, color: ThreadlyColors.warmWhiteMuted, lineHeight: 19 },
-  insightHighlight: { color: ThreadlyColors.roseGoldLight, fontWeight: "600" },
-
-  categoryStrip: {
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    gap: 8,
-    marginBottom: 16,
-  },
-  categoryChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: ThreadlyRadius.pill,
-    backgroundColor: ThreadlyColors.charcoal,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-  },
-  categoryChipActive: {
+  scanCardContent: { flexDirection: "row", alignItems: "center", padding: 18, gap: 14 },
+  scanIcon: {
+    width: 44, height: 44, borderRadius: 22,
     backgroundColor: "rgba(201,149,106,0.15)",
-    borderColor: ThreadlyColors.roseGold,
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 1, borderColor: "rgba(201,149,106,0.3)",
   },
-  categoryChipText: { fontSize: 13, color: ThreadlyColors.warmWhiteSubtle, fontWeight: "600" },
-  categoryChipTextActive: { color: ThreadlyColors.roseGoldLight },
-
-  gridHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    marginBottom: 12,
-  },
-  gridCount: { fontSize: 12, color: ThreadlyColors.warmWhiteSubtle },
-  sortBtn: { fontSize: 12, color: ThreadlyColors.roseGold, fontWeight: "600" },
-
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    gap: 12,
-    marginBottom: 24,
-  },
-  wardrobeItem: {
-    width: ITEM_W,
-    backgroundColor: ThreadlyColors.charcoal,
-    borderRadius: ThreadlyRadius.lg,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-  },
-  wardrobeItemSwatch: {
-    height: ITEM_W,
-    position: "relative",
-  },
-  underusedDot: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: ThreadlyColors.roseGold,
-    borderWidth: 1.5,
-    borderColor: ThreadlyColors.charcoal,
-  },
-  wardrobeItemInfo: { padding: 10 },
-  wardrobeItemName: {
-    fontSize: 12,
-    color: ThreadlyColors.warmWhite,
-    fontWeight: "600",
-    marginBottom: 2,
-  },
-  wardrobeItemBrand: {
-    fontSize: 10,
-    color: ThreadlyColors.warmWhiteSubtle,
-    marginBottom: 4,
-  },
-  wardrobeItemCpw: {
-    fontSize: 10,
-    color: ThreadlyColors.roseGoldDim,
-    fontWeight: "600",
-  },
-
-  bigScanCta: {
+  scanIconText: { fontSize: 24, color: ThreadlyColors.roseGold, fontWeight: "300" },
+  scanCardText: { flex: 1 },
+  scanCardTitle: { fontSize: 15, fontFamily: "Georgia", color: ThreadlyColors.warmWhite, marginBottom: 3 },
+  scanCardSub: { fontSize: 12, color: ThreadlyColors.warmWhiteSubtle },
+  scanCardArrow: { fontSize: 18, color: ThreadlyColors.warmWhiteMuted },
+  analysisCard: {
     marginHorizontal: ThreadlySpacing.screenPadding,
     borderRadius: ThreadlyRadius.xl,
     overflow: "hidden",
-    padding: 24,
-    alignItems: "center",
     borderWidth: 1,
     borderColor: "rgba(201,149,106,0.2)",
+    padding: 20,
+    marginBottom: 24,
   },
-  bigScanCtaBorder: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: ThreadlyColors.roseGold,
-    opacity: 0.3,
+  analysisCardBorder: {
+    position: "absolute", top: 0, left: 0, right: 0, height: 1,
+    backgroundColor: ThreadlyColors.roseGold, opacity: 0.4,
   },
-  bigScanIcon: { fontSize: 32, color: ThreadlyColors.roseGold, marginBottom: 12 },
-  bigScanTitle: {
-    fontSize: 18,
-    fontFamily: "Georgia",
-    color: ThreadlyColors.warmWhite,
-    marginBottom: 8,
-  },
-  bigScanSub: {
-    fontSize: 13,
-    color: ThreadlyColors.warmWhiteSubtle,
-    textAlign: "center",
-    lineHeight: 19,
-    marginBottom: 16,
-  },
-  bigScanBadge: {
-    backgroundColor: "rgba(201,149,106,0.15)",
-    paddingHorizontal: 20,
-    paddingVertical: 8,
+  analysisLabel: { fontSize: 9, fontWeight: "700", color: ThreadlyColors.roseGold, letterSpacing: 2, marginBottom: 6 },
+  analysisTitle: { fontSize: 20, fontFamily: "Georgia", color: ThreadlyColors.warmWhite, marginBottom: 16 },
+  styleProfileRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" },
+  styleProfileKey: { fontSize: 11, color: ThreadlyColors.warmWhiteSubtle, fontWeight: "600" },
+  styleProfileTags: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
+  styleTag: {
+    backgroundColor: "rgba(201,149,106,0.12)",
+    borderWidth: 1, borderColor: "rgba(201,149,106,0.3)",
+    paddingHorizontal: 10, paddingVertical: 4,
     borderRadius: ThreadlyRadius.pill,
-    borderWidth: 1,
-    borderColor: "rgba(201,149,106,0.3)",
   },
-  bigScanBadgeText: {
-    fontSize: 13,
-    color: ThreadlyColors.roseGoldLight,
-    fontWeight: "600",
+  styleTagText: { fontSize: 11, color: ThreadlyColors.roseGoldLight, fontWeight: "600" },
+  matchRow: { flexDirection: "row", gap: 8, marginBottom: 20 },
+  matchCard: {
+    flex: 1,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: ThreadlyRadius.md,
+    padding: 12, alignItems: "center",
+    borderWidth: 1, borderColor: ThreadlyColors.charcoalLight,
   },
+  matchScore: { fontSize: 18, fontFamily: "Georgia", color: ThreadlyColors.roseGoldLight, marginBottom: 3 },
+  matchLabel: { fontSize: 9, color: ThreadlyColors.warmWhiteSubtle, letterSpacing: 0.5, textAlign: "center" },
+  colorDnaLabel: { fontSize: 10, fontWeight: "700", color: ThreadlyColors.warmWhiteSubtle, letterSpacing: 1.5, marginBottom: 10 },
+  colorDnaRow: { flexDirection: "row", gap: 8, marginBottom: 20 },
+  colorDnaItem: { alignItems: "center", gap: 4 },
+  colorDnaDot: { width: 32, height: 32, borderRadius: 16 },
+  colorDnaName: { fontSize: 9, color: ThreadlyColors.warmWhiteSubtle },
+  colorDnaPct: { fontSize: 10, fontWeight: "700", color: ThreadlyColors.warmWhiteMuted },
+  brandLabel: { fontSize: 10, fontWeight: "700", color: ThreadlyColors.warmWhiteSubtle, letterSpacing: 1.5, marginBottom: 10 },
+  brandList: { gap: 8 },
+  brandRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  brandName: { fontSize: 12, color: ThreadlyColors.warmWhiteMuted, width: 52 },
+  brandBarWrap: { flex: 1, height: 4, backgroundColor: ThreadlyColors.charcoalLight, borderRadius: 2, overflow: "hidden" },
+  brandBar: { height: "100%", backgroundColor: ThreadlyColors.roseGold, borderRadius: 2 },
+  brandCount: { fontSize: 11, color: ThreadlyColors.warmWhiteSubtle, width: 20, textAlign: "right" },
+  categoryScroll: { marginBottom: 16 },
+  categoryList: { paddingHorizontal: ThreadlySpacing.screenPadding, gap: 8 },
+  categoryChip: {
+    paddingHorizontal: 16, paddingVertical: 8,
+    borderRadius: ThreadlyRadius.pill,
+    backgroundColor: ThreadlyColors.charcoal,
+    borderWidth: 1, borderColor: ThreadlyColors.charcoalLight,
+  },
+  categoryChipActive: { backgroundColor: "rgba(201,149,106,0.15)", borderColor: ThreadlyColors.roseGold },
+  categoryChipText: { fontSize: 12, color: ThreadlyColors.warmWhiteSubtle, fontWeight: "600" },
+  categoryChipTextActive: { color: ThreadlyColors.roseGoldLight },
+  itemGrid: {
+    paddingHorizontal: ThreadlySpacing.screenPadding,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: GRID_GAP,
+  },
+  itemCard: {
+    backgroundColor: ThreadlyColors.charcoal,
+    borderRadius: ThreadlyRadius.lg,
+    overflow: "hidden",
+    borderWidth: 1, borderColor: ThreadlyColors.charcoalLight,
+  },
+  itemImageWrap: { height: ITEM_W, position: "relative" },
+  itemImage: { width: "100%", height: "100%" },
+  itemWornBadge: {
+    position: "absolute", top: 6, right: 6,
+    backgroundColor: "rgba(10,10,10,0.7)",
+    paddingHorizontal: 6, paddingVertical: 2,
+    borderRadius: ThreadlyRadius.pill,
+  },
+  itemWornText: { fontSize: 9, fontWeight: "700", color: ThreadlyColors.warmWhiteSubtle },
+  itemInfo: { padding: 8 },
+  itemName: { fontSize: 11, color: ThreadlyColors.warmWhite, fontWeight: "600", marginBottom: 2 },
+  itemCat: { fontSize: 9, color: ThreadlyColors.warmWhiteSubtle, letterSpacing: 0.5 },
 });

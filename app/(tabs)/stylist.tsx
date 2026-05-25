@@ -1,8 +1,6 @@
 /**
- * Threadly — AI Stylist
- * Conversational AI stylist. Ask anything about your style, get outfit builds,
- * shopping guidance, and trend advice. Feels like texting your most stylish friend.
- * Emotional outcome: "She actually gets me."
+ * Threadly — Stylist
+ * AI conversational stylist. Emotional outcome: "Like having a stylist who understands you."
  */
 
 import { useState, useRef } from "react";
@@ -15,6 +13,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Image,
   FlatList,
   Dimensions,
 } from "react-native";
@@ -24,20 +23,9 @@ import {
   ThreadlyColors,
   ThreadlySpacing,
   ThreadlyRadius,
-  ThreadlyShadow,
 } from "@/constants/threadly";
 
 const { width } = Dimensions.get("window");
-
-type RecoCard = {
-  id: string;
-  brand: string;
-  item: string;
-  price: number;
-  salePrice?: number;
-  color: string;
-  tag?: string;
-};
 
 type Message = {
   id: string;
@@ -47,230 +35,182 @@ type Message = {
   timestamp: string;
 };
 
-const SUGGESTION_PROMPTS = [
-  "Build me a look for a rooftop dinner",
-  "What's trending in quiet luxury?",
-  "Find a blazer under $80",
-  "Style my camel coat 3 ways",
-  "What am I missing in my closet?",
-  "Outfit for a first date",
-];
+type RecoCard = {
+  id: string;
+  brand: string;
+  item: string;
+  price: number;
+  image: string;
+};
 
 const INITIAL_MESSAGES: Message[] = [
   {
-    id: "0",
+    id: "1",
     role: "stylist",
-    text: "Hi, I'm your Threadly stylist. I know your closet, your budget, and your vibe.\n\nWhat are we dressing you for today?",
-    timestamp: "Just now",
+    text: "Hi, I'm your Threadly stylist. I've analyzed your wardrobe — you have great bones to work with. What are we dressing you for today?",
+    timestamp: "now",
   },
 ];
 
-const MOCK_RESPONSES: Record<string, Omit<Message, "id">> = {
-  "Build me a look for a rooftop dinner": {
+const SUGGESTION_CHIPS = [
+  "Build me a look from what I own",
+  "I have a rooftop dinner tonight",
+  "Find me deals under $50",
+  "What's trending this week?",
+  "Make me look expensive for less",
+  "Work outfit that still feels like me",
+];
+
+const MOCK_RESPONSES: Record<string, Message> = {
+  default: {
+    id: "r1",
     role: "stylist",
-    text: "Rooftop dinner — elevated but effortless. Here's what I'd build for you:",
+    text: "I love that. Based on your closet, here's what I'd pull together — you already own 80% of this look. The only missing piece is a blazer, and I found one at 46% off.",
     cards: [
-      { id: "c1", brand: "ZARA", item: "Satin Slip Midi Dress", price: 89, salePrice: 54, color: "#C4A882", tag: "You own this" },
-      { id: "c2", brand: "MANGO", item: "Strappy Heeled Sandal", price: 79, salePrice: 49, color: "#8B5E3C" },
-      { id: "c3", brand: "MEJURI", item: "Gold Layered Necklace", price: 95, color: "#C9956A", tag: "Deal found" },
+      { id: "c1", brand: "ZARA", item: "Oversized Blazer", price: 59, image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=300&q=80" },
+      { id: "c2", brand: "YOUR CLOSET", item: "Straight-Leg Jeans", price: 0, image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&q=80" },
+      { id: "c3", brand: "YOUR CLOSET", item: "White Linen Shirt", price: 0, image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=300&q=80" },
     ],
-    timestamp: "Just now",
+    timestamp: "now",
   },
-  "What's trending in quiet luxury?": {
+  rooftop: {
+    id: "r2",
     role: "stylist",
-    text: "Quiet luxury is about elevated basics — nothing loud, everything intentional. Key pieces right now:",
+    text: "Rooftop dinner — I'm thinking elevated but effortless. Your camel blazer is perfect here. Pair it with the midi slip dress from your closet and these heels I found at 42% off.",
     cards: [
-      { id: "c4", brand: "ARKET", item: "Merino Crewneck", price: 85, salePrice: 59, color: "#E8DDD0", tag: "Trending" },
-      { id: "c5", brand: "COS", item: "Wide-Leg Tailored Trousers", price: 110, salePrice: 72, color: "#2C2416" },
-      { id: "c6", brand: "EVERLANE", item: "The Day Glove Flat", price: 145, salePrice: 87, color: "#C4A882", tag: "Best price" },
+      { id: "c4", brand: "YOUR CLOSET", item: "Camel Blazer", price: 0, image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=300&q=80" },
+      { id: "c5", brand: "YOUR CLOSET", item: "Midi Slip Dress", price: 0, image: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=300&q=80" },
+      { id: "c6", brand: "ALDO", item: "Pointed Slingback", price: 55, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&q=80" },
     ],
-    timestamp: "Just now",
+    timestamp: "now",
   },
-  "Find a blazer under $80": {
+  deals: {
+    id: "r3",
     role: "stylist",
-    text: "Found 3 blazers under $80 that match your style profile. The top pick is a near-perfect match:",
+    text: "Under $50 and on-trend? I've got you. These three pieces all match your style profile and are currently on sale. Together they build 4 different looks.",
     cards: [
-      { id: "c7", brand: "H&M", item: "Linen Oversized Blazer", price: 70, salePrice: 42, color: "#E8DDD0", tag: "Best match" },
-      { id: "c8", brand: "ZARA", item: "Structured Blazer", price: 79, salePrice: 55, color: "#1A1A1A" },
-      { id: "c9", brand: "MANGO", item: "Boyfriend Blazer", price: 89, salePrice: 49, color: "#C4A882", tag: "Deal" },
+      { id: "c7", brand: "H&M", item: "Linen Trousers", price: 25, image: "https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=300&q=80" },
+      { id: "c8", brand: "AMAZON", item: "Gold Hoops", price: 14, image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=300&q=80" },
+      { id: "c9", brand: "TARGET", item: "White Sneakers", price: 28, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&q=80" },
     ],
-    timestamp: "Just now",
-  },
-  "Style my camel coat 3 ways": {
-    role: "stylist",
-    text: "Your camel coat is one of your most versatile pieces. Here are 3 complete looks — all using what you already own:",
-    cards: [
-      { id: "c10", brand: "LOOK 1", item: "Camel coat + black turtleneck + straight jeans + loafers", price: 0, color: "#C4A882", tag: "80% owned" },
-      { id: "c11", brand: "LOOK 2", item: "Camel coat + white shirt + midi skirt + ankle boots", price: 0, color: "#E8DDD0", tag: "100% owned" },
-      { id: "c12", brand: "LOOK 3", item: "Camel coat + monochrome beige + mules + mini bag", price: 0, color: "#8B7355", tag: "Buy 1 item" },
-    ],
-    timestamp: "Just now",
-  },
-  "What am I missing in my closet?": {
-    role: "stylist",
-    text: "Based on your style profile and how often you reach for certain pieces, here's what would complete your wardrobe:",
-    cards: [
-      { id: "c13", brand: "INVESTMENT", item: "A quality trench coat — you'll wear it 200+ times", price: 180, salePrice: 120, color: "#C4A882", tag: "High impact" },
-      { id: "c14", brand: "BASICS", item: "A fitted white button-down — the most versatile piece you're missing", price: 45, salePrice: 28, color: "#FAF7F4" },
-      { id: "c15", brand: "FOOTWEAR", item: "Ankle boots in a neutral — bridges casual and dressed up", price: 95, salePrice: 65, color: "#1A1A1A", tag: "Gap filler" },
-    ],
-    timestamp: "Just now",
-  },
-  "Outfit for a first date": {
-    role: "stylist",
-    text: "First date energy: confident, not trying too hard. You want to feel like yourself, just elevated. Here's the move:",
-    cards: [
-      { id: "c16", brand: "ZARA", item: "Satin Midi Skirt", price: 69, salePrice: 42, color: "#C4A882", tag: "You own this" },
-      { id: "c17", brand: "EVERLANE", item: "Fitted Ribbed Tee", price: 38, color: "#FAF7F4" },
-      { id: "c18", brand: "STEVE MADDEN", item: "Block Heel Mule", price: 85, salePrice: 55, color: "#8B5E3C", tag: "Best price" },
-    ],
-    timestamp: "Just now",
+    timestamp: "now",
   },
 };
 
-const DEFAULT_RESPONSE: Omit<Message, "id"> = {
-  role: "stylist",
-  text: "Great question. Based on your style profile and what's in your closet, here's what I'd suggest. Want me to go deeper on any of these?",
-  timestamp: "Just now",
-};
+function getResponse(text: string): Message {
+  const lower = text.toLowerCase();
+  if (lower.includes("rooftop") || lower.includes("dinner")) return { ...MOCK_RESPONSES.rooftop, id: Date.now().toString(), timestamp: "now" };
+  if (lower.includes("deal") || lower.includes("$50") || lower.includes("under")) return { ...MOCK_RESPONSES.deals, id: Date.now().toString(), timestamp: "now" };
+  return { ...MOCK_RESPONSES.default, id: Date.now().toString(), timestamp: "now" };
+}
 
 export default function StylistScreen() {
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
-  const [inputText, setInputText] = useState("");
+  const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
   const sendMessage = (text: string) => {
     if (!text.trim()) return;
-
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      text: text.trim(),
-      timestamp: "Just now",
-    };
-
+    const userMsg: Message = { id: Date.now().toString(), role: "user", text: text.trim(), timestamp: "now" };
     setMessages(prev => [...prev, userMsg]);
-    setInputText("");
+    setInput("");
     setIsTyping(true);
-
     setTimeout(() => {
-      const base = MOCK_RESPONSES[text.trim()] ?? DEFAULT_RESPONSE;
-      const response: Message = { ...base, id: Date.now().toString() + "_r" };
-      setMessages(prev => [...prev, response]);
       setIsTyping(false);
+      setMessages(prev => [...prev, getResponse(text)]);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-    }, 1200);
+    }, 1400);
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   };
-
-  const showSuggestions = messages.length <= 1;
 
   return (
     <ScreenContainer containerClassName="bg-[#0A0A0A]" edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
-        style={styles.kav}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={90}
       >
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <View style={styles.avatarRing}>
+            <View style={styles.avatarWrap}>
               <LinearGradient
                 colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
-                style={styles.avatar}
-              >
-                <Text style={styles.avatarText}>T</Text>
-              </LinearGradient>
+                style={StyleSheet.absoluteFill}
+              />
+              <Text style={styles.avatarText}>T</Text>
             </View>
             <View>
               <Text style={styles.headerName}>Threadly Stylist</Text>
               <View style={styles.onlineRow}>
                 <View style={styles.onlineDot} />
-                <Text style={styles.onlineText}>Online · Knows your closet</Text>
+                <Text style={styles.onlineText}>AI-powered · Always available</Text>
               </View>
             </View>
           </View>
-          <TouchableOpacity style={styles.headerAction} activeOpacity={0.7}>
-            <Text style={styles.headerActionText}>⋯</Text>
+          <TouchableOpacity style={styles.headerBtn} activeOpacity={0.7}>
+            <Text style={styles.headerBtnText}>✦</Text>
           </TouchableOpacity>
         </View>
 
         {/* Messages */}
         <ScrollView
           ref={scrollRef}
-          style={styles.messages}
-          contentContainerStyle={styles.messagesContent}
+          style={styles.messageList}
+          contentContainerStyle={styles.messageListContent}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
         >
           {messages.map(msg => (
             <MessageBubble key={msg.id} message={msg} />
           ))}
-
-          {isTyping && (
-            <View style={styles.typingRow}>
-              <View style={styles.typingBubble}>
-                <Text style={styles.typingDots}>● ● ●</Text>
-              </View>
-            </View>
-          )}
-
-          <View style={{ height: 16 }} />
+          {isTyping && <TypingIndicator />}
+          <View style={{ height: 12 }} />
         </ScrollView>
 
         {/* Suggestion Chips */}
-        {showSuggestions && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.suggestions}
-            style={styles.suggestionsScroll}
-          >
-            {SUGGESTION_PROMPTS.map((prompt, i) => (
-              <TouchableOpacity
-                key={i}
-                style={styles.suggestionChip}
-                onPress={() => sendMessage(prompt)}
-                activeOpacity={0.75}
-              >
-                <Text style={styles.suggestionText}>{prompt}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipList}
+          style={styles.chipScroll}
+        >
+          {SUGGESTION_CHIPS.map((chip, i) => (
+            <TouchableOpacity
+              key={i}
+              style={styles.chip}
+              onPress={() => sendMessage(chip)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.chipText}>{chip}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
-        {/* Input Bar */}
-        <View style={styles.inputBar}>
-          <TouchableOpacity style={styles.inputAction} activeOpacity={0.7}>
-            <Text style={styles.inputActionIcon}>◈</Text>
-          </TouchableOpacity>
+        {/* Input */}
+        <View style={styles.inputRow}>
           <TextInput
             style={styles.input}
+            value={input}
+            onChangeText={setInput}
             placeholder="Ask your stylist anything..."
             placeholderTextColor={ThreadlyColors.warmWhiteSubtle}
-            value={inputText}
-            onChangeText={setInputText}
-            multiline
-            maxLength={300}
             returnKeyType="send"
-            onSubmitEditing={() => sendMessage(inputText)}
+            onSubmitEditing={() => sendMessage(input)}
+            multiline={false}
           />
           <TouchableOpacity
-            style={styles.sendBtn}
-            onPress={() => sendMessage(inputText)}
+            style={[styles.sendBtn, !input.trim() && styles.sendBtnDisabled]}
+            onPress={() => sendMessage(input)}
             activeOpacity={0.85}
+            disabled={!input.trim()}
           >
             <LinearGradient
-              colors={
-                inputText.trim()
-                  ? [ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]
-                  : [ThreadlyColors.charcoal, ThreadlyColors.charcoal]
-              }
-              style={styles.sendBtnGradient}
-            >
-              <Text style={styles.sendBtnIcon}>↑</Text>
-            </LinearGradient>
+              colors={input.trim() ? [ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight] : [ThreadlyColors.charcoal, ThreadlyColors.charcoal]}
+              style={StyleSheet.absoluteFill}
+            />
+            <Text style={[styles.sendBtnText, !input.trim() && styles.sendBtnTextDisabled]}>→</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -278,332 +218,199 @@ export default function StylistScreen() {
   );
 }
 
-// ─── Message Bubble ───────────────────────────────────────────────────────────
-
 function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
-
   return (
-    <View style={[styles.msgRow, isUser && styles.msgRowUser]}>
+    <View style={[styles.msgWrap, isUser && styles.msgWrapUser]}>
       {!isUser && (
         <View style={styles.msgAvatar}>
           <LinearGradient
             colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
-            style={styles.msgAvatarGradient}
-          >
-            <Text style={styles.msgAvatarText}>T</Text>
-          </LinearGradient>
+            style={StyleSheet.absoluteFill}
+          />
+          <Text style={styles.msgAvatarText}>T</Text>
         </View>
       )}
-      <View style={[styles.msgContent, isUser && styles.msgContentUser]}>
-        <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleStylist]}>
-          <Text style={styles.bubbleText}>{message.text}</Text>
-        </View>
+      <View style={[styles.msgBubble, isUser && styles.msgBubbleUser]}>
+        {!isUser && <LinearGradient colors={["#1A1410", "#1A1A1A"]} style={StyleSheet.absoluteFill} />}
+        {!isUser && <View style={styles.msgBubbleBorder} />}
+        <Text style={[styles.msgText, isUser && styles.msgTextUser]}>{message.text}</Text>
         {message.cards && message.cards.length > 0 && (
-          <FlatList
-            data={message.cards}
-            keyExtractor={c => c.id}
+          <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.cardList}
-            renderItem={({ item: card }) => <RecommendationCard card={card} />}
-          />
+            contentContainerStyle={styles.recoCards}
+            style={styles.recoScroll}
+          >
+            {message.cards.map(card => (
+              <TouchableOpacity key={card.id} style={styles.recoCard} activeOpacity={0.85}>
+                <Image source={{ uri: card.image }} style={styles.recoCardImage} resizeMode="cover" />
+                <View style={styles.recoCardInfo}>
+                  <Text style={styles.recoCardBrand}>{card.brand}</Text>
+                  <Text style={styles.recoCardItem} numberOfLines={1}>{card.item}</Text>
+                  {card.price > 0 ? (
+                    <Text style={styles.recoCardPrice}>${card.price}</Text>
+                  ) : (
+                    <Text style={styles.recoCardOwned}>You own this</Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         )}
-        <Text style={[styles.msgTimestamp, isUser && styles.msgTimestampUser]}>
-          {message.timestamp}
-        </Text>
       </View>
     </View>
   );
 }
 
-// ─── Recommendation Card ──────────────────────────────────────────────────────
-
-function RecommendationCard({ card }: { card: RecoCard }) {
+function TypingIndicator() {
   return (
-    <TouchableOpacity style={styles.recoCard} activeOpacity={0.85}>
-      <View style={[styles.recoCardVisual, { backgroundColor: card.color }]}>
-        {card.tag && (
-          <View style={styles.recoCardTag}>
-            <Text style={styles.recoCardTagText}>{card.tag}</Text>
-          </View>
-        )}
+    <View style={styles.msgWrap}>
+      <View style={styles.msgAvatar}>
+        <LinearGradient
+          colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
+          style={StyleSheet.absoluteFill}
+        />
+        <Text style={styles.msgAvatarText}>T</Text>
       </View>
-      <View style={styles.recoCardInfo}>
-        <Text style={styles.recoCardBrand}>{card.brand}</Text>
-        <Text style={styles.recoCardItem} numberOfLines={2}>{card.item}</Text>
-        {card.price > 0 && (
-          <View style={styles.recoCardPricing}>
-            {card.salePrice ? (
-              <>
-                <Text style={styles.recoCardOriginal}>${card.price}</Text>
-                <Text style={styles.recoCardSale}>${card.salePrice}</Text>
-              </>
-            ) : (
-              <Text style={styles.recoCardSale}>${card.price}</Text>
-            )}
-          </View>
-        )}
+      <View style={styles.typingBubble}>
+        <LinearGradient colors={["#1A1410", "#1A1A1A"]} style={StyleSheet.absoluteFill} />
+        <View style={styles.typingBubbleBorder} />
+        <View style={styles.typingDots}>
+          {[0, 1, 2].map(i => (
+            <View key={i} style={styles.typingDot} />
+          ))}
+        </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
-  kav: { flex: 1 },
-
   header: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: ThreadlySpacing.screenPadding,
     paddingTop: 16,
-    paddingBottom: 14,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: ThreadlyColors.charcoalLight,
   },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
-  avatarRing: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1.5,
-    borderColor: ThreadlyColors.roseGold,
-    padding: 2,
-    ...ThreadlyShadow.roseGlow,
+  avatarWrap: {
+    width: 40, height: 40, borderRadius: 20,
+    overflow: "hidden",
+    alignItems: "center", justifyContent: "center",
   },
-  avatar: {
-    flex: 1,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: {
-    fontSize: 16,
-    fontFamily: "Georgia",
-    color: ThreadlyColors.black,
-    fontWeight: "700",
-  },
-  headerName: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: ThreadlyColors.warmWhite,
-    marginBottom: 2,
-  },
+  avatarText: { fontSize: 18, fontFamily: "Georgia", color: ThreadlyColors.black, fontWeight: "700" },
+  headerName: { fontSize: 15, fontFamily: "Georgia", color: ThreadlyColors.warmWhite, marginBottom: 2 },
   onlineRow: { flexDirection: "row", alignItems: "center", gap: 5 },
-  onlineDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: ThreadlyColors.success,
-  },
-  onlineText: { fontSize: 11, color: ThreadlyColors.warmWhiteSubtle },
-  headerAction: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
+  onlineDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: ThreadlyColors.success },
+  onlineText: { fontSize: 10, color: ThreadlyColors.warmWhiteSubtle },
+  headerBtn: {
+    width: 36, height: 36, borderRadius: 18,
     backgroundColor: ThreadlyColors.charcoal,
-    borderRadius: ThreadlyRadius.md,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 1, borderColor: "rgba(201,149,106,0.25)",
   },
-  headerActionText: { fontSize: 18, color: ThreadlyColors.warmWhiteSubtle, lineHeight: 22 },
-
-  messages: { flex: 1 },
-  messagesContent: {
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    paddingTop: 20,
-  },
-
-  msgRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 10,
-    marginBottom: 16,
-  },
-  msgRowUser: { flexDirection: "row-reverse" },
+  headerBtnText: { fontSize: 16, color: ThreadlyColors.roseGold },
+  messageList: { flex: 1, backgroundColor: ThreadlyColors.black },
+  messageListContent: { padding: ThreadlySpacing.screenPadding, gap: 16 },
+  msgWrap: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
+  msgWrapUser: { flexDirection: "row-reverse" },
   msgAvatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 28, height: 28, borderRadius: 14,
+    overflow: "hidden",
+    alignItems: "center", justifyContent: "center",
+    flexShrink: 0,
+  },
+  msgAvatarText: { fontSize: 12, fontFamily: "Georgia", color: ThreadlyColors.black, fontWeight: "700" },
+  msgBubble: {
+    maxWidth: width * 0.72,
+    borderRadius: ThreadlyRadius.xl,
+    borderTopLeftRadius: 4,
+    padding: 14,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: ThreadlyColors.roseGold,
+    borderColor: "rgba(201,149,106,0.2)",
   },
-  msgAvatarGradient: { flex: 1, alignItems: "center", justifyContent: "center" },
-  msgAvatarText: { fontSize: 12, color: ThreadlyColors.black, fontWeight: "700" },
-  msgContent: { maxWidth: width * 0.72 },
-  msgContentUser: { alignItems: "flex-end" },
-
-  bubble: {
-    borderRadius: ThreadlyRadius.xl,
-    padding: 14,
-    marginBottom: 4,
+  msgBubbleUser: {
+    backgroundColor: ThreadlyColors.roseGold,
+    borderTopLeftRadius: ThreadlyRadius.xl,
+    borderTopRightRadius: 4,
+    borderColor: "transparent",
   },
-  bubbleStylist: {
-    backgroundColor: ThreadlyColors.charcoal,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-    borderBottomLeftRadius: 4,
-  },
-  bubbleUser: {
-    backgroundColor: "rgba(201,149,106,0.15)",
-    borderWidth: 1,
-    borderColor: "rgba(201,149,106,0.3)",
-    borderBottomRightRadius: 4,
-  },
-  bubbleText: {
-    fontSize: 14,
-    color: ThreadlyColors.warmWhite,
-    lineHeight: 21,
-  },
-
-  cardList: { gap: 10, paddingVertical: 8 },
+  msgBubbleBorder: { position: "absolute", top: 0, left: 0, right: 0, height: 1, backgroundColor: ThreadlyColors.roseGold, opacity: 0.3 },
+  msgText: { fontSize: 14, color: ThreadlyColors.warmWhite, lineHeight: 21 },
+  msgTextUser: { color: ThreadlyColors.black },
+  recoScroll: { marginTop: 12 },
+  recoCards: { gap: 10, paddingRight: 4 },
   recoCard: {
-    width: 150,
+    width: 110,
     backgroundColor: ThreadlyColors.charcoal,
     borderRadius: ThreadlyRadius.lg,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: ThreadlyColors.charcoalLight,
   },
-  recoCardVisual: { height: 100, position: "relative" },
-  recoCardTag: {
-    position: "absolute",
-    top: 6,
-    left: 6,
-    backgroundColor: "rgba(201,149,106,0.2)",
+  recoCardImage: { width: "100%", height: 90 },
+  recoCardInfo: { padding: 8 },
+  recoCardBrand: { fontSize: 7, fontWeight: "700", color: ThreadlyColors.warmWhiteSubtle, letterSpacing: 1.2, marginBottom: 2 },
+  recoCardItem: { fontSize: 11, color: ThreadlyColors.warmWhite, fontWeight: "600", marginBottom: 3 },
+  recoCardPrice: { fontSize: 12, fontFamily: "Georgia", color: ThreadlyColors.roseGoldLight },
+  recoCardOwned: { fontSize: 9, color: ThreadlyColors.success, fontWeight: "600" },
+  typingBubble: {
+    borderRadius: ThreadlyRadius.xl,
+    borderTopLeftRadius: 4,
+    padding: 14,
+    overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(201,149,106,0.4)",
-    paddingHorizontal: 7,
-    paddingVertical: 3,
+    borderColor: "rgba(201,149,106,0.2)",
+  },
+  typingBubbleBorder: { position: "absolute", top: 0, left: 0, right: 0, height: 1, backgroundColor: ThreadlyColors.roseGold, opacity: 0.3 },
+  typingDots: { flexDirection: "row", gap: 5, alignItems: "center" },
+  typingDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: ThreadlyColors.roseGold, opacity: 0.6 },
+  chipScroll: {
+    borderTopWidth: 1,
+    borderTopColor: ThreadlyColors.charcoalLight,
+    paddingVertical: 10,
+  },
+  chipList: { paddingHorizontal: ThreadlySpacing.screenPadding, gap: 8 },
+  chip: {
+    paddingHorizontal: 14, paddingVertical: 8,
     borderRadius: ThreadlyRadius.pill,
+    backgroundColor: ThreadlyColors.charcoal,
+    borderWidth: 1, borderColor: "rgba(201,149,106,0.2)",
   },
-  recoCardTagText: {
-    fontSize: 8,
-    fontWeight: "700",
-    color: ThreadlyColors.roseGoldLight,
-    letterSpacing: 0.5,
-  },
-  recoCardInfo: { padding: 10 },
-  recoCardBrand: {
-    fontSize: 8,
-    fontWeight: "700",
-    color: ThreadlyColors.warmWhiteSubtle,
-    letterSpacing: 1.5,
-    marginBottom: 3,
-  },
-  recoCardItem: {
-    fontSize: 12,
-    color: ThreadlyColors.warmWhite,
-    fontWeight: "600",
-    lineHeight: 16,
-    marginBottom: 5,
-  },
-  recoCardPricing: { flexDirection: "row", alignItems: "center", gap: 5 },
-  recoCardOriginal: {
-    fontSize: 10,
-    color: ThreadlyColors.warmWhiteSubtle,
-    textDecorationLine: "line-through",
-  },
-  recoCardSale: { fontSize: 13, fontWeight: "700", color: ThreadlyColors.success },
-
-  msgTimestamp: {
-    fontSize: 10,
-    color: ThreadlyColors.warmWhiteSubtle2,
-    marginTop: 2,
-    marginLeft: 4,
-  },
-  msgTimestampUser: { textAlign: "right", marginRight: 4 },
-
-  typingRow: {
+  chipText: { fontSize: 12, color: ThreadlyColors.warmWhiteMuted },
+  inputRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginBottom: 16,
-  },
-  typingBubble: {
-    backgroundColor: ThreadlyColors.charcoal,
-    borderRadius: ThreadlyRadius.xl,
-    borderBottomLeftRadius: 4,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-  },
-  typingDots: {
-    fontSize: 10,
-    color: ThreadlyColors.roseGold,
-    letterSpacing: 4,
-  },
-
-  suggestionsScroll: { maxHeight: 56 },
-  suggestions: {
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    gap: 8,
-    paddingVertical: 10,
-  },
-  suggestionChip: {
-    backgroundColor: ThreadlyColors.charcoal,
-    borderRadius: ThreadlyRadius.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: "rgba(201,149,106,0.3)",
-  },
-  suggestionText: {
-    fontSize: 12,
-    color: ThreadlyColors.roseGoldLight,
-    fontWeight: "500",
-  },
-
-  inputBar: {
-    flexDirection: "row",
-    alignItems: "flex-end",
     paddingHorizontal: ThreadlySpacing.screenPadding,
     paddingVertical: 12,
-    gap: 10,
     borderTopWidth: 1,
     borderTopColor: ThreadlyColors.charcoalLight,
     backgroundColor: ThreadlyColors.black,
   },
-  inputAction: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: ThreadlyColors.charcoal,
-    borderRadius: ThreadlyRadius.md,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-  },
-  inputActionIcon: { fontSize: 18, color: ThreadlyColors.roseGold },
   input: {
     flex: 1,
     backgroundColor: ThreadlyColors.charcoal,
     borderRadius: ThreadlyRadius.xl,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     fontSize: 14,
     color: ThreadlyColors.warmWhite,
     borderWidth: 1,
     borderColor: ThreadlyColors.charcoalLight,
-    maxHeight: 100,
-    lineHeight: 20,
   },
   sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44, height: 44, borderRadius: 22,
     overflow: "hidden",
+    alignItems: "center", justifyContent: "center",
   },
-  sendBtnGradient: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sendBtnIcon: { fontSize: 18, color: ThreadlyColors.warmWhite, fontWeight: "700" },
+  sendBtnDisabled: { opacity: 0.5 },
+  sendBtnText: { fontSize: 18, color: ThreadlyColors.black, fontWeight: "700" },
+  sendBtnTextDisabled: { color: ThreadlyColors.warmWhiteSubtle },
 });

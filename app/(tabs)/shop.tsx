@@ -1,8 +1,7 @@
 /**
  * Threadly — Shop
- * The AI-powered deal engine. Finds the missing pieces from your looks,
- * tracks prices, surfaces alternatives, and makes every dollar go further.
- * Emotional outcome: "I never overpay for fashion again."
+ * AI deal engine, brand discovery, smart shopping.
+ * Emotional outcome: "She found me the best deal. Again."
  */
 
 import { useState } from "react";
@@ -14,6 +13,7 @@ import {
   ScrollView,
   FlatList,
   Dimensions,
+  Image,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
@@ -21,96 +21,98 @@ import {
   ThreadlyColors,
   ThreadlySpacing,
   ThreadlyRadius,
-  ThreadlyShadow,
 } from "@/constants/threadly";
 
 const { width } = Dimensions.get("window");
-const DEAL_CARD_W = width * 0.58;
 
-const SHOP_TABS = ["For You", "Trending", "Brands", "Saved"];
+const FILTER_TABS = ["All", "Work", "Date Night", "Casual", "Go New"];
 
-const FEATURED_DEALS = [
+const DEALS = [
   {
     id: "1",
     brand: "ZARA",
-    item: "Oversized Camel Blazer",
+    item: "Oversized Blazer",
+    desc: "Camel, Size M — matches 4 looks",
     original: 110,
-    sale: 54,
-    off: 51,
-    color: "#C4A882",
-    reason: "Completes 3 of your looks",
+    sale: 59,
+    off: 46,
+    image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500&q=80",
     tag: "BEST MATCH",
+    expiry: "2h left",
   },
   {
     id: "2",
     brand: "MANGO",
-    item: "Straight-Leg Trousers",
+    item: "Straight-Leg Jeans",
+    desc: "Ecru, Size 28 — trending now",
     original: 80,
-    sale: 38,
-    off: 52,
-    color: "#4A4A5A",
-    reason: "Your most-worn style",
+    sale: 44,
+    off: 45,
+    image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500&q=80",
     tag: "TRENDING",
+    expiry: "24h left",
   },
   {
     id: "3",
-    brand: "AMAZON",
-    item: "Gold Hoop Earrings Set",
-    original: 28,
-    sale: 14,
-    off: 50,
-    color: "#C9956A",
-    reason: "Matches your color DNA",
-    tag: "FLASH DEAL",
+    brand: "ALDO",
+    item: "Pointed Slingback Heels",
+    desc: "Nude, Size 8 — completes 3 looks",
+    original: 95,
+    sale: 55,
+    off: 42,
+    image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=500&q=80",
+    tag: "HOT DEAL",
+    expiry: "6h left",
   },
   {
     id: "4",
+    brand: "AMAZON",
+    item: "Gold Hoop Earrings",
+    desc: "14k plated — your most-worn style",
+    original: 22,
+    sale: 14,
+    off: 36,
+    image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500&q=80",
+    tag: "YOUR STYLE",
+    expiry: "48h left",
+  },
+  {
+    id: "5",
     brand: "H&M",
-    item: "Linen Wide-Leg Pants",
-    original: 50,
+    item: "Linen Wide-Leg Trousers",
+    desc: "Beige, Size S — quiet luxury pick",
+    original: 45,
     sale: 25,
-    off: 50,
-    color: "#E8DDD0",
-    reason: "Trending: Quiet Luxury",
-    tag: "HOT NOW",
+    off: 44,
+    image: "https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=500&q=80",
+    tag: "QUIET LUXURY",
+    expiry: "12h left",
+  },
+  {
+    id: "6",
+    brand: "NORDSTROM",
+    item: "Leather Crossbody Bag",
+    desc: "Black, small — pairs with 6 looks",
+    original: 148,
+    sale: 89,
+    off: 40,
+    image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=500&q=80",
+    tag: "INVESTMENT",
+    expiry: "3d left",
   },
 ];
 
-const SMART_PICKS = [
-  { id: "1", brand: "TARGET", item: "White Sneakers", original: 40, sale: 28, off: 30, color: "#F5F5F0" },
-  { id: "2", brand: "ASOS", item: "Silk-Look Blouse", original: 55, sale: 29, off: 47, color: "#E8C4B4" },
-  { id: "3", brand: "NORDSTROM", item: "Leather Belt", original: 45, sale: 22, off: 51, color: "#8B5E3C" },
-  { id: "4", brand: "SHEIN", item: "Ribbed Midi Skirt", original: 24, sale: 12, off: 50, color: "#C9956A" },
-  { id: "5", brand: "REVOLVE", item: "Wrap Mini Dress", original: 148, sale: 74, off: 50, color: "#2C2416" },
-  { id: "6", brand: "EVERLANE", item: "Day Glove Flat", original: 145, sale: 87, off: 40, color: "#C4A882" },
-];
-
 const BRANDS = [
-  { name: "Zara", saved: 142, deals: 8, color: "#1A1A1A" },
-  { name: "Mango", saved: 87, deals: 5, color: "#8B7355" },
-  { name: "H&M", saved: 63, deals: 12, color: "#E8383B" },
-  { name: "Amazon", saved: 210, deals: 24, color: "#FF9900" },
-  { name: "Target", saved: 95, deals: 9, color: "#CC0000" },
-  { name: "Aritzia", saved: 178, deals: 4, color: "#2C2416" },
-];
-
-const PRICE_ALERTS = [
-  { id: "1", item: "COS Linen Blazer", target: 80, current: 95, progress: 0.84 },
-  { id: "2", item: "Toteme Scarf", target: 120, current: 180, progress: 0.67 },
-  { id: "3", item: "Adidas Samba OG", target: 90, current: 100, progress: 0.90 },
+  { id: "1", name: "Zara", logo: "Z", deals: 12, color: "#1A1A1A" },
+  { id: "2", name: "Mango", logo: "M", deals: 8, color: "#2A1A10" },
+  { id: "3", name: "H&M", logo: "H", deals: 15, color: "#1A1A2A" },
+  { id: "4", name: "Nordstrom", logo: "N", deals: 6, color: "#0A1A0A" },
+  { id: "5", name: "ASOS", logo: "A", deals: 22, color: "#1A0A1A" },
+  { id: "6", name: "Revolve", logo: "R", deals: 9, color: "#1A1510" },
 ];
 
 export default function ShopScreen() {
-  const [activeTab, setActiveTab] = useState("For You");
-  const [savedItems, setSavedItems] = useState<Set<string>>(new Set());
-
-  const toggleSave = (id: string) => {
-    setSavedItems(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
+  const [activeFilter, setActiveFilter] = useState("All");
 
   return (
     <ScreenContainer containerClassName="bg-[#0A0A0A]" edges={["top", "left", "right"]}>
@@ -122,607 +124,339 @@ export default function ShopScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.eyebrow}>AI DEAL ENGINE</Text>
-            <Text style={styles.headline}>Shop Smart</Text>
+            <Text style={styles.headerLabel}>DEALS FOR YOU</Text>
+            <Text style={styles.headerTitle}>Smart Shopping</Text>
           </View>
           <View style={styles.savingsBadge}>
-            <Text style={styles.savingsBadgeLabel}>You've saved</Text>
-            <Text style={styles.savingsBadgeValue}>$342</Text>
+            <Text style={styles.savingsBadgeLabel}>SAVED</Text>
+            <Text style={styles.savingsBadgeAmount}>$247</Text>
+            <Text style={styles.savingsBadgeSub}>this month</Text>
           </View>
         </View>
 
-        {/* Tab Bar */}
+        {/* AI Intelligence Banner */}
+        <View style={styles.aiBanner}>
+          <LinearGradient colors={["#1A0E08", "#2A1A10"]} style={StyleSheet.absoluteFill} />
+          <View style={styles.aiBannerBorder} />
+          <View style={styles.aiBannerContent}>
+            <Text style={styles.aiBannerIcon}>✦</Text>
+            <View style={styles.aiBannerText}>
+              <Text style={styles.aiBannerTitle}>AI found 6 new deals</Text>
+              <Text style={styles.aiBannerSub}>Pieces that complete your looks, at the best prices</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Filter Tabs */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabStrip}
+          contentContainerStyle={styles.filterList}
+          style={styles.filterScroll}
         >
-          {SHOP_TABS.map(tab => (
+          {FILTER_TABS.map(tab => (
             <TouchableOpacity
               key={tab}
-              style={[styles.tabChip, activeTab === tab && styles.tabChipActive]}
-              onPress={() => setActiveTab(tab)}
+              style={[styles.filterChip, activeFilter === tab && styles.filterChipActive]}
+              onPress={() => setActiveFilter(tab)}
               activeOpacity={0.7}
             >
-              <Text style={[styles.tabChipText, activeTab === tab && styles.tabChipTextActive]}>
+              <Text style={[styles.filterChipText, activeFilter === tab && styles.filterChipTextActive]}>
                 {tab}
               </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
 
-        {/* Featured Deals */}
-        <View style={styles.sectionHeader}>
-          <View>
-            <Text style={styles.sectionTitle}>Deals Found For You</Text>
-            <Text style={styles.sectionSub}>Based on your closet + looks</Text>
+        {/* Deal Cards */}
+        <View style={styles.dealsSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionLabel}>AI RECOMMENDED FOR YOU</Text>
+            <Text style={styles.sectionTitle}>Looks built for your style</Text>
           </View>
-          <TouchableOpacity activeOpacity={0.7}>
-            <Text style={styles.seeAll}>See all →</Text>
-          </TouchableOpacity>
+
+          {DEALS.map(deal => (
+            <DealCard key={deal.id} deal={deal} />
+          ))}
+        </View>
+
+        {/* Favorite Brands */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionLabel}>YOUR BRANDS</Text>
+          <Text style={styles.sectionTitle}>Active deals from brands you love</Text>
         </View>
 
         <FlatList
-          data={FEATURED_DEALS}
-          keyExtractor={item => item.id}
+          data={BRANDS}
+          keyExtractor={b => b.id}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.featuredList}
-          renderItem={({ item }) => (
-            <FeaturedDealCard
-              item={item}
-              saved={savedItems.has(item.id)}
-              onSave={() => toggleSave(item.id)}
-            />
+          contentContainerStyle={styles.brandList}
+          renderItem={({ item: b }) => (
+            <TouchableOpacity style={styles.brandCard} activeOpacity={0.85}>
+              <LinearGradient colors={[b.color, "#1A1A1A"]} style={StyleSheet.absoluteFill} />
+              <View style={styles.brandCardBorder} />
+              <Text style={styles.brandCardLogo}>{b.logo}</Text>
+              <Text style={styles.brandCardName}>{b.name}</Text>
+              <View style={styles.brandCardDealBadge}>
+                <Text style={styles.brandCardDealText}>{b.deals} deals</Text>
+              </View>
+            </TouchableOpacity>
           )}
         />
 
-        {/* Price Alerts */}
+        {/* Price Comparison */}
         <View style={styles.sectionHeader}>
-          <View>
-            <Text style={styles.sectionTitle}>Price Alerts</Text>
-            <Text style={styles.sectionSub}>Tracking items you want</Text>
-          </View>
-          <TouchableOpacity activeOpacity={0.7}>
-            <Text style={styles.seeAll}>+ Add →</Text>
-          </TouchableOpacity>
+          <Text style={styles.sectionLabel}>PRICE COMPARISON</Text>
+          <Text style={styles.sectionTitle}>We checked every store</Text>
         </View>
 
-        <View style={styles.alertsList}>
-          {PRICE_ALERTS.map(alert => (
-            <PriceAlertRow key={alert.id} alert={alert} />
-          ))}
-        </View>
-
-        {/* Smart Picks */}
-        <View style={styles.sectionHeader}>
-          <View>
-            <Text style={styles.sectionTitle}>Smart Picks</Text>
-            <Text style={styles.sectionSub}>AI-matched to your style</Text>
-          </View>
-        </View>
-
-        <View style={styles.smartGrid}>
-          {SMART_PICKS.map(item => (
-            <SmartPickCard
-              key={item.id}
-              item={item}
-              saved={savedItems.has("sp-" + item.id)}
-              onSave={() => toggleSave("sp-" + item.id)}
+        <View style={styles.priceCompCard}>
+          <LinearGradient colors={["#1A1410", "#1A1A1A"]} style={StyleSheet.absoluteFill} />
+          <View style={styles.priceCompBorder} />
+          <View style={styles.priceCompHeader}>
+            <Image
+              source={{ uri: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=200&q=80" }}
+              style={styles.priceCompImage}
+              resizeMode="cover"
             />
-          ))}
-        </View>
-
-        {/* Your Brands */}
-        <View style={styles.sectionHeader}>
-          <View>
-            <Text style={styles.sectionTitle}>Your Brands</Text>
-            <Text style={styles.sectionSub}>Deals from brands you love</Text>
+            <View style={styles.priceCompInfo}>
+              <Text style={styles.priceCompBrand}>ZARA</Text>
+              <Text style={styles.priceCompItem}>Oversized Blazer</Text>
+              <Text style={styles.priceCompDesc}>Camel · Size M</Text>
+            </View>
+          </View>
+          <View style={styles.priceCompRows}>
+            {[
+              { store: "Zara.com", price: 59, best: true },
+              { store: "ASOS", price: 72, best: false },
+              { store: "Revolve", price: 78, best: false },
+              { store: "Nordstrom", price: 89, best: false },
+            ].map((row, i) => (
+              <View key={i} style={[styles.priceCompRow, row.best && styles.priceCompRowBest]}>
+                <Text style={[styles.priceCompStore, row.best && styles.priceCompStoreBest]}>{row.store}</Text>
+                <View style={styles.priceCompRight}>
+                  {row.best && (
+                    <View style={styles.priceCompBestBadge}>
+                      <Text style={styles.priceCompBestText}>BEST</Text>
+                    </View>
+                  )}
+                  <Text style={[styles.priceCompPrice, row.best && styles.priceCompPriceBest]}>${row.price}</Text>
+                </View>
+              </View>
+            ))}
           </View>
         </View>
 
-        <View style={styles.brandsList}>
-          {BRANDS.map(brand => (
-            <BrandRow key={brand.name} brand={brand} />
-          ))}
-        </View>
-
-        {/* Intelligence Banner */}
-        <TouchableOpacity style={styles.intelligenceBanner} activeOpacity={0.88}>
-          <LinearGradient colors={["#1A0E08", "#2A1A10"]} style={StyleSheet.absoluteFill} />
-          <View style={styles.intelligenceBannerBorder} />
-          <Text style={styles.intelligenceLabel}>✦ SHOPPING INTELLIGENCE</Text>
-          <Text style={styles.intelligenceTitle}>
-            "Find me the cheapest{"\n"}alternative to this Toteme blazer."
-          </Text>
-          <Text style={styles.intelligenceCta}>Ask your AI stylist →</Text>
-        </TouchableOpacity>
-
-        <View style={{ height: 32 }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </ScreenContainer>
   );
 }
 
-// ─── Featured Deal Card ───────────────────────────────────────────────────────
-
-function FeaturedDealCard({
-  item,
-  saved,
-  onSave,
-}: {
-  item: typeof FEATURED_DEALS[0];
-  saved: boolean;
-  onSave: () => void;
-}) {
+function DealCard({ deal }: { deal: typeof DEALS[0] }) {
   return (
-    <TouchableOpacity style={styles.featuredCard} activeOpacity={0.88}>
-      <View style={[styles.featuredCardVisual, { backgroundColor: item.color }]}>
+    <TouchableOpacity style={styles.dealCard} activeOpacity={0.88}>
+      <View style={styles.dealImageWrap}>
+        <Image source={{ uri: deal.image }} style={styles.dealImage} resizeMode="cover" />
         <LinearGradient
-          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.5)"]}
+          colors={["transparent", "rgba(10,10,10,0.6)"]}
           style={StyleSheet.absoluteFill}
         />
-        <View style={styles.featuredTag}>
-          <Text style={styles.featuredTagText}>{item.tag}</Text>
+        <View style={styles.dealTag}>
+          <Text style={styles.dealTagText}>{deal.tag}</Text>
         </View>
-        <TouchableOpacity style={styles.featuredSaveBtn} onPress={onSave} activeOpacity={0.7}>
-          <Text style={[styles.featuredSaveIcon, saved && { color: ThreadlyColors.roseGold }]}>
-            {saved ? "♥" : "♡"}
-          </Text>
-        </TouchableOpacity>
-        <View style={styles.featuredOffBadge}>
-          <Text style={styles.featuredOffText}>-{item.off}%</Text>
+        <View style={styles.dealOffBadge}>
+          <Text style={styles.dealOffText}>-{deal.off}%</Text>
+        </View>
+        <View style={styles.dealExpiry}>
+          <Text style={styles.dealExpiryText}>{deal.expiry}</Text>
         </View>
       </View>
-      <View style={styles.featuredCardInfo}>
-        <Text style={styles.featuredBrand}>{item.brand}</Text>
-        <Text style={styles.featuredItem} numberOfLines={2}>{item.item}</Text>
-        <Text style={styles.featuredReason}>{item.reason}</Text>
-        <View style={styles.featuredPricing}>
-          <Text style={styles.featuredOriginal}>${item.original}</Text>
-          <Text style={styles.featuredSale}>${item.sale}</Text>
+      <View style={styles.dealCardInfo}>
+        <View style={styles.dealCardTop}>
+          <View style={styles.dealCardLeft}>
+            <Text style={styles.dealBrand}>{deal.brand}</Text>
+            <Text style={styles.dealItem}>{deal.item}</Text>
+            <Text style={styles.dealDesc}>{deal.desc}</Text>
+          </View>
+          <View style={styles.dealPricingBlock}>
+            <Text style={styles.dealOriginal}>${deal.original}</Text>
+            <Text style={styles.dealSale}>${deal.sale}</Text>
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
-}
-
-// ─── Price Alert Row ──────────────────────────────────────────────────────────
-
-function PriceAlertRow({ alert }: { alert: typeof PRICE_ALERTS[0] }) {
-  const pct = Math.round(alert.progress * 100);
-  const nearTarget = alert.progress >= 0.88;
-  return (
-    <View style={styles.alertRow}>
-      <View style={styles.alertInfo}>
-        <Text style={styles.alertItem}>{alert.item}</Text>
-        <View style={styles.alertPricing}>
-          <Text style={styles.alertCurrent}>${alert.current}</Text>
-          <Text style={styles.alertArrow}>→</Text>
-          <Text style={styles.alertTarget}>target ${alert.target}</Text>
-        </View>
-        <View style={styles.alertBarBg}>
-          <View style={[
-            styles.alertBarFill,
-            {
-              width: `${pct}%` as any,
-              backgroundColor: nearTarget ? ThreadlyColors.success : ThreadlyColors.roseGold,
-            },
-          ]} />
-        </View>
-      </View>
-      <View style={[styles.alertStatusBadge, nearTarget && styles.alertStatusBadgeNear]}>
-        <Text style={[styles.alertStatusText, nearTarget && styles.alertStatusTextNear]}>
-          {nearTarget ? "Almost!" : `${pct}%`}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-// ─── Smart Pick Card ──────────────────────────────────────────────────────────
-
-function SmartPickCard({
-  item,
-  saved,
-  onSave,
-}: {
-  item: typeof SMART_PICKS[0];
-  saved: boolean;
-  onSave: () => void;
-}) {
-  const cardW = (width - ThreadlySpacing.screenPadding * 2 - 12) / 2;
-  return (
-    <TouchableOpacity style={[styles.smartCard, { width: cardW }]} activeOpacity={0.85}>
-      <View style={[styles.smartCardVisual, { backgroundColor: item.color }]}>
-        <LinearGradient
-          colors={["rgba(0,0,0,0)", "rgba(0,0,0,0.4)"]}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.smartOffBadge}>
-          <Text style={styles.smartOffText}>-{item.off}%</Text>
-        </View>
-        <TouchableOpacity style={styles.smartSaveBtn} onPress={onSave} activeOpacity={0.7}>
-          <Text style={[styles.smartSaveIcon, saved && { color: ThreadlyColors.roseGold }]}>
-            {saved ? "♥" : "♡"}
-          </Text>
+        <TouchableOpacity style={styles.viewDealBtn} activeOpacity={0.85}>
+          <LinearGradient
+            colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.viewDealBtnGradient}
+          >
+            <Text style={styles.viewDealBtnText}>View Deal</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
-      <View style={styles.smartCardInfo}>
-        <Text style={styles.smartBrand}>{item.brand}</Text>
-        <Text style={styles.smartItem} numberOfLines={2}>{item.item}</Text>
-        <View style={styles.smartPricing}>
-          <Text style={styles.smartOriginal}>${item.original}</Text>
-          <Text style={styles.smartSale}>${item.sale}</Text>
-        </View>
-      </View>
     </TouchableOpacity>
   );
 }
-
-// ─── Brand Row ────────────────────────────────────────────────────────────────
-
-function BrandRow({ brand }: { brand: typeof BRANDS[0] }) {
-  return (
-    <TouchableOpacity style={styles.brandRow} activeOpacity={0.85}>
-      <View style={[styles.brandColorDot, { backgroundColor: brand.color }]} />
-      <View style={styles.brandInfo}>
-        <Text style={styles.brandName}>{brand.name}</Text>
-        <Text style={styles.brandDeals}>{brand.deals} deals active</Text>
-      </View>
-      <View style={styles.brandSavedBadge}>
-        <Text style={styles.brandSavedText}>Saved ${brand.saved}</Text>
-      </View>
-      <Text style={styles.brandArrow}>›</Text>
-    </TouchableOpacity>
-  );
-}
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 24 },
-
+  scroll: { flex: 1, backgroundColor: ThreadlyColors.black },
+  scrollContent: { paddingBottom: 32 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
     paddingHorizontal: ThreadlySpacing.screenPadding,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingTop: 24,
+    paddingBottom: 20,
   },
-  eyebrow: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: ThreadlyColors.roseGold,
-    letterSpacing: 2,
-    marginBottom: 4,
-  },
-  headline: {
-    fontSize: 28,
-    fontFamily: "Georgia",
-    color: ThreadlyColors.warmWhite,
-  },
+  headerLabel: { fontSize: 9, fontWeight: "700", color: ThreadlyColors.roseGold, letterSpacing: 2, marginBottom: 4 },
+  headerTitle: { fontSize: 26, fontFamily: "Georgia", color: ThreadlyColors.warmWhite },
   savingsBadge: {
-    backgroundColor: "rgba(74,155,111,0.12)",
+    alignItems: "center",
+    backgroundColor: "rgba(93,191,138,0.1)",
     borderRadius: ThreadlyRadius.lg,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(74,155,111,0.25)",
+    borderColor: "rgba(93,191,138,0.25)",
   },
-  savingsBadgeLabel: {
-    fontSize: 9,
-    color: ThreadlyColors.success,
-    letterSpacing: 0.5,
-    marginBottom: 2,
-  },
-  savingsBadgeValue: {
-    fontSize: 20,
-    fontFamily: "Georgia",
-    color: ThreadlyColors.success,
-  },
-
-  tabStrip: {
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    gap: 8,
-    marginBottom: 24,
-  },
-  tabChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: ThreadlyRadius.pill,
-    backgroundColor: ThreadlyColors.charcoal,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-  },
-  tabChipActive: {
-    backgroundColor: "rgba(201,149,106,0.15)",
-    borderColor: ThreadlyColors.roseGold,
-  },
-  tabChipText: { fontSize: 13, color: ThreadlyColors.warmWhiteSubtle, fontWeight: "600" },
-  tabChipTextActive: { color: ThreadlyColors.roseGoldLight },
-
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    marginBottom: 14,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: ThreadlyColors.warmWhite,
-    marginBottom: 2,
-  },
-  sectionSub: { fontSize: 11, color: ThreadlyColors.warmWhiteSubtle },
-  seeAll: { fontSize: 12, color: ThreadlyColors.roseGold, fontWeight: "600" },
-
-  featuredList: {
-    paddingLeft: ThreadlySpacing.screenPadding,
-    paddingRight: 8,
-    gap: 12,
-    marginBottom: 28,
-  },
-  featuredCard: {
-    width: DEAL_CARD_W,
-    backgroundColor: ThreadlyColors.charcoal,
-    borderRadius: ThreadlyRadius.xl,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-  },
-  featuredCardVisual: { height: 150, position: "relative" },
-  featuredTag: {
-    position: "absolute",
-    top: 10,
-    left: 10,
-    backgroundColor: "rgba(201,149,106,0.2)",
-    borderWidth: 1,
-    borderColor: "rgba(201,149,106,0.4)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: ThreadlyRadius.pill,
-  },
-  featuredTagText: {
-    fontSize: 9,
-    fontWeight: "700",
-    color: ThreadlyColors.roseGoldLight,
-    letterSpacing: 1,
-  },
-  featuredSaveBtn: {
-    position: "absolute",
-    top: 8,
-    right: 10,
-    width: 30,
-    height: 30,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  featuredSaveIcon: { fontSize: 20, color: ThreadlyColors.warmWhiteSubtle },
-  featuredOffBadge: {
-    position: "absolute",
-    bottom: 10,
-    right: 10,
-    backgroundColor: "rgba(74,155,111,0.2)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: ThreadlyRadius.md,
-    borderWidth: 1,
-    borderColor: "rgba(74,155,111,0.35)",
-  },
-  featuredOffText: { fontSize: 12, fontWeight: "700", color: ThreadlyColors.success },
-  featuredCardInfo: { padding: 14 },
-  featuredBrand: {
-    fontSize: 9,
-    fontWeight: "700",
-    color: ThreadlyColors.warmWhiteSubtle,
-    letterSpacing: 1.5,
-    marginBottom: 4,
-  },
-  featuredItem: {
-    fontSize: 14,
-    color: ThreadlyColors.warmWhite,
-    fontWeight: "600",
-    marginBottom: 4,
-    lineHeight: 19,
-  },
-  featuredReason: {
-    fontSize: 11,
-    color: ThreadlyColors.roseGoldDim,
-    fontStyle: "italic",
-    marginBottom: 8,
-  },
-  featuredPricing: { flexDirection: "row", alignItems: "center", gap: 8 },
-  featuredOriginal: {
-    fontSize: 12,
-    color: ThreadlyColors.warmWhiteSubtle,
-    textDecorationLine: "line-through",
-  },
-  featuredSale: { fontSize: 18, fontWeight: "700", color: ThreadlyColors.success },
-
-  alertsList: {
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    gap: 10,
-    marginBottom: 28,
-  },
-  alertRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: ThreadlyColors.charcoal,
-    borderRadius: ThreadlyRadius.lg,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-    gap: 12,
-  },
-  alertInfo: { flex: 1 },
-  alertItem: {
-    fontSize: 14,
-    color: ThreadlyColors.warmWhite,
-    fontWeight: "600",
-    marginBottom: 5,
-  },
-  alertPricing: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 },
-  alertCurrent: { fontSize: 13, color: ThreadlyColors.warmWhiteMuted },
-  alertArrow: { fontSize: 11, color: ThreadlyColors.warmWhiteSubtle },
-  alertTarget: { fontSize: 12, color: ThreadlyColors.roseGoldLight, fontWeight: "600" },
-  alertBarBg: {
-    height: 3,
-    backgroundColor: ThreadlyColors.charcoalLight,
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  alertBarFill: { height: 3, borderRadius: 2 },
-  alertStatusBadge: {
-    backgroundColor: ThreadlyColors.charcoalMid,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: ThreadlyRadius.md,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-  },
-  alertStatusBadgeNear: {
-    backgroundColor: "rgba(74,155,111,0.12)",
-    borderColor: "rgba(74,155,111,0.3)",
-  },
-  alertStatusText: { fontSize: 12, fontWeight: "700", color: ThreadlyColors.warmWhiteSubtle },
-  alertStatusTextNear: { color: ThreadlyColors.success },
-
-  smartGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    gap: 12,
-    marginBottom: 28,
-  },
-  smartCard: {
-    backgroundColor: ThreadlyColors.charcoal,
-    borderRadius: ThreadlyRadius.xl,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-  },
-  smartCardVisual: { height: 130, position: "relative" },
-  smartOffBadge: {
-    position: "absolute",
-    bottom: 8,
-    left: 8,
-    backgroundColor: "rgba(74,155,111,0.2)",
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: ThreadlyRadius.sm,
-    borderWidth: 1,
-    borderColor: "rgba(74,155,111,0.35)",
-  },
-  smartOffText: { fontSize: 11, fontWeight: "700", color: ThreadlyColors.success },
-  smartSaveBtn: {
-    position: "absolute",
-    top: 6,
-    right: 8,
-    width: 28,
-    height: 28,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  smartSaveIcon: { fontSize: 18, color: ThreadlyColors.warmWhiteSubtle },
-  smartCardInfo: { padding: 12 },
-  smartBrand: {
-    fontSize: 9,
-    fontWeight: "700",
-    color: ThreadlyColors.warmWhiteSubtle,
-    letterSpacing: 1.5,
-    marginBottom: 3,
-  },
-  smartItem: {
-    fontSize: 13,
-    color: ThreadlyColors.warmWhite,
-    fontWeight: "600",
-    marginBottom: 6,
-    lineHeight: 17,
-  },
-  smartPricing: { flexDirection: "row", alignItems: "center", gap: 6 },
-  smartOriginal: {
-    fontSize: 11,
-    color: ThreadlyColors.warmWhiteSubtle,
-    textDecorationLine: "line-through",
-  },
-  smartSale: { fontSize: 15, fontWeight: "700", color: ThreadlyColors.success },
-
-  brandsList: {
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    gap: 8,
-    marginBottom: 28,
-  },
-  brandRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: ThreadlyColors.charcoal,
-    borderRadius: ThreadlyRadius.lg,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-    gap: 12,
-  },
-  brandColorDot: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.08)",
-  },
-  brandInfo: { flex: 1 },
-  brandName: { fontSize: 15, color: ThreadlyColors.warmWhite, fontWeight: "700", marginBottom: 2 },
-  brandDeals: { fontSize: 11, color: ThreadlyColors.warmWhiteSubtle },
-  brandSavedBadge: {
-    backgroundColor: "rgba(74,155,111,0.1)",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: ThreadlyRadius.pill,
-    borderWidth: 1,
-    borderColor: "rgba(74,155,111,0.2)",
-  },
-  brandSavedText: { fontSize: 11, color: ThreadlyColors.success, fontWeight: "600" },
-  brandArrow: { fontSize: 20, color: ThreadlyColors.warmWhiteSubtle },
-
-  intelligenceBanner: {
+  savingsBadgeLabel: { fontSize: 7, fontWeight: "700", color: ThreadlyColors.success, letterSpacing: 1.5 },
+  savingsBadgeAmount: { fontSize: 20, fontFamily: "Georgia", color: ThreadlyColors.success, lineHeight: 22 },
+  savingsBadgeSub: { fontSize: 9, color: ThreadlyColors.warmWhiteSubtle },
+  aiBanner: {
     marginHorizontal: ThreadlySpacing.screenPadding,
     borderRadius: ThreadlyRadius.xl,
     overflow: "hidden",
-    padding: 22,
     borderWidth: 1,
     borderColor: "rgba(201,149,106,0.2)",
+    marginBottom: 20,
   },
-  intelligenceBannerBorder: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1,
+  aiBannerBorder: { position: "absolute", top: 0, left: 0, right: 0, height: 1, backgroundColor: ThreadlyColors.roseGold, opacity: 0.4 },
+  aiBannerContent: { flexDirection: "row", alignItems: "center", padding: 16, gap: 12 },
+  aiBannerIcon: { fontSize: 22, color: ThreadlyColors.roseGold },
+  aiBannerText: { flex: 1 },
+  aiBannerTitle: { fontSize: 15, fontFamily: "Georgia", color: ThreadlyColors.warmWhite, marginBottom: 2 },
+  aiBannerSub: { fontSize: 12, color: ThreadlyColors.warmWhiteSubtle },
+  filterScroll: { marginBottom: 20 },
+  filterList: { paddingHorizontal: ThreadlySpacing.screenPadding, gap: 8 },
+  filterChip: {
+    paddingHorizontal: 16, paddingVertical: 8,
+    borderRadius: ThreadlyRadius.pill,
+    backgroundColor: ThreadlyColors.charcoal,
+    borderWidth: 1, borderColor: ThreadlyColors.charcoalLight,
+  },
+  filterChipActive: { backgroundColor: "rgba(201,149,106,0.15)", borderColor: ThreadlyColors.roseGold },
+  filterChipText: { fontSize: 12, color: ThreadlyColors.warmWhiteSubtle, fontWeight: "600" },
+  filterChipTextActive: { color: ThreadlyColors.roseGoldLight },
+  dealsSection: { marginBottom: 8 },
+  sectionHeader: {
+    paddingHorizontal: ThreadlySpacing.screenPadding,
+    marginBottom: 16,
+  },
+  sectionLabel: { fontSize: 9, fontWeight: "700", color: ThreadlyColors.roseGold, letterSpacing: 2, marginBottom: 4 },
+  sectionTitle: { fontSize: 18, fontFamily: "Georgia", color: ThreadlyColors.warmWhite },
+  dealCard: {
+    marginHorizontal: ThreadlySpacing.screenPadding,
+    backgroundColor: ThreadlyColors.charcoal,
+    borderRadius: ThreadlyRadius.xl,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: ThreadlyColors.charcoalLight,
+    marginBottom: 16,
+  },
+  dealImageWrap: { height: 200, position: "relative" },
+  dealImage: { width: "100%", height: "100%" },
+  dealTag: {
+    position: "absolute", top: 12, left: 12,
+    backgroundColor: "rgba(201,149,106,0.18)",
+    borderWidth: 1, borderColor: "rgba(201,149,106,0.4)",
+    paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: ThreadlyRadius.pill,
+  },
+  dealTagText: { fontSize: 8, fontWeight: "700", color: ThreadlyColors.roseGoldLight, letterSpacing: 1 },
+  dealOffBadge: {
+    position: "absolute", top: 12, right: 12,
+    backgroundColor: ThreadlyColors.success,
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderRadius: ThreadlyRadius.pill,
+  },
+  dealOffText: { fontSize: 11, fontWeight: "700", color: "#fff" },
+  dealExpiry: {
+    position: "absolute", bottom: 12, right: 12,
+    backgroundColor: "rgba(10,10,10,0.7)",
+    paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: ThreadlyRadius.pill,
+  },
+  dealExpiryText: { fontSize: 9, color: ThreadlyColors.warmWhiteSubtle },
+  dealCardInfo: { padding: 16 },
+  dealCardTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 },
+  dealCardLeft: { flex: 1, marginRight: 12 },
+  dealBrand: { fontSize: 8, fontWeight: "700", color: ThreadlyColors.warmWhiteSubtle, letterSpacing: 1.5, marginBottom: 3 },
+  dealItem: { fontSize: 16, fontFamily: "Georgia", color: ThreadlyColors.warmWhite, marginBottom: 4 },
+  dealDesc: { fontSize: 11, color: ThreadlyColors.warmWhiteSubtle },
+  dealPricingBlock: { alignItems: "flex-end" },
+  dealOriginal: { fontSize: 12, color: ThreadlyColors.warmWhiteSubtle, textDecorationLine: "line-through", marginBottom: 2 },
+  dealSale: { fontSize: 22, fontFamily: "Georgia", color: ThreadlyColors.success },
+  viewDealBtn: { borderRadius: ThreadlyRadius.lg, overflow: "hidden" },
+  viewDealBtnGradient: { paddingVertical: 13, alignItems: "center" },
+  viewDealBtnText: { fontSize: 13, fontFamily: "Georgia", color: ThreadlyColors.black, letterSpacing: 0.5 },
+  brandList: { paddingLeft: ThreadlySpacing.screenPadding, paddingRight: 8, gap: 10, marginBottom: 32 },
+  brandCard: {
+    width: 100, height: 110,
+    borderRadius: ThreadlyRadius.xl,
+    overflow: "hidden",
+    borderWidth: 1, borderColor: ThreadlyColors.charcoalLight,
+    alignItems: "center", justifyContent: "center",
+    gap: 4,
+  },
+  brandCardBorder: { position: "absolute", top: 0, left: 0, right: 0, height: 1, backgroundColor: ThreadlyColors.roseGold, opacity: 0.2 },
+  brandCardLogo: { fontSize: 28, fontFamily: "Georgia", color: ThreadlyColors.roseGoldLight },
+  brandCardName: { fontSize: 11, color: ThreadlyColors.warmWhiteMuted, fontWeight: "600" },
+  brandCardDealBadge: {
+    backgroundColor: "rgba(201,149,106,0.15)",
+    paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: ThreadlyRadius.pill,
+    borderWidth: 1, borderColor: "rgba(201,149,106,0.25)",
+  },
+  brandCardDealText: { fontSize: 9, color: ThreadlyColors.roseGoldLight, fontWeight: "600" },
+  priceCompCard: {
+    marginHorizontal: ThreadlySpacing.screenPadding,
+    borderRadius: ThreadlyRadius.xl,
+    overflow: "hidden",
+    borderWidth: 1, borderColor: "rgba(201,149,106,0.2)",
+    padding: 16,
+    marginBottom: 8,
+  },
+  priceCompBorder: { position: "absolute", top: 0, left: 0, right: 0, height: 1, backgroundColor: ThreadlyColors.roseGold, opacity: 0.4 },
+  priceCompHeader: { flexDirection: "row", gap: 12, marginBottom: 16, alignItems: "center" },
+  priceCompImage: { width: 60, height: 60, borderRadius: ThreadlyRadius.md },
+  priceCompInfo: { flex: 1 },
+  priceCompBrand: { fontSize: 8, fontWeight: "700", color: ThreadlyColors.warmWhiteSubtle, letterSpacing: 1.5, marginBottom: 2 },
+  priceCompItem: { fontSize: 15, fontFamily: "Georgia", color: ThreadlyColors.warmWhite, marginBottom: 2 },
+  priceCompDesc: { fontSize: 11, color: ThreadlyColors.warmWhiteSubtle },
+  priceCompRows: { gap: 8 },
+  priceCompRow: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    paddingVertical: 10, paddingHorizontal: 12,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: ThreadlyRadius.md,
+    borderWidth: 1, borderColor: ThreadlyColors.charcoalLight,
+  },
+  priceCompRowBest: {
+    backgroundColor: "rgba(201,149,106,0.08)",
+    borderColor: "rgba(201,149,106,0.35)",
+  },
+  priceCompStore: { fontSize: 13, color: ThreadlyColors.warmWhiteMuted },
+  priceCompStoreBest: { color: ThreadlyColors.warmWhite, fontWeight: "600" },
+  priceCompRight: { flexDirection: "row", alignItems: "center", gap: 8 },
+  priceCompBestBadge: {
     backgroundColor: ThreadlyColors.roseGold,
-    opacity: 0.4,
+    paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: ThreadlyRadius.pill,
   },
-  intelligenceLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: ThreadlyColors.roseGold,
-    letterSpacing: 2,
-    marginBottom: 10,
-  },
-  intelligenceTitle: {
-    fontSize: 18,
-    fontFamily: "Georgia",
-    color: ThreadlyColors.warmWhite,
-    lineHeight: 26,
-    marginBottom: 14,
-    fontStyle: "italic",
-  },
-  intelligenceCta: {
-    fontSize: 13,
-    color: ThreadlyColors.roseGoldLight,
-    fontWeight: "600",
-  },
+  priceCompBestText: { fontSize: 8, fontWeight: "700", color: ThreadlyColors.black, letterSpacing: 1 },
+  priceCompPrice: { fontSize: 15, color: ThreadlyColors.warmWhiteMuted, fontWeight: "600" },
+  priceCompPriceBest: { color: ThreadlyColors.success, fontSize: 17 },
 });

@@ -49,3 +49,12 @@
 - [ ] Push notifications for daily look and deals
 - [ ] Social sharing / virality features
 - [ ] Virtual try-on feature
+
+## Phase 6 — Visual Polish Sprint (Deck Fidelity)
+- [x] Rebuild Home screen — THREADLY wordmark hero, 340px outfit image, Go New CTA, trend cards, deal alerts, AI insight
+- [x] Rebuild Go New screen — animated progress orb, outfit flat lay with 80% badge, missing pieces with images
+- [x] Rebuild Closet screen — scan CTA, AI analysis card, color DNA, brand bars, categorized image grid
+- [x] Rebuild Shop screen — deal cards with imagery, price comparison, brand carousel, savings badge
+- [x] Rebuild Stylist screen — conversational chat, typing indicator, recommendation cards, suggestion chips
+- [x] Update tab bar — dark luxury bar, rose gold Go New FAB, spaced labels
+- [x] Update icon mappings — checkroom, local-mall, auto-awesome for all 5 tabs

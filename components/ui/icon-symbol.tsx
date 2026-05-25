@@ -1,55 +1,36 @@
-// Fallback for using MaterialIcons on Android and web.
-
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { SymbolWeight, SymbolViewProps } from "expo-symbols";
 import { ComponentProps } from "react";
 import { OpaqueColorValue, type StyleProp, type TextStyle } from "react-native";
 
-type IconMapping = Record<SymbolViewProps["name"], ComponentProps<typeof MaterialIcons>["name"]>;
+type IconMapping = Record<string, ComponentProps<typeof MaterialIcons>["name"]>;
 type IconSymbolName = keyof typeof MAPPING;
 
-/**
- * SF Symbols → Material Icons mappings for Threadly tab bar.
- */
-const MAPPING = {
+const MAPPING: IconMapping = {
   // Core navigation
   "house.fill": "home",
-  "house": "home",
-  "sparkles": "auto-awesome",
-  "sparkles.fill": "auto-awesome",
-  "hanger": "checkroom",
-  "bag.fill": "shopping-bag",
-  "bag": "shopping-bag",
-  "message.fill": "chat",
-  "message": "chat",
-  // Utility
+  "closet.fill": "checkroom",
+  "shop.fill": "local-mall",
+  "stylist.fill": "auto-awesome",
+  // Generic
   "paperplane.fill": "send",
   "chevron.left.forwardslash.chevron.right": "code",
   "chevron.right": "chevron-right",
-  "chevron.left": "chevron-left",
-  "xmark": "close",
-  "plus": "add",
   "heart.fill": "favorite",
-  "heart": "favorite-border",
-  "camera.fill": "camera-alt",
-  "camera": "camera-alt",
-  "magnifyingglass": "search",
-  "person.fill": "person",
-  "person": "person",
-  "gearshape.fill": "settings",
-  "arrow.right": "arrow-forward",
-  "arrow.left": "arrow-back",
   "star.fill": "star",
-  "star": "star-border",
+  "person.fill": "person",
+  "magnifyingglass": "search",
+  "bell.fill": "notifications",
+  "camera.fill": "camera-alt",
+  "plus": "add",
+  "xmark": "close",
+  "checkmark": "check",
+  "sparkles": "auto-awesome",
+  "bag.fill": "shopping-bag",
   "tag.fill": "local-offer",
-  "tag": "local-offer",
-  "bolt.fill": "bolt",
-  "bolt": "bolt",
-} as unknown as IconMapping;
+  "arrow.right": "arrow-forward",
+};
 
-/**
- * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.
- */
 export function IconSymbol({
   name,
   size = 24,
@@ -62,5 +43,6 @@ export function IconSymbol({
   style?: StyleProp<TextStyle>;
   weight?: SymbolWeight;
 }) {
-  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
+  const mappedName = (MAPPING as Record<string, ComponentProps<typeof MaterialIcons>["name"]>)[name as string] ?? "help-outline";
+  return <MaterialIcons color={color} size={size} name={mappedName} style={style} />;
 }
