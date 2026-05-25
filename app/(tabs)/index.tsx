@@ -23,6 +23,7 @@ import { usePersonalization } from "@/lib/personalization";
 import { resetOnboarding } from "@/lib/onboarding-store";
 import { useScalePress, useImageFade, hapticLight, hapticSuccess } from "@/lib/animations";
 import { HERO_IMAGES } from "@/lib/images";
+import { useWardrobeIntelligence } from "@/lib/wardrobe-intelligence";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const CARD_W = SCREEN_W - 48;
@@ -83,6 +84,7 @@ function FadeImage({
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const p = usePersonalization();
+  const wi = useWardrobeIntelligence();
   const [savedLooks, setSavedLooks] = useState<Set<string>>(new Set());
   const headerFade = useRef(new Animated.Value(0)).current;
   const heroSlide = useRef(new Animated.Value(30)).current;
@@ -107,13 +109,14 @@ export default function HomeScreen() {
   const heroImage = p.heroImage ?? HERO_IMAGES.quietLuxury;
 
   // Outfit picks — images already vibe-matched in personalization engine
+  // Worn-count intelligence overlays attribution labels when available
   const picks = p.outfits.slice(0, 5).map((r) => ({
     id: r.id,
     label: r.title,
     brand: r.vibeTag,
     match: r.matchPct,
     image: r.image,
-    attribution: r.attribution,
+    attribution: wi.getRecommendationAttribution(r.id) ?? r.attribution,
   }));
 
   // Trend cards — images already vibe-matched in personalization engine
@@ -220,6 +223,7 @@ export default function HomeScreen() {
               label={item.label}
               brand={item.brand}
               match={item.match}
+              attribution={item.attribution}
               saved={savedLooks.has(item.id)}
               onSave={() => toggleSave(item.id)}
               delay={index * 80}
@@ -387,10 +391,10 @@ function SectionHeader({ title, sub }: { title: string; sub: string }) {
 // ─── Pick Card ────────────────────────────────────────────────────────────────
 
 function PickCard({
-  image, label, brand, match, saved, onSave, delay = 0,
+  image, label, brand, match, saved, onSave, delay = 0, attribution,
 }: {
   image: string; label: string; brand: string; match: number;
-  saved: boolean; onSave: () => void; delay?: number;
+  saved: boolean; onSave: () => void; delay?: number; attribution?: string | null;
 }) {
   const { scale, onPressIn, onPressOut } = useScalePress(0.96);
   const { imageOpacity: imgOpacity, onImageLoad: onLoad } = useImageFade();
@@ -439,6 +443,11 @@ function PickCard({
         <View style={styles.pickInfo}>
           <Text style={styles.pickBrand}>{brand.toUpperCase()}</Text>
           <Text style={styles.pickLabel} numberOfLines={2}>{label}</Text>
+          {attribution ? (
+            <View style={styles.pickAttribution}>
+              <Text style={styles.pickAttributionText}>✦ {attribution}</Text>
+            </View>
+          ) : null}
         </View>
       </Animated.View>
     </Pressable>
@@ -997,6 +1006,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: "500",
+  },
+
+  pickAttribution: {
+    marginTop: 4,
+    backgroundColor: ThreadlyColors.roseGold + "18",
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    alignSelf: "flex-start",
+  },
+  pickAttributionText: {
+    color: ThreadlyColors.roseGold,
+    fontSize: 9,
+    fontWeight: "600",
+    letterSpacing: 0.3,
   },
 
   // Trend card

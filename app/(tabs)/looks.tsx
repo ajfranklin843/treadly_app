@@ -274,12 +274,37 @@ function LookCard({ look, index, onDelete }: { look: SavedLook; index: number; o
 
         {/* Actions */}
         <View style={styles.lookActions}>
-          <TouchableOpacity style={styles.lookActionBtn} onPress={() => router.push("/(tabs)/closet")} activeOpacity={0.7}>
-            <Text style={styles.lookActionText}>Wear This</Text>
+          <TouchableOpacity
+            style={styles.lookActionBtnPrimary}
+            onPress={() => {
+              hapticLight();
+              router.push({
+                pathname: "/(tabs)/gonew",
+                params: {
+                  anchorItemId: look.anchorItemId,
+                  anchorItemLabel: look.anchorItemLabel,
+                  anchorItemImage: look.anchorItemImage,
+                  occasion: look.occasion,
+                  fromLook: look.id,
+                },
+              });
+            }}
+            activeOpacity={0.85}
+          >
+            <LinearGradient
+              colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
+              style={StyleSheet.absoluteFill}
+            />
+            <Text style={styles.lookActionTextPrimary}>✦ Recreate This Look</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.lookActionBtnDanger} onPress={onDelete} activeOpacity={0.7}>
-            <Text style={styles.lookActionTextDanger}>Remove</Text>
-          </TouchableOpacity>
+          <View style={styles.lookActionsSecondary}>
+            <TouchableOpacity style={styles.lookActionBtn} onPress={() => { hapticLight(); router.push("/(tabs)/closet"); }} activeOpacity={0.7}>
+              <Text style={styles.lookActionText}>Wear This</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.lookActionBtnDanger} onPress={onDelete} activeOpacity={0.7}>
+              <Text style={styles.lookActionTextDanger}>Remove</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Animated.View>
     </Pressable>
@@ -365,7 +390,10 @@ const styles = StyleSheet.create({
   anchorName: { fontSize: 11, color: ThreadlyColors.roseGold, fontWeight: "600" },
 
   // Actions
-  lookActions: { flexDirection: "row", gap: 10 },
+  lookActions: { gap: 10 },
+  lookActionsSecondary: { flexDirection: "row", gap: 10 },
+  lookActionBtnPrimary: { height: 44, alignItems: "center", justifyContent: "center", borderRadius: ThreadlyRadius.lg, overflow: "hidden" },
+  lookActionTextPrimary: { fontSize: 13, color: ThreadlyColors.black, fontWeight: "700", letterSpacing: 0.3 },
   lookActionBtn: { flex: 1, paddingVertical: 10, alignItems: "center", backgroundColor: "rgba(201,149,106,0.12)", borderRadius: ThreadlyRadius.lg, borderWidth: 1, borderColor: "rgba(201,149,106,0.3)" },
   lookActionText: { fontSize: 13, color: ThreadlyColors.roseGold, fontWeight: "600" },
   lookActionBtnDanger: { paddingHorizontal: 16, paddingVertical: 10, alignItems: "center", borderRadius: ThreadlyRadius.lg, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },

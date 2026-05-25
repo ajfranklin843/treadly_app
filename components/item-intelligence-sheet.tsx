@@ -42,6 +42,7 @@ import {
   formatLastWorn,
   type WornRecord,
 } from "@/lib/worn-tracking-store";
+import { useWardrobeIntelligence } from "@/lib/wardrobe-intelligence";
 
 const { height: SCREEN_H } = Dimensions.get("window");
 const SHEET_HEIGHT = SCREEN_H * 0.88;
@@ -161,6 +162,7 @@ export function ItemIntelligenceSheet({ item, visible, onClose, onBuildOutfit }:
   const insets = useSafeAreaInsets();
   const slideAnim = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const wi = useWardrobeIntelligence();
 
   const [wornRecord, setWornRecord] = useState<WornRecord | null>(null);
   const [wornConfirmed, setWornConfirmed] = useState(false);
@@ -381,6 +383,17 @@ export function ItemIntelligenceSheet({ item, visible, onClose, onBuildOutfit }:
           {/* Intelligence Lines */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>WARDROBE INTELLIGENCE</Text>
+            {/* Worn-count contextual label — invisible AI insight */}
+            {item && wi.getWornLabel(item.id) && (
+              <View style={styles.wornInsightBanner}>
+                <Text style={styles.wornInsightText}>✦ {wi.getWornLabel(item.id)}</Text>
+              </View>
+            )}
+            {item && wi.getVersatilityInsight(item.id) && (
+              <View style={[styles.wornInsightBanner, { marginBottom: 8 }]}>
+                <Text style={styles.wornInsightText}>{wi.getVersatilityInsight(item.id)}</Text>
+              </View>
+            )}
             <View style={styles.intelLines}>
               <IntelRow icon="◈" label="Already works with" value={`${outfitCount} looks`} accent />
               <IntelRow icon="✦" label="Style match score" value={`${matchPct}%`} accent />
@@ -696,6 +709,23 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "#4ADE80",
     fontWeight: "600",
+  },
+
+  // ── Worn Insight Banner ──
+  wornInsightBanner: {
+    backgroundColor: ThreadlyColors.roseGold + "15",
+    borderRadius: ThreadlyRadius.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 10,
+    borderLeftWidth: 2,
+    borderLeftColor: ThreadlyColors.roseGold,
+  },
+  wornInsightText: {
+    color: ThreadlyColors.roseGold,
+    fontSize: 11,
+    fontWeight: "600",
+    letterSpacing: 0.3,
   },
 
   // ── Intelligence Lines ──

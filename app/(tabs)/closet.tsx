@@ -19,6 +19,7 @@ import {
   TextInput,
 } from "react-native";
 import { useScalePress, hapticLight, hapticSuccess, hapticMedium } from "@/lib/animations";
+import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from "@/constants/threadly";
@@ -268,11 +269,19 @@ export default function ClosetScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.headerLabel}>YOUR CLOSET</Text>
             <Text style={styles.headerTitle}>Wardrobe Intelligence</Text>
           </View>
-          <View style={styles.headerStats}>
+          <TouchableOpacity
+            style={styles.insightsBtn}
+            onPress={() => { hapticLight(); router.push("/closet-insights"); }}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.insightsBtnText}>◈</Text>
+            <Text style={styles.insightsBtnLabel}>Insights</Text>
+          </TouchableOpacity>
+          <View style={[styles.headerStats, { marginLeft: 10 }]}>
             <Text style={styles.headerStatNum}>{closetItems.length}</Text>
             <Text style={styles.headerStatLabel}>items</Text>
           </View>
@@ -662,6 +671,27 @@ const styles = StyleSheet.create({
   },
   headerStatNum: { fontSize: 22, fontFamily: "Georgia", color: ThreadlyColors.roseGoldLight, lineHeight: 24 },
   headerStatLabel: { fontSize: 9, color: ThreadlyColors.warmWhiteSubtle, letterSpacing: 1 },
+
+  insightsBtn: {
+    alignItems: "center",
+    backgroundColor: ThreadlyColors.charcoal,
+    borderRadius: ThreadlyRadius.lg,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: "rgba(201,149,106,0.3)",
+    gap: 2,
+  },
+  insightsBtnText: {
+    fontSize: 16,
+    color: ThreadlyColors.roseGold,
+  },
+  insightsBtnLabel: {
+    fontSize: 8,
+    color: ThreadlyColors.roseGold,
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
 
   // Search + Sort
   searchRow: {

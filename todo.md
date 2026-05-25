@@ -242,3 +242,26 @@
 - [x] Fix reset onboarding to clear all demo data (scan history, worn counts, saved looks)
 - [x] Fix onboarding step1 to use correct VIBE_IMAGES camelCase keys
 - [x] TypeScript clean (0 errors), 12 tests passing
+
+## Phase 16 — Invisible AI Style Identity System
+
+- [ ] Build wardrobe-intelligence.ts — worn-count labels, underused pieces, versatility scores, closet insights derived from AsyncStorage
+- [ ] Wire worn-count intelligence into Home curated picks (attribution labels: "You wear this often", "One of your staples", "You haven't worn this in a while")
+- [ ] Wire worn-count intelligence into ItemIntelligenceSheet (worn history, versatility insight, underused nudge)
+- [ ] Wire worn-count intelligence into Go New missing pieces (contextual labels)
+- [ ] Build Closet Insights screen — Closet IQ, Style Evolution, Wardrobe Personality, Most Versatile, Underused Pieces, Style Consistency Score
+- [ ] Add Recreate This Look to Saved Looks cards — pre-seed Go New with anchor item + occasion
+- [ ] Sharpen Stylist LLM system prompt — luxury stylist persona, outfit reasoning, Why This Works cards, style explanations
+- [ ] Add outfit reasoning to Home hero card (Why This Works inline insight)
+- [ ] TypeScript clean, 12 tests passing
+
+## Phase 16 — Invisible AI Style Identity System (COMPLETED)
+
+- [x] Build wardrobe intelligence engine (wardrobe-intelligence.ts) — worn-count labels, versatility scores, closet insights
+- [x] Wire worn-count intelligence into Home curated picks (attribution labels)
+- [x] Wire worn-count intelligence into ItemIntelligenceSheet (worn insight banner)
+- [x] Build Closet Insights screen — Closet IQ ring, Wardrobe Personality, Most Versatile, Hidden Gems, Category Breakdown
+- [x] Add Insights button to Closet header to open Closet Insights screen
+- [x] Add Recreate This Look CTA to Saved Looks cards
+- [x] Sharpen Stylist LLM system prompt — luxury stylist persona, vibe-specific brand mapping, Why This Works card
+- [x] TypeScript clean (0 errors), 12 tests passing
