@@ -265,3 +265,38 @@
 - [x] Add Recreate This Look CTA to Saved Looks cards
 - [x] Sharpen Stylist LLM system prompt — luxury stylist persona, vibe-specific brand mapping, Why This Works card
 - [x] TypeScript clean (0 errors), 12 tests passing
+
+## Phase 17 — Core Loop Stabilization Sprint
+
+- [ ] Wire Recreate This Look params into Go New (read anchorItemId, anchorItemLabel, anchorItemImage, occasion, fromLook)
+- [ ] Go New: detect fromLook mode, show anchor item pinned, remix variations, compatible pieces, save new variation
+- [ ] Surface worn-count intelligence on Home curated picks (most-worn labels, favorite staples, build-around picks)
+- [ ] Connect Home save actions to saved-looks store (Today's Look + Curated Pick saves persist across restarts)
+- [ ] Replace hardcoded match scores with derived values from wardrobe intelligence, style profile, worn counts
+- [ ] Extract shared reusable components: OutfitCard, DealCard, IntelligenceBadge, SectionHeader, EmptyState
+- [ ] Verify reset onboarding clears all stores (onboarding, scan history, worn counts, saved looks, favorites)
+- [ ] Verify all persisted data survives app restart (scan history, saved looks, worn counts, favorites)
+- [ ] TypeScript clean, 12 tests passing
+
+## Phase 17 — Visual Identity Restoration
+
+- [ ] Research and curate Unsplash photo IDs for strict semantic image roles
+- [ ] Rebuild lib/images.ts with HERO_CLOSET_LUXURY, HERO_PHONE_CLOSET, vibe outfit pools, product category pools, flat lays
+- [ ] Fix Home hero image to match pitch deck (warm closet, neutral wardrobe, phone visible)
+- [ ] Update personalization.ts to use new strict image constants
+- [ ] Audit and update all screens: Home, Go New, Closet, Shop, Stylist, Onboarding, Saved Looks, Outfit Builder
+- [ ] TypeScript clean, 12 tests passing
+
+## Phase 17 — Visual Identity Restoration (COMPLETED)
+
+- [x] Scrape verified Pexels photo IDs for all semantic categories via parallel map subtasks
+- [x] Rebuild lib/images.ts with Pexels-sourced, semantically verified URLs organized by strict semantic role
+- [x] VIBE_IMAGES: one canonical image per vibe, verified against Pexels alt-text descriptions
+- [x] VIBE_OUTFIT_POOL: 7 editorial full-body outfit shots per vibe (Old Money, Minimal, Clean Girl, Chic, Streetwear, Vacation, Casual Luxury, Soft Glam)
+- [x] CLOSET_IMAGES: category-specific product shots (tops, bottoms, dresses, outerwear, shoes, bags, accessories)
+- [x] DEAL_IMAGES: product-specific deal card images
+- [x] TREND_IMAGES: editorial trend card images (landscape)
+- [x] VIBE_DEAL_POOL, VIBE_TREND_POOL, VIBE_STYLIST_POOL: all vibe-matched
+- [x] Fix welcome.tsx to use VIBE_HERO_MAP and pickFromPool
+- [x] Fix closet-scan-modal.tsx to use getAllClosetImages and pickFromPool
+- [x] TypeScript clean (0 errors), 12 tests passing

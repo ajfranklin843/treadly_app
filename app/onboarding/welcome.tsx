@@ -12,10 +12,10 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from '@/constants/threadly';
-import { HERO_IMAGES, pickImage } from '@/lib/images';
+import { VIBE_HERO_MAP, pickFromPool } from '@/lib/images';
 
 const { height } = Dimensions.get('window');
-const HERO_IMAGE = pickImage(Object.values(HERO_IMAGES), 0);
+const HERO_IMAGE = pickFromPool(Object.values(VIBE_HERO_MAP), 0);
 
 export default function WelcomeScreen() {
   const imageOpacity = useRef(new Animated.Value(0)).current;

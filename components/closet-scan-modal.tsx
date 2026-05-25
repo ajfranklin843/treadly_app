@@ -31,7 +31,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 import { ThreadlyColors, ThreadlyRadius } from "@/constants/threadly";
 import { hapticLight, hapticSuccess } from "@/lib/animations";
-import { ALL_CLOSET_IMAGES, ALL_PRODUCT_IMAGES, pickImage } from "@/lib/images";
+import { getAllClosetImages, ALL_PRODUCT_IMAGES, pickFromPool } from "@/lib/images";
+const ALL_CLOSET_IMAGES = getAllClosetImages();
 
 const { width: W, height: H } = Dimensions.get("window");
 
@@ -270,7 +271,7 @@ export function ClosetScanModal({ visible, onClose, onItemAdded, userVibe = "Min
   const handleCamera = useCallback(async () => {
     hapticLight();
     if (Platform.OS === "web") {
-      const uri = pickImage(ALL_CLOSET_IMAGES, Date.now());
+      const uri = pickFromPool(ALL_CLOSET_IMAGES, Date.now());
       setImageUri(uri);
       runAnalysis(uri);
       return;
@@ -293,7 +294,7 @@ export function ClosetScanModal({ visible, onClose, onItemAdded, userVibe = "Min
   const handleGallery = useCallback(async () => {
     hapticLight();
     if (Platform.OS === "web") {
-      const uri = pickImage(ALL_PRODUCT_IMAGES, Date.now() + 7);
+      const uri = pickFromPool(ALL_PRODUCT_IMAGES, Date.now() + 7);
       setImageUri(uri);
       runAnalysis(uri);
       return;
@@ -315,7 +316,7 @@ export function ClosetScanModal({ visible, onClose, onItemAdded, userVibe = "Min
 
   const handleInspiration = useCallback(() => {
     hapticLight();
-    const uri = pickImage(ALL_CLOSET_IMAGES, Date.now() + 13);
+    const uri = pickFromPool(ALL_CLOSET_IMAGES, Date.now() + 13);
     setImageUri(uri);
     runAnalysis(uri);
   }, [runAnalysis]);
