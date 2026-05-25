@@ -15,13 +15,39 @@ const tailwindColors = Object.fromEntries(
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: "class",
-  // Scan all component and app files for Tailwind classes
-  content: ["./app/**/*.{js,ts,tsx}", "./components/**/*.{js,ts,tsx}", "./lib/**/*.{js,ts,tsx}", "./hooks/**/*.{js,ts,tsx}"],
-
+  content: [
+    "./app/**/*.{js,ts,tsx}",
+    "./components/**/*.{js,ts,tsx}",
+    "./lib/**/*.{js,ts,tsx}",
+    "./hooks/**/*.{js,ts,tsx}",
+  ],
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
-      colors: tailwindColors,
+      colors: {
+        ...tailwindColors,
+        // Threadly brand shortcuts
+        'threadly-black': '#0A0A0A',
+        'threadly-charcoal': '#1A1A1A',
+        'threadly-charcoal-mid': '#252525',
+        'threadly-rose': '#C9956A',
+        'threadly-rose-light': '#E8B89A',
+        'threadly-blush': '#F2D4C8',
+        'threadly-blush-deep': '#D4A090',
+        'threadly-warm-white': '#FAF7F4',
+        'threadly-warm-muted': '#C8C0B8',
+      },
+      fontFamily: {
+        serif: ['Cormorant_Garamond', 'serif'],
+        display: ['Playfair_Display', 'serif'],
+        sans: ['DM_Sans', 'sans-serif'],
+      },
+      borderRadius: {
+        'xl': '16px',
+        '2xl': '20px',
+        '3xl': '24px',
+        'pill': '100px',
+      },
     },
   },
   plugins: [

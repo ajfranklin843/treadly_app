@@ -9,21 +9,75 @@ type IconMapping = Record<SymbolViewProps["name"], ComponentProps<typeof Materia
 type IconSymbolName = keyof typeof MAPPING;
 
 /**
- * Add your SF Symbols to Material Icons mappings here.
- * - see Material Icons in the [Icons Directory](https://icons.expo.fyi).
- * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
+ * SF Symbols to Material Icons mappings for Threadly.
  */
 const MAPPING = {
+  // Navigation
   "house.fill": "home",
+  "house": "home",
   "paperplane.fill": "send",
   "chevron.left.forwardslash.chevron.right": "code",
   "chevron.right": "chevron-right",
+  "chevron.left": "chevron-left",
+  "chevron.down": "keyboard-arrow-down",
+  "chevron.up": "keyboard-arrow-up",
+  // Threadly tabs
+  "hanger": "checkroom",
+  "sparkles": "auto-awesome",
+  "bag.fill": "shopping-bag",
+  "bag": "shopping-bag",
+  "person.fill": "person",
+  "person": "person",
+  "magnifyingglass": "search",
+  "bell.fill": "notifications",
+  "bell": "notifications-none",
+  // Closet / wardrobe
+  "tshirt.fill": "checkroom",
+  "tshirt": "checkroom",
+  "camera.fill": "camera-alt",
+  "camera": "camera-alt",
+  "photo.fill": "photo",
+  "photo": "photo",
+  "plus": "add",
+  "plus.circle.fill": "add-circle",
+  "minus.circle.fill": "remove-circle",
+  // Shopping / deals
+  "tag.fill": "local-offer",
+  "tag": "local-offer",
+  "percent": "percent",
+  "cart.fill": "shopping-cart",
+  "cart": "shopping-cart",
+  "heart.fill": "favorite",
+  "heart": "favorite-border",
+  "star.fill": "star",
+  "star": "star-border",
+  // AI / style
+  "wand.and.stars": "auto-fix-high",
+  "wand.and.stars.inverse": "auto-fix-high",
+  "brain": "psychology",
+  "lightbulb.fill": "lightbulb",
+  "lightbulb": "lightbulb-outline",
+  // Misc
+  "xmark": "close",
+  "xmark.circle.fill": "cancel",
+  "checkmark": "check",
+  "checkmark.circle.fill": "check-circle",
+  "arrow.right": "arrow-forward",
+  "arrow.left": "arrow-back",
+  "arrow.up": "arrow-upward",
+  "arrow.down": "arrow-downward",
+  "ellipsis": "more-horiz",
+  "ellipsis.circle": "more-horiz",
+  "square.and.arrow.up": "ios-share",
+  "trash.fill": "delete",
+  "pencil": "edit",
+  "gear": "settings",
+  "info.circle": "info",
+  "questionmark.circle": "help-outline",
 } as IconMapping;
 
 /**
  * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.
- * This ensures a consistent look across platforms, and optimal resource usage.
- * Icon `name`s are based on SF Symbols and require manual mapping to Material Icons.
  */
 export function IconSymbol({
   name,

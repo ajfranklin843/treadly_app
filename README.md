@@ -692,7 +692,7 @@ import type { ExpoConfig } from "expo/config";
 // e.g., "my-app" created at 2024-01-15 10:30:45 -> "space.manus.my.app.t20240115103045"
 // Bundle ID can only contain letters, numbers, and dots
 // Android requires each dot-separated segment to start with a letter
-const rawBundleId = "com.app.treadly_app";
+const rawBundleId = "com.app.threadly_app";
 const bundleId =
   rawBundleId
     .replace(/[-_]/g, ".") // Replace hyphens/underscores with dots
@@ -715,7 +715,7 @@ const schemeFromBundleId = `manus${timestamp}`;
 const env = {
   // App branding - update these values directly (do not use env vars)
   appName: "{{project_title}}",
-  appSlug: "treadly_app",
+  appSlug: "threadly_app",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
   logoUrl: "",

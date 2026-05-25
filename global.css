@@ -1,3 +1,55 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── Threadly Design Tokens ─────────────────────────────────────────────── */
+
+:root {
+  /* Brand Colors */
+  --threadly-black: #0A0A0A;
+  --threadly-charcoal: #1A1A1A;
+  --threadly-charcoal-mid: #252525;
+  --threadly-rose: #C9956A;
+  --threadly-rose-light: #E8B89A;
+  --threadly-blush: #F2D4C8;
+  --threadly-blush-deep: #D4A090;
+  --threadly-warm-white: #FAF7F4;
+  --threadly-warm-muted: #C8C0B8;
+
+  /* Semantic Tokens — Light Mode */
+  --color-primary: #C9956A;
+  --color-primaryLight: #E8B89A;
+  --color-primaryMuted: #D4A090;
+  --color-background: #FAF7F4;
+  --color-surface: #F0EBE5;
+  --color-surfaceMid: #E8E0D8;
+  --color-foreground: #1A1A1A;
+  --color-muted: #7A6E68;
+  --color-subtle: #A89E96;
+  --color-border: #DDD5CC;
+  --color-borderAccent: #C9956A;
+  --color-success: #4A9B6F;
+  --color-warning: #C9956A;
+  --color-error: #C05050;
+  --color-blush: #F2D4C8;
+  --color-blushMid: #E8C4B4;
+}
+
+[data-theme="dark"] {
+  --color-primary: #C9956A;
+  --color-primaryLight: #E8B89A;
+  --color-primaryMuted: #D4A090;
+  --color-background: #0A0A0A;
+  --color-surface: #1A1A1A;
+  --color-surfaceMid: #252525;
+  --color-foreground: #FAF7F4;
+  --color-muted: #C8C0B8;
+  --color-subtle: #6A6058;
+  --color-border: #2E2E2E;
+  --color-borderAccent: #C9956A;
+  --color-success: #5DBF8A;
+  --color-warning: #E8B89A;
+  --color-error: #E07070;
+  --color-blush: #3A2520;
+  --color-blushMid: #2E1E1A;
+}
