@@ -1,205 +1,166 @@
 /**
- * Threadly — Welcome Screen
- * Brand intro with emotional hook and CTA to begin onboarding.
+ * Threadly — Onboarding Welcome
+ * Cinematic brand intro. Full-bleed editorial imagery, serif wordmark, minimal text.
+ * Emotional hook: "entering a luxury fashion ecosystem."
  */
 
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Animated } from 'react-native';
 import { useEffect, useRef } from 'react';
-import { router } from 'expo-router';
+import {
+  View, Text, StyleSheet, TouchableOpacity,
+  Animated, Dimensions, Image,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from '@/constants/threadly';
 
 const { height } = Dimensions.get('window');
-
-const FEATURES = [
-  { icon: '✦', text: 'Build looks from what you own' },
-  { icon: '✦', text: 'Find trends that fit your style' },
-  { icon: '✦', text: 'Get the best deals automatically' },
-  { icon: '✦', text: 'Shop smarter. Save more.' },
-];
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=800&q=85';
 
 export default function WelcomeScreen() {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
+  const imageOpacity = useRef(new Animated.Value(0)).current;
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const wordmarkOpacity = useRef(new Animated.Value(0)).current;
+  const wordmarkY = useRef(new Animated.Value(24)).current;
+  const taglineOpacity = useRef(new Animated.Value(0)).current;
+  const taglineY = useRef(new Animated.Value(16)).current;
+  const ctaOpacity = useRef(new Animated.Value(0)).current;
+  const ctaY = useRef(new Animated.Value(20)).current;
+  const pillsOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 800, useNativeDriver: true }),
+    Animated.sequence([
+      Animated.timing(imageOpacity, { toValue: 1, duration: 1000, useNativeDriver: true }),
+      Animated.timing(overlayOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+      Animated.delay(100),
+      Animated.parallel([
+        Animated.timing(wordmarkOpacity, { toValue: 1, duration: 700, useNativeDriver: true }),
+        Animated.timing(wordmarkY, { toValue: 0, duration: 700, useNativeDriver: true }),
+      ]),
+      Animated.delay(200),
+      Animated.parallel([
+        Animated.timing(taglineOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+        Animated.timing(taglineY, { toValue: 0, duration: 600, useNativeDriver: true }),
+      ]),
+      Animated.delay(200),
+      Animated.parallel([
+        Animated.timing(pillsOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.timing(ctaOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.timing(ctaY, { toValue: 0, duration: 500, useNativeDriver: true }),
+      ]),
     ]).start();
   }, []);
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#0A0A0A', '#1A1A1A']}
-        style={StyleSheet.absoluteFill}
-      />
+      {/* Full-bleed hero */}
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: imageOpacity }]}>
+        <Image source={{ uri: HERO_IMAGE }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      </Animated.View>
 
-      {/* Top decorative gradient */}
-      <LinearGradient
-        colors={['rgba(201,149,106,0.12)', 'transparent']}
-        style={styles.topGlow}
-      />
+      {/* Cinematic gradient overlay */}
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: overlayOpacity }]}>
+        <LinearGradient
+          colors={['rgba(10,10,10,0.1)', 'rgba(10,10,10,0.35)', 'rgba(10,10,10,0.95)']}
+          locations={[0, 0.45, 1]}
+          style={StyleSheet.absoluteFill}
+        />
+      </Animated.View>
 
-      <Animated.View
-        style={[
-          styles.content,
-          { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
-        ]}
-      >
-        {/* Logo */}
-        <View style={styles.logoRow}>
-          <Text style={styles.monogram}>T</Text>
-          <Text style={styles.wordmark}>THREADLY</Text>
+      {/* Top badge */}
+      <Animated.View style={[styles.topBadge, { opacity: pillsOpacity }]}>
+        <View style={styles.topBadgeInner}>
+          <Text style={styles.topBadgeText}>✦  AI-POWERED STYLING</Text>
         </View>
+      </Animated.View>
 
-        {/* Hero copy */}
-        <View style={styles.heroSection}>
-          <Text style={styles.heroHeadline}>The AI stylist</Text>
-          <Text style={styles.heroHeadlineAccent}>built around you.</Text>
-          <Text style={styles.heroBody}>
-            An AI-powered personal style system that builds outfits from your real closet, learns your favorite brands, and finds deals automatically.
-          </Text>
-        </View>
-
-        {/* Feature list */}
-        <View style={styles.featureList}>
-          {FEATURES.map((f, i) => (
-            <View key={i} style={styles.featureRow}>
-              <Text style={styles.featureIcon}>{f.icon}</Text>
-              <Text style={styles.featureText}>{f.text}</Text>
+      {/* Bottom content */}
+      <View style={styles.bottomContent}>
+        {/* Feature pills */}
+        <Animated.View style={[styles.pillRow, { opacity: pillsOpacity }]}>
+          {['AI Stylist', 'Deal Engine', 'Trend Discovery'].map((pill) => (
+            <View key={pill} style={styles.pill}>
+              <Text style={styles.pillText}>{pill}</Text>
             </View>
           ))}
-        </View>
+        </Animated.View>
+
+        {/* Wordmark */}
+        <Animated.View style={{ opacity: wordmarkOpacity, transform: [{ translateY: wordmarkY }] }}>
+          <Text style={styles.wordmark}>THREADLY</Text>
+        </Animated.View>
+
+        {/* Tagline */}
+        <Animated.View style={{ opacity: taglineOpacity, transform: [{ translateY: taglineY }] }}>
+          <Text style={styles.tagline}>Your AI stylist{'\n'}that shops smarter.</Text>
+          <Text style={styles.subTagline}>
+            Personalized looks from your closet.{'\n'}Missing pieces found at the best price.
+          </Text>
+        </Animated.View>
 
         {/* CTA */}
-        <View style={styles.ctaSection}>
+        <Animated.View style={[styles.ctaWrap, { opacity: ctaOpacity, transform: [{ translateY: ctaY }] }]}>
           <TouchableOpacity
-            style={styles.primaryBtn}
-            activeOpacity={0.85}
+            style={styles.ctaBtn}
+            activeOpacity={0.88}
             onPress={() => router.push('/onboarding/step1')}
           >
             <LinearGradient
               colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.primaryBtnGradient}
-            >
-              <Text style={styles.primaryBtnText}>Get Started</Text>
-            </LinearGradient>
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <Text style={styles.ctaBtnText}>Begin Your Style Profile</Text>
+            <Text style={styles.ctaBtnArrow}>→</Text>
           </TouchableOpacity>
-
-          <Text style={styles.disclaimer}>
-            Personalized for you in under 2 minutes.
-          </Text>
-        </View>
-      </Animated.View>
+          <Text style={styles.ctaNote}>Takes 60 seconds · No account needed</Text>
+        </Animated.View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: ThreadlyColors.black,
+  container: { flex: 1, backgroundColor: ThreadlyColors.black },
+  topBadge: { position: 'absolute', top: 60, alignSelf: 'center', zIndex: 10 },
+  topBadgeInner: {
+    paddingHorizontal: 16, paddingVertical: 7,
+    borderRadius: ThreadlyRadius.pill,
+    backgroundColor: 'rgba(10,10,10,0.6)',
+    borderWidth: 1, borderColor: 'rgba(201,149,106,0.4)',
   },
-  topGlow: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: height * 0.35,
-  },
-  content: {
-    flex: 1,
+  topBadgeText: { fontSize: 10, fontWeight: '700', color: ThreadlyColors.roseGoldLight, letterSpacing: 2 },
+  bottomContent: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
     paddingHorizontal: ThreadlySpacing.screenPadding,
-    paddingTop: 60,
-    paddingBottom: 40,
-    justifyContent: 'space-between',
+    paddingBottom: 52, gap: 18,
   },
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 8,
+  pillRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  pill: {
+    paddingHorizontal: 12, paddingVertical: 5,
+    borderRadius: ThreadlyRadius.pill,
+    backgroundColor: 'rgba(201,149,106,0.15)',
+    borderWidth: 1, borderColor: 'rgba(201,149,106,0.3)',
   },
-  monogram: {
-    fontSize: 32,
-    fontFamily: 'Georgia',
-    fontStyle: 'italic',
-    color: ThreadlyColors.roseGold,
-  },
+  pillText: { fontSize: 11, color: ThreadlyColors.roseGoldLight, fontWeight: '600', letterSpacing: 0.3 },
   wordmark: {
-    fontSize: 18,
-    fontFamily: 'Georgia',
-    color: ThreadlyColors.warmWhite,
-    letterSpacing: 5,
+    fontSize: 44, fontFamily: 'Georgia',
+    color: ThreadlyColors.warmWhite, letterSpacing: 8, lineHeight: 52,
   },
-  heroSection: {
-    marginTop: 48,
+  tagline: {
+    fontSize: 26, fontFamily: 'Georgia',
+    color: ThreadlyColors.warmWhite, lineHeight: 34, marginBottom: 10,
   },
-  heroHeadline: {
-    fontSize: 44,
-    fontFamily: 'Georgia',
-    fontWeight: '400',
-    color: ThreadlyColors.warmWhite,
-    lineHeight: 52,
+  subTagline: {
+    fontSize: 14, color: ThreadlyColors.warmWhiteMuted,
+    lineHeight: 22, fontStyle: 'italic',
   },
-  heroHeadlineAccent: {
-    fontSize: 44,
-    fontFamily: 'Georgia',
-    fontStyle: 'italic',
-    color: ThreadlyColors.roseGold,
-    lineHeight: 52,
-    marginBottom: 20,
+  ctaWrap: { gap: 12, marginTop: 4 },
+  ctaBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 18, borderRadius: ThreadlyRadius.xl,
+    overflow: 'hidden', gap: 10,
   },
-  heroBody: {
-    fontSize: 15,
-    color: ThreadlyColors.warmWhiteMuted,
-    lineHeight: 24,
-    fontWeight: '400',
-  },
-  featureList: {
-    gap: 14,
-    marginTop: 8,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  featureIcon: {
-    fontSize: 10,
-    color: ThreadlyColors.roseGold,
-  },
-  featureText: {
-    fontSize: 14,
-    color: ThreadlyColors.warmWhiteMuted,
-    fontWeight: '400',
-  },
-  ctaSection: {
-    gap: 14,
-    marginTop: 16,
-  },
-  primaryBtn: {
-    borderRadius: ThreadlyRadius.pill,
-    overflow: 'hidden',
-  },
-  primaryBtnGradient: {
-    paddingVertical: 18,
-    alignItems: 'center',
-    borderRadius: ThreadlyRadius.pill,
-  },
-  primaryBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: ThreadlyColors.warmWhite,
-    letterSpacing: 0.5,
-  },
-  disclaimer: {
-    fontSize: 12,
-    color: ThreadlyColors.warmWhiteSubtle,
-    textAlign: 'center',
-    letterSpacing: 0.3,
-  },
+  ctaBtnText: { fontSize: 16, fontWeight: '700', color: ThreadlyColors.black, letterSpacing: 0.3 },
+  ctaBtnArrow: { fontSize: 18, color: ThreadlyColors.black, fontWeight: '700' },
+  ctaNote: { textAlign: 'center', fontSize: 12, color: ThreadlyColors.warmWhiteSubtle, fontStyle: 'italic' },
 });

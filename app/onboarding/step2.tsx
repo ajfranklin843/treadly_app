@@ -1,209 +1,171 @@
 /**
- * Threadly Onboarding — Step 2: Occasions
- * User selects which occasions they dress for.
+ * Threadly Onboarding — Step 2: Favorite Brands
+ * Visual brand grid. Selectable cards with brand logo/color.
  */
 
-import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { router } from 'expo-router';
+import { useState, useRef, useEffect } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity,
+  ScrollView, Dimensions, Animated,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { saveStyleProfile } from '@/lib/onboarding-store';
-import { ThreadlyColors, ThreadlyRadius, ThreadlySpacing } from '@/constants/threadly';
+import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from '@/constants/threadly';
 
-const OCCASIONS = [
-  { id: 'work', label: 'Work', icon: '💼', desc: 'Office & meetings' },
-  { id: 'casual', label: 'Casual', icon: '☕', desc: 'Everyday errands' },
-  { id: 'date_night', label: 'Date Night', icon: '♡', desc: 'Evenings out' },
-  { id: 'party', label: 'Party', icon: '✦', desc: 'Celebrations' },
-  { id: 'vacation', label: 'Vacation', icon: '✈', desc: 'Travel & resort' },
-  { id: 'school', label: 'School', icon: '◈', desc: 'Campus & classes' },
-  { id: 'church', label: 'Church', icon: '◇', desc: 'Sunday best' },
-  { id: 'gym', label: 'Active', icon: '◉', desc: 'Gym & outdoors' },
-  { id: 'brunch', label: 'Brunch', icon: '◆', desc: 'Weekend social' },
-  { id: 'formal', label: 'Formal', icon: '◧', desc: 'Galas & events' },
+const { width } = Dimensions.get('window');
+const CARD_W = (width - ThreadlySpacing.screenPadding * 2 - 12) / 3;
+
+const BRANDS = [
+  { id: 'zara', name: 'ZARA', tier: 'High Street', color: '#1A1A1A', textColor: '#FAF7F4' },
+  { id: 'hm', name: 'H&M', tier: 'High Street', color: '#E50010', textColor: '#FAF7F4' },
+  { id: 'mango', name: 'MANGO', tier: 'High Street', color: '#2C2C2C', textColor: '#FAF7F4' },
+  { id: 'aritzia', name: 'ARITZIA', tier: 'Premium', color: '#F5F0EB', textColor: '#1A1A1A' },
+  { id: 'cos', name: 'COS', tier: 'Premium', color: '#E8E4E0', textColor: '#1A1A1A' },
+  { id: 'arket', name: 'ARKET', tier: 'Premium', color: '#D4CFC8', textColor: '#1A1A1A' },
+  { id: 'toteme', name: 'TOTEME', tier: 'Luxury', color: '#C8B89A', textColor: '#1A1A1A' },
+  { id: 'sandro', name: 'SANDRO', tier: 'Luxury', color: '#2A2A3A', textColor: '#FAF7F4' },
+  { id: 'maje', name: 'MAJE', tier: 'Luxury', color: '#3A2A2A', textColor: '#FAF7F4' },
+  { id: 'reformation', name: 'REFORMATION', tier: 'Sustainable', color: '#E8D4C8', textColor: '#2A1A1A' },
+  { id: 'everlane', name: 'EVERLANE', tier: 'Sustainable', color: '#F0EDE8', textColor: '#1A1A1A' },
+  { id: 'amazon', name: 'AMAZON', tier: 'Value', color: '#FF9900', textColor: '#1A1A1A' },
+  { id: 'target', name: 'TARGET', tier: 'Value', color: '#CC0000', textColor: '#FAF7F4' },
+  { id: 'nordstrom', name: 'NORDSTROM', tier: 'Department', color: '#1A1A1A', textColor: '#FAF7F4' },
+  { id: 'ssense', name: 'SSENSE', tier: 'Designer', color: '#0A0A0A', textColor: '#FAF7F4' },
 ];
 
-export default function Step2Occasions() {
+export default function Step2Screen() {
   const [selected, setSelected] = useState<string[]>([]);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   const toggle = (id: string) => {
-    setSelected(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
+    setSelected(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
   };
 
   const handleNext = async () => {
-    await saveStyleProfile({ occasions: selected });
+    await saveStyleProfile({ favoriteBrands: selected });
     router.push('/onboarding/step3');
   };
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#0A0A0A', '#1A1A1A']} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={['#0A0A0A', '#111111']} style={StyleSheet.absoluteFill} />
 
-      <View style={styles.header}>
-        <ProgressBar step={2} total={6} />
-        <Text style={styles.stepLabel}>STEP 2 OF 6</Text>
-        <Text style={styles.title}>Where do you dress up?</Text>
-        <Text style={styles.subtitle}>Your AI stylist will build looks for every moment in your life.</Text>
-      </View>
+      <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <View style={styles.progressRow}>
+          {[1,2,3,4,5,6,7].map(i => (
+            <View key={i} style={[styles.progressDot, i <= 2 && styles.progressDotActive]} />
+          ))}
+        </View>
+        <Text style={styles.stepLabel}>STEP 2 OF 7</Text>
+        <Text style={styles.headline}>Your favorite{'\n'}brands?</Text>
+        <Text style={styles.subline}>We'll track deals and new arrivals for you.</Text>
+      </Animated.View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.grid}
-        showsVerticalScrollIndicator={false}
-      >
-        {OCCASIONS.map(occ => {
-          const isSelected = selected.includes(occ.id);
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.grid}>
+        {BRANDS.map((brand) => {
+          const isSelected = selected.includes(brand.id);
           return (
             <TouchableOpacity
-              key={occ.id}
-              style={[styles.chip, isSelected && styles.chipSelected]}
-              activeOpacity={0.8}
-              onPress={() => toggle(occ.id)}
+              key={brand.id}
+              style={[styles.card, { backgroundColor: brand.color }, isSelected && styles.cardSelected]}
+              activeOpacity={0.85}
+              onPress={() => toggle(brand.id)}
             >
               {isSelected && (
-                <LinearGradient
-                  colors={['rgba(201,149,106,0.2)', 'rgba(201,149,106,0.05)']}
-                  style={StyleSheet.absoluteFill}
-                />
+                <View style={styles.selectedGlow}>
+                  <LinearGradient
+                    colors={['rgba(201,149,106,0.3)', 'transparent']}
+                    style={StyleSheet.absoluteFill}
+                  />
+                </View>
               )}
-              <Text style={styles.chipIcon}>{occ.icon}</Text>
-              <View style={styles.chipTextGroup}>
-                <Text style={[styles.chipLabel, isSelected && styles.chipLabelSelected]}>
-                  {occ.label}
-                </Text>
-                <Text style={styles.chipDesc}>{occ.desc}</Text>
-              </View>
-              {isSelected && <Text style={styles.chipCheck}>✓</Text>}
+              <Text style={[styles.brandName, { color: brand.textColor }]}>{brand.name}</Text>
+              <Text style={[styles.brandTier, { color: brand.textColor, opacity: 0.6 }]}>{brand.tier}</Text>
+              {isSelected && (
+                <View style={styles.checkBadge}>
+                  <Text style={styles.checkText}>✓</Text>
+                </View>
+              )}
             </TouchableOpacity>
           );
         })}
+        <View style={{ height: 120, width: '100%' }} />
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={styles.ctaWrap}>
+        <LinearGradient colors={['transparent', 'rgba(10,10,10,0.98)']} style={StyleSheet.absoluteFill} />
         <TouchableOpacity
-          style={[styles.nextBtn, selected.length === 0 && styles.nextBtnDisabled]}
-          activeOpacity={0.85}
+          style={[styles.ctaBtn, selected.length === 0 && styles.ctaBtnDisabled]}
+          activeOpacity={0.88}
           onPress={handleNext}
-          disabled={selected.length === 0}
         >
           <LinearGradient
-            colors={selected.length > 0
-              ? [ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]
-              : ['#2A2A2A', '#2A2A2A']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.nextBtnGradient}
-          >
-            <Text style={styles.nextBtnText}>
-              {selected.length > 0 ? 'Continue' : 'Select at least one'}
-            </Text>
-          </LinearGradient>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleNext} style={styles.skipBtn}>
-          <Text style={styles.skipText}>Skip for now</Text>
+            colors={selected.length > 0 ? [ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight] : [ThreadlyColors.charcoal, ThreadlyColors.charcoal]}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <Text style={[styles.ctaBtnText, selected.length === 0 && styles.ctaBtnTextDisabled]}>
+            {selected.length > 0 ? `Continue with ${selected.length} brand${selected.length > 1 ? 's' : ''}` : 'Select at least one'}
+          </Text>
+          {selected.length > 0 && <Text style={styles.ctaBtnArrow}>→</Text>}
         </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-function ProgressBar({ step, total }: { step: number; total: number }) {
-  return (
-    <View style={pb.container}>
-      {Array.from({ length: total }).map((_, i) => (
-        <View key={i} style={[pb.dot, i < step ? pb.active : pb.inactive]} />
-      ))}
-    </View>
-  );
-}
-
-const pb = StyleSheet.create({
-  container: { flexDirection: 'row', gap: 6, marginBottom: 16 },
-  dot: { height: 3, borderRadius: 2 },
-  active: { width: 24, backgroundColor: ThreadlyColors.roseGold },
-  inactive: { width: 12, backgroundColor: ThreadlyColors.charcoalLight },
-});
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: ThreadlyColors.black },
-  header: {
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    paddingTop: 60,
-    paddingBottom: 24,
-  },
-  stepLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: ThreadlyColors.roseGold,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: 'Georgia',
-    color: ThreadlyColors.warmWhite,
-    marginBottom: 8,
-    lineHeight: 38,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: ThreadlyColors.warmWhiteMuted,
-    lineHeight: 20,
-  },
-  scroll: { flex: 1 },
+  header: { paddingHorizontal: ThreadlySpacing.screenPadding, paddingTop: 60, paddingBottom: 20 },
+  progressRow: { flexDirection: 'row', gap: 5, marginBottom: 16 },
+  progressDot: { flex: 1, height: 2, borderRadius: 1, backgroundColor: ThreadlyColors.charcoalLight },
+  progressDotActive: { backgroundColor: ThreadlyColors.roseGold },
+  stepLabel: { fontSize: 10, fontWeight: '700', color: ThreadlyColors.roseGold, letterSpacing: 2, marginBottom: 10 },
+  headline: { fontSize: 36, fontFamily: 'Georgia', color: ThreadlyColors.warmWhite, lineHeight: 44, marginBottom: 8 },
+  subline: { fontSize: 14, color: ThreadlyColors.warmWhiteMuted, fontStyle: 'italic' },
   grid: {
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    gap: 10,
-    paddingBottom: 24,
+    flexDirection: 'row', flexWrap: 'wrap',
+    paddingHorizontal: ThreadlySpacing.screenPadding, gap: 10,
   },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: ThreadlyColors.charcoal,
+  card: {
+    width: CARD_W, height: CARD_W * 1.1,
     borderRadius: ThreadlyRadius.lg,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-    gap: 14,
-    overflow: 'hidden',
-    position: 'relative',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+    overflow: 'hidden', position: 'relative',
+    padding: 8,
   },
-  chipSelected: {
-    borderColor: ThreadlyColors.roseGold,
-    borderWidth: 1.5,
+  cardSelected: { borderColor: ThreadlyColors.roseGold, borderWidth: 2 },
+  selectedGlow: { ...StyleSheet.absoluteFillObject, overflow: 'hidden' },
+  brandName: { fontSize: 11, fontWeight: '700', letterSpacing: 1, textAlign: 'center' },
+  brandTier: { fontSize: 8, letterSpacing: 0.5, marginTop: 3, textAlign: 'center' },
+  checkBadge: {
+    position: 'absolute', top: 6, right: 6,
+    width: 18, height: 18, borderRadius: 9,
+    backgroundColor: ThreadlyColors.roseGold,
+    alignItems: 'center', justifyContent: 'center',
   },
-  chipIcon: { fontSize: 18 },
-  chipTextGroup: { flex: 1 },
-  chipLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: ThreadlyColors.warmWhite,
-    marginBottom: 2,
-  },
-  chipLabelSelected: { color: ThreadlyColors.roseGoldLight },
-  chipDesc: {
-    fontSize: 12,
-    color: ThreadlyColors.warmWhiteSubtle,
-  },
-  chipCheck: {
-    fontSize: 14,
-    color: ThreadlyColors.roseGold,
-    fontWeight: '700',
-  },
-  footer: {
+  checkText: { fontSize: 10, color: ThreadlyColors.black, fontWeight: '700' },
+  ctaWrap: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
     paddingHorizontal: ThreadlySpacing.screenPadding,
-    paddingBottom: 40,
-    paddingTop: 16,
-    gap: 10,
+    paddingBottom: 44, paddingTop: 40, overflow: 'hidden',
   },
-  nextBtn: { borderRadius: ThreadlyRadius.pill, overflow: 'hidden' },
-  nextBtnDisabled: { opacity: 0.6 },
-  nextBtnGradient: { paddingVertical: 18, alignItems: 'center' },
-  nextBtnText: { fontSize: 16, fontWeight: '700', color: ThreadlyColors.warmWhite, letterSpacing: 0.3 },
-  skipBtn: { alignItems: 'center', paddingVertical: 8 },
-  skipText: { fontSize: 13, color: ThreadlyColors.warmWhiteSubtle },
+  ctaBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 18, borderRadius: ThreadlyRadius.xl, overflow: 'hidden', gap: 10,
+  },
+  ctaBtnDisabled: { opacity: 0.6 },
+  ctaBtnText: { fontSize: 16, fontWeight: '700', color: ThreadlyColors.black },
+  ctaBtnTextDisabled: { color: ThreadlyColors.warmWhiteSubtle },
+  ctaBtnArrow: { fontSize: 18, color: ThreadlyColors.black, fontWeight: '700' },
 });

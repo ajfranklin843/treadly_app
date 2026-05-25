@@ -1,236 +1,169 @@
 /**
- * Threadly Onboarding — Step 4: Budget Range
- * User sets their typical shopping budget per outfit/item.
+ * Threadly Onboarding — Step 4: Occasions
+ * Chip grid with icons. Multi-select.
  */
 
-import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { router } from 'expo-router';
+import { useState, useRef, useEffect } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity,
+  ScrollView, Dimensions, Animated,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { saveStyleProfile } from '@/lib/onboarding-store';
-import { ThreadlyColors, ThreadlyRadius, ThreadlySpacing } from '@/constants/threadly';
+import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from '@/constants/threadly';
 
-const BUDGET_OPTIONS = [
-  { id: 'budget', label: 'Budget Savvy', range: '$25 – $75', min: 25, max: 75, desc: 'Great finds, smart prices' },
-  { id: 'mid', label: 'Mid-Range', range: '$75 – $150', min: 75, max: 150, desc: 'Quality pieces, good value' },
-  { id: 'premium', label: 'Premium', range: '$150 – $300', min: 150, max: 300, desc: 'Investment pieces' },
-  { id: 'luxury', label: 'Luxury', range: '$300+', min: 300, max: 1000, desc: 'No limits on quality' },
+const { width } = Dimensions.get('window');
+
+const OCCASIONS = [
+  { id: 'work', label: 'Work', icon: '💼', sub: 'Office & meetings' },
+  { id: 'date-night', label: 'Date Night', icon: '✨', sub: 'Romantic & elevated' },
+  { id: 'casual', label: 'Casual', icon: '☀️', sub: 'Everyday comfort' },
+  { id: 'vacation', label: 'Vacation', icon: '🌊', sub: 'Travel & resort' },
+  { id: 'events', label: 'Events', icon: '🥂', sub: 'Parties & galas' },
+  { id: 'church', label: 'Church', icon: '🌿', sub: 'Modest & polished' },
+  { id: 'gym', label: 'Gym', icon: '🏃‍♀️', sub: 'Activewear' },
+  { id: 'brunch', label: 'Brunch', icon: '🌸', sub: 'Weekend social' },
+  { id: 'travel', label: 'Travel', icon: '✈️', sub: 'Airport & transit' },
+  { id: 'wedding', label: 'Wedding Guest', icon: '💐', sub: 'Formal occasions' },
+  { id: 'creative', label: 'Creative Work', icon: '🎨', sub: 'Studio & freelance' },
+  { id: 'nightout', label: 'Night Out', icon: '🌙', sub: 'Clubs & bars' },
 ];
 
-export default function Step4Budget() {
-  const [selected, setSelected] = useState<string>('mid');
+export default function Step4Screen() {
+  const [selected, setSelected] = useState<string[]>([]);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  const toggle = (id: string) => {
+    setSelected(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
+  };
 
   const handleNext = async () => {
-    const opt = BUDGET_OPTIONS.find(o => o.id === selected)!;
-    await saveStyleProfile({ budgetMin: opt.min, budgetMax: opt.max });
+    await saveStyleProfile({ occasions: selected });
     router.push('/onboarding/step5');
   };
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#0A0A0A', '#1A1A1A']} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={['#0A0A0A', '#111111']} style={StyleSheet.absoluteFill} />
 
-      <View style={styles.header}>
-        <ProgressBar step={4} total={6} />
-        <Text style={styles.stepLabel}>STEP 4 OF 6</Text>
-        <Text style={styles.title}>What's your budget?</Text>
-        <Text style={styles.subtitle}>Your AI stylist will always find the best deals within your range.</Text>
-      </View>
+      <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <View style={styles.progressRow}>
+          {[1,2,3,4,5,6,7].map(i => (
+            <View key={i} style={[styles.progressDot, i <= 4 && styles.progressDotActive]} />
+          ))}
+        </View>
+        <Text style={styles.stepLabel}>STEP 4 OF 7</Text>
+        <Text style={styles.headline}>Where are you{'\n'}getting dressed?</Text>
+        <Text style={styles.subline}>We'll build looks for the moments that matter most.</Text>
+      </Animated.View>
 
-      <View style={styles.optionsContainer}>
-        {BUDGET_OPTIONS.map(opt => {
-          const isSelected = selected === opt.id;
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.grid}>
+        {OCCASIONS.map((occ) => {
+          const isSelected = selected.includes(occ.id);
           return (
             <TouchableOpacity
-              key={opt.id}
-              style={[styles.optionCard, isSelected && styles.optionCardSelected]}
-              activeOpacity={0.8}
-              onPress={() => setSelected(opt.id)}
+              key={occ.id}
+              style={[styles.card, isSelected && styles.cardSelected]}
+              activeOpacity={0.85}
+              onPress={() => toggle(occ.id)}
             >
               {isSelected && (
                 <LinearGradient
-                  colors={['rgba(201,149,106,0.15)', 'rgba(201,149,106,0.03)']}
+                  colors={['rgba(201,149,106,0.18)', 'rgba(201,149,106,0.06)']}
                   style={StyleSheet.absoluteFill}
                 />
               )}
-              <View style={styles.optionLeft}>
-                <Text style={[styles.optionLabel, isSelected && styles.optionLabelSelected]}>
-                  {opt.label}
-                </Text>
-                <Text style={styles.optionDesc}>{opt.desc}</Text>
-              </View>
-              <View style={styles.optionRight}>
-                <Text style={[styles.optionRange, isSelected && styles.optionRangeSelected]}>
-                  {opt.range}
-                </Text>
-                {isSelected && (
-                  <View style={styles.radioSelected}>
-                    <View style={styles.radioDot} />
-                  </View>
-                )}
-                {!isSelected && <View style={styles.radioEmpty} />}
-              </View>
+              <Text style={styles.cardIcon}>{occ.icon}</Text>
+              <Text style={[styles.cardLabel, isSelected && styles.cardLabelSelected]}>{occ.label}</Text>
+              <Text style={styles.cardSub}>{occ.sub}</Text>
+              {isSelected && (
+                <View style={styles.checkDot}>
+                  <Text style={styles.checkText}>✓</Text>
+                </View>
+              )}
             </TouchableOpacity>
           );
         })}
-      </View>
+        <View style={{ height: 120, width: '100%' }} />
+      </ScrollView>
 
-      <View style={styles.insightCard}>
-        <Text style={styles.insightIcon}>✦</Text>
-        <Text style={styles.insightText}>
-          Threadly finds deals up to 60% off your favorite brands — so your budget goes further.
-        </Text>
-      </View>
-
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.nextBtn} activeOpacity={0.85} onPress={handleNext}>
+      <View style={styles.ctaWrap}>
+        <LinearGradient colors={['transparent', 'rgba(10,10,10,0.98)']} style={StyleSheet.absoluteFill} />
+        <TouchableOpacity
+          style={[styles.ctaBtn, selected.length === 0 && styles.ctaBtnDisabled]}
+          activeOpacity={0.88}
+          onPress={handleNext}
+          disabled={selected.length === 0}
+        >
           <LinearGradient
-            colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.nextBtnGradient}
-          >
-            <Text style={styles.nextBtnText}>Continue</Text>
-          </LinearGradient>
+            colors={selected.length > 0 ? [ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight] : [ThreadlyColors.charcoal, ThreadlyColors.charcoal]}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <Text style={[styles.ctaBtnText, selected.length === 0 && styles.ctaBtnTextDisabled]}>
+            {selected.length > 0 ? `Continue — ${selected.length} occasion${selected.length > 1 ? 's' : ''}` : 'Select at least one'}
+          </Text>
+          {selected.length > 0 && <Text style={styles.ctaBtnArrow}>→</Text>}
         </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-function ProgressBar({ step, total }: { step: number; total: number }) {
-  return (
-    <View style={pb.container}>
-      {Array.from({ length: total }).map((_, i) => (
-        <View key={i} style={[pb.dot, i < step ? pb.active : pb.inactive]} />
-      ))}
-    </View>
-  );
-}
-
-const pb = StyleSheet.create({
-  container: { flexDirection: 'row', gap: 6, marginBottom: 16 },
-  dot: { height: 3, borderRadius: 2 },
-  active: { width: 24, backgroundColor: ThreadlyColors.roseGold },
-  inactive: { width: 12, backgroundColor: ThreadlyColors.charcoalLight },
-});
+const CARD_W = (width - ThreadlySpacing.screenPadding * 2 - 10 * 2) / 3;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: ThreadlyColors.black },
-  header: {
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    paddingTop: 60,
-    paddingBottom: 24,
+  header: { paddingHorizontal: ThreadlySpacing.screenPadding, paddingTop: 60, paddingBottom: 20 },
+  progressRow: { flexDirection: 'row', gap: 5, marginBottom: 16 },
+  progressDot: { flex: 1, height: 2, borderRadius: 1, backgroundColor: ThreadlyColors.charcoalLight },
+  progressDotActive: { backgroundColor: ThreadlyColors.roseGold },
+  stepLabel: { fontSize: 10, fontWeight: '700', color: ThreadlyColors.roseGold, letterSpacing: 2, marginBottom: 10 },
+  headline: { fontSize: 36, fontFamily: 'Georgia', color: ThreadlyColors.warmWhite, lineHeight: 44, marginBottom: 8 },
+  subline: { fontSize: 14, color: ThreadlyColors.warmWhiteMuted, fontStyle: 'italic' },
+  grid: {
+    flexDirection: 'row', flexWrap: 'wrap',
+    paddingHorizontal: ThreadlySpacing.screenPadding, gap: 10,
   },
-  stepLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: ThreadlyColors.roseGold,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: 'Georgia',
-    color: ThreadlyColors.warmWhite,
-    marginBottom: 8,
-    lineHeight: 38,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: ThreadlyColors.warmWhiteMuted,
-    lineHeight: 20,
-  },
-  optionsContainer: {
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    gap: 10,
-    flex: 1,
-  },
-  optionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: ThreadlyColors.charcoal,
+  card: {
+    width: CARD_W, paddingVertical: 16, paddingHorizontal: 8,
     borderRadius: ThreadlyRadius.xl,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-    overflow: 'hidden',
-    position: 'relative',
+    backgroundColor: ThreadlyColors.charcoal,
+    borderWidth: 1, borderColor: ThreadlyColors.charcoalLight,
+    alignItems: 'center', gap: 6, position: 'relative', overflow: 'hidden',
   },
-  optionCardSelected: {
-    borderColor: ThreadlyColors.roseGold,
-    borderWidth: 1.5,
-  },
-  optionLeft: { flex: 1 },
-  optionLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: ThreadlyColors.warmWhite,
-    marginBottom: 4,
-  },
-  optionLabelSelected: { color: ThreadlyColors.roseGoldLight },
-  optionDesc: {
-    fontSize: 12,
-    color: ThreadlyColors.warmWhiteSubtle,
-  },
-  optionRight: {
-    alignItems: 'flex-end',
-    gap: 8,
-  },
-  optionRange: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: ThreadlyColors.warmWhiteMuted,
-  },
-  optionRangeSelected: { color: ThreadlyColors.roseGold },
-  radioEmpty: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: ThreadlyColors.charcoalLight,
-  },
-  radioSelected: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: ThreadlyColors.roseGold,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  cardSelected: { borderColor: ThreadlyColors.roseGold },
+  cardIcon: { fontSize: 24 },
+  cardLabel: { fontSize: 12, fontWeight: '700', color: ThreadlyColors.warmWhite, textAlign: 'center' },
+  cardLabelSelected: { color: ThreadlyColors.roseGoldLight },
+  cardSub: { fontSize: 9, color: ThreadlyColors.warmWhiteSubtle, textAlign: 'center' },
+  checkDot: {
+    position: 'absolute', top: 6, right: 6,
+    width: 16, height: 16, borderRadius: 8,
     backgroundColor: ThreadlyColors.roseGold,
+    alignItems: 'center', justifyContent: 'center',
   },
-  insightCard: {
-    marginHorizontal: ThreadlySpacing.screenPadding,
-    marginTop: 16,
-    backgroundColor: ThreadlyColors.blushDark,
-    borderRadius: ThreadlyRadius.lg,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.roseGoldDim,
-  },
-  insightIcon: { fontSize: 12, color: ThreadlyColors.roseGold, marginTop: 2 },
-  insightText: {
-    flex: 1,
-    fontSize: 13,
-    color: ThreadlyColors.roseGoldLight,
-    lineHeight: 19,
-  },
-  footer: {
+  checkText: { fontSize: 9, color: ThreadlyColors.black, fontWeight: '700' },
+  ctaWrap: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
     paddingHorizontal: ThreadlySpacing.screenPadding,
-    paddingBottom: 40,
-    paddingTop: 20,
+    paddingBottom: 44, paddingTop: 40, overflow: 'hidden',
   },
-  nextBtn: { borderRadius: ThreadlyRadius.pill, overflow: 'hidden' },
-  nextBtnGradient: { paddingVertical: 18, alignItems: 'center' },
-  nextBtnText: { fontSize: 16, fontWeight: '700', color: ThreadlyColors.warmWhite, letterSpacing: 0.3 },
+  ctaBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 18, borderRadius: ThreadlyRadius.xl, overflow: 'hidden', gap: 10,
+  },
+  ctaBtnDisabled: { opacity: 0.6 },
+  ctaBtnText: { fontSize: 16, fontWeight: '700', color: ThreadlyColors.black },
+  ctaBtnTextDisabled: { color: ThreadlyColors.warmWhiteSubtle },
+  ctaBtnArrow: { fontSize: 18, color: ThreadlyColors.black, fontWeight: '700' },
 });

@@ -58,3 +58,29 @@
 - [x] Rebuild Stylist screen — conversational chat, typing indicator, recommendation cards, suggestion chips
 - [x] Update tab bar — dark luxury bar, rose gold Go New FAB, spaced labels
 - [x] Update icon mappings — checkroom, local-mall, auto-awesome for all 5 tabs
+
+## Phase 7 — Onboarding Polish Sprint
+- [ ] Welcome / Brand Intro screen — cinematic hero, THREADLY wordmark, luxury feel
+- [ ] Step 1: Style Vibes — large visual cards with fashion imagery, multi-select
+- [ ] Step 2: Favorite Brands — visual brand grid, selectable cards
+- [ ] Step 3: Shopping Personality — 4 personality archetypes with editorial imagery
+- [ ] Step 4: Occasions — chip grid with icons, multi-select
+- [ ] Step 5: Color + Aesthetic Preferences — visual swatch grid
+- [ ] Step 6: AI Profile Build — animated progress moment "building your style profile"
+- [ ] Step 7: First AI Look Reveal — "You already own 80% of this look" emotional hook
+- [ ] Shared progress indicator component across all steps
+- [ ] Smooth slide transitions between all steps
+- [ ] Root layout anchor updated to onboarding
+
+## Phase 7 — Onboarding Polish Sprint (COMPLETED)
+- [x] Welcome / Brand Intro — cinematic full-bleed hero, THREADLY wordmark, feature pills, animated sequence
+- [x] Step 1: Style Vibes — 8 large visual image cards with fashion photography, multi-select with rose-gold check
+- [x] Step 2: Favorite Brands — 15 brand cards with brand colors, selectable grid
+- [x] Step 3: Shopping Personality — 4 editorial archetype cards with imagery and trait pills
+- [x] Step 4: Occasions — 12-item chip grid with emoji icons, multi-select
+- [x] Step 5: Color + Aesthetic Preferences — 8 palette cards with color swatches, multi-select
+- [x] Step 6: AI Profile Build — animated orb, 7-step build sequence, progress bar, routes to main app
+- [x] Smooth slide/fade transitions between all steps via _layout.tsx
+- [x] Progress bar (7 dots) on all steps
+- [x] Root layout anchor set to onboarding
+- [x] TypeScript clean, 12 tests passing

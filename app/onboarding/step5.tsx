@@ -1,40 +1,45 @@
 /**
- * Threadly Onboarding — Step 5: Color Preferences
- * User selects their go-to color palette.
+ * Threadly Onboarding — Step 5: Color + Aesthetic Preferences
+ * Visual swatch grid with color palettes. Multi-select.
  */
 
-import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
-import { router } from 'expo-router';
+import { useState, useRef, useEffect } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity,
+  ScrollView, Dimensions, Animated,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { saveStyleProfile } from '@/lib/onboarding-store';
-import { ThreadlyColors, ThreadlyRadius, ThreadlySpacing } from '@/constants/threadly';
+import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from '@/constants/threadly';
 
 const { width } = Dimensions.get('window');
-const SWATCH_SIZE = (width - ThreadlySpacing.screenPadding * 2 - 12 * 3) / 4;
 
-const COLORS = [
-  { id: 'black', label: 'Black', hex: '#0A0A0A', border: '#333' },
-  { id: 'white', label: 'White', hex: '#F5F5F0', border: '#555' },
-  { id: 'neutral', label: 'Neutral', hex: '#C4A882', border: '#B09060' },
-  { id: 'blush', label: 'Blush', hex: '#F2C4B0', border: '#D4A090' },
-  { id: 'camel', label: 'Camel', hex: '#C19A6B', border: '#A07845' },
-  { id: 'navy', label: 'Navy', hex: '#1A2A4A', border: '#2A3A5A' },
-  { id: 'burgundy', label: 'Burgundy', hex: '#6B1A2A', border: '#8B2A3A' },
-  { id: 'green', label: 'Olive', hex: '#4A5A2A', border: '#5A6A3A' },
-  { id: 'brown', label: 'Brown', hex: '#5A3A1A', border: '#6A4A2A' },
-  { id: 'grey', label: 'Grey', hex: '#6A6A6A', border: '#7A7A7A' },
-  { id: 'cobalt', label: 'Cobalt', hex: '#1A3A8A', border: '#2A4A9A' },
-  { id: 'rust', label: 'Rust', hex: '#B04A1A', border: '#C05A2A' },
+const COLOR_PALETTES = [
+  { id: 'neutrals', label: 'Neutrals', sub: 'Beige, cream, sand, taupe', colors: ['#F5F0E8', '#E8DDD0', '#C8B89A', '#A89070'] },
+  { id: 'monochrome', label: 'Monochrome', sub: 'Black, white, grey', colors: ['#0A0A0A', '#3A3A3A', '#888888', '#F5F5F5'] },
+  { id: 'earth', label: 'Earth Tones', sub: 'Terracotta, rust, olive', colors: ['#C0614A', '#8B6914', '#5C6B2E', '#A0522D'] },
+  { id: 'blush', label: 'Blush & Rose', sub: 'Pink, mauve, dusty rose', colors: ['#F2D4C8', '#E8A898', '#C87878', '#D4A0B0'] },
+  { id: 'navy', label: 'Navy & Blue', sub: 'Classic, crisp, coastal', colors: ['#1A2A4A', '#2A4A8A', '#4A7AB8', '#8AB0D8'] },
+  { id: 'jewel', label: 'Jewel Tones', sub: 'Emerald, sapphire, ruby', colors: ['#1A6A3A', '#1A3A8A', '#8A1A2A', '#6A1A8A'] },
+  { id: 'pastels', label: 'Pastels', sub: 'Soft, dreamy, feminine', colors: ['#D8EAF0', '#F0D8E8', '#E8F0D8', '#F0EAD8'] },
+  { id: 'bold', label: 'Bold & Bright', sub: 'Statement colors, vivid', colors: ['#FF4444', '#FF8800', '#FFCC00', '#00AA44'] },
 ];
 
-export default function Step5Colors() {
+export default function Step5Screen() {
   const [selected, setSelected] = useState<string[]>([]);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   const toggle = (id: string) => {
-    setSelected(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
+    setSelected(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
   };
 
   const handleNext = async () => {
@@ -44,161 +49,122 @@ export default function Step5Colors() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#0A0A0A', '#1A1A1A']} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={['#0A0A0A', '#111111']} style={StyleSheet.absoluteFill} />
 
-      <View style={styles.header}>
-        <ProgressBar step={5} total={6} />
-        <Text style={styles.stepLabel}>STEP 5 OF 6</Text>
-        <Text style={styles.title}>Your color palette?</Text>
-        <Text style={styles.subtitle}>Your AI stylist will build looks around colors you actually wear.</Text>
-      </View>
+      <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <View style={styles.progressRow}>
+          {[1,2,3,4,5,6,7].map(i => (
+            <View key={i} style={[styles.progressDot, i <= 5 && styles.progressDotActive]} />
+          ))}
+        </View>
+        <Text style={styles.stepLabel}>STEP 5 OF 7</Text>
+        <Text style={styles.headline}>Your color{'\n'}universe.</Text>
+        <Text style={styles.subline}>We'll filter recommendations to your palette.</Text>
+      </Animated.View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.grid}
-        showsVerticalScrollIndicator={false}
-      >
-        {COLORS.map(color => {
-          const isSelected = selected.includes(color.id);
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
+        {COLOR_PALETTES.map((palette) => {
+          const isSelected = selected.includes(palette.id);
           return (
             <TouchableOpacity
-              key={color.id}
-              style={[styles.swatchContainer, { width: SWATCH_SIZE }]}
-              activeOpacity={0.8}
-              onPress={() => toggle(color.id)}
+              key={palette.id}
+              style={[styles.card, isSelected && styles.cardSelected]}
+              activeOpacity={0.85}
+              onPress={() => toggle(palette.id)}
             >
-              <View
-                style={[
-                  styles.swatch,
-                  { backgroundColor: color.hex, borderColor: color.border },
-                  isSelected && styles.swatchSelected,
-                ]}
-              >
-                {isSelected && (
-                  <View style={styles.swatchCheck}>
-                    <Text style={styles.swatchCheckText}>✓</Text>
-                  </View>
-                )}
+              {isSelected && (
+                <LinearGradient
+                  colors={['rgba(201,149,106,0.12)', 'transparent']}
+                  style={StyleSheet.absoluteFill}
+                />
+              )}
+              {/* Swatch row */}
+              <View style={styles.swatchRow}>
+                {palette.colors.map((color, i) => (
+                  <View key={i} style={[styles.swatch, { backgroundColor: color }]} />
+                ))}
               </View>
-              <Text style={[styles.swatchLabel, isSelected && styles.swatchLabelSelected]}>
-                {color.label}
-              </Text>
+              {/* Label */}
+              <View style={styles.cardText}>
+                <Text style={[styles.cardLabel, isSelected && styles.cardLabelSelected]}>{palette.label}</Text>
+                <Text style={styles.cardSub}>{palette.sub}</Text>
+              </View>
+              {isSelected && (
+                <View style={styles.checkBadge}>
+                  <Text style={styles.checkText}>✓</Text>
+                </View>
+              )}
             </TouchableOpacity>
           );
         })}
+        <View style={{ height: 120 }} />
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.nextBtn} activeOpacity={0.85} onPress={handleNext}>
+      <View style={styles.ctaWrap}>
+        <LinearGradient colors={['transparent', 'rgba(10,10,10,0.98)']} style={StyleSheet.absoluteFill} />
+        <TouchableOpacity
+          style={[styles.ctaBtn, selected.length === 0 && styles.ctaBtnDisabled]}
+          activeOpacity={0.88}
+          onPress={handleNext}
+          disabled={selected.length === 0}
+        >
           <LinearGradient
-            colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.nextBtnGradient}
-          >
-            <Text style={styles.nextBtnText}>Continue</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleNext} style={styles.skipBtn}>
-          <Text style={styles.skipText}>Skip for now</Text>
+            colors={selected.length > 0 ? [ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight] : [ThreadlyColors.charcoal, ThreadlyColors.charcoal]}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <Text style={[styles.ctaBtnText, selected.length === 0 && styles.ctaBtnTextDisabled]}>
+            {selected.length > 0 ? `Continue with ${selected.length} palette${selected.length > 1 ? 's' : ''}` : 'Select at least one'}
+          </Text>
+          {selected.length > 0 && <Text style={styles.ctaBtnArrow}>→</Text>}
         </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-function ProgressBar({ step, total }: { step: number; total: number }) {
-  return (
-    <View style={pb.container}>
-      {Array.from({ length: total }).map((_, i) => (
-        <View key={i} style={[pb.dot, i < step ? pb.active : pb.inactive]} />
-      ))}
-    </View>
-  );
-}
-
-const pb = StyleSheet.create({
-  container: { flexDirection: 'row', gap: 6, marginBottom: 16 },
-  dot: { height: 3, borderRadius: 2 },
-  active: { width: 24, backgroundColor: ThreadlyColors.roseGold },
-  inactive: { width: 12, backgroundColor: ThreadlyColors.charcoalLight },
-});
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: ThreadlyColors.black },
-  header: {
+  header: { paddingHorizontal: ThreadlySpacing.screenPadding, paddingTop: 60, paddingBottom: 20 },
+  progressRow: { flexDirection: 'row', gap: 5, marginBottom: 16 },
+  progressDot: { flex: 1, height: 2, borderRadius: 1, backgroundColor: ThreadlyColors.charcoalLight },
+  progressDotActive: { backgroundColor: ThreadlyColors.roseGold },
+  stepLabel: { fontSize: 10, fontWeight: '700', color: ThreadlyColors.roseGold, letterSpacing: 2, marginBottom: 10 },
+  headline: { fontSize: 36, fontFamily: 'Georgia', color: ThreadlyColors.warmWhite, lineHeight: 44, marginBottom: 8 },
+  subline: { fontSize: 14, color: ThreadlyColors.warmWhiteMuted, fontStyle: 'italic' },
+  list: { paddingHorizontal: ThreadlySpacing.screenPadding, gap: 10 },
+  card: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    paddingVertical: 14, paddingHorizontal: 16,
+    borderRadius: ThreadlyRadius.xl,
+    backgroundColor: ThreadlyColors.charcoal,
+    borderWidth: 1, borderColor: ThreadlyColors.charcoalLight,
+    overflow: 'hidden', position: 'relative',
+  },
+  cardSelected: { borderColor: ThreadlyColors.roseGold },
+  swatchRow: { flexDirection: 'row', gap: 3 },
+  swatch: { width: 22, height: 44, borderRadius: 6 },
+  cardText: { flex: 1 },
+  cardLabel: { fontSize: 15, fontWeight: '700', color: ThreadlyColors.warmWhite, marginBottom: 2 },
+  cardLabelSelected: { color: ThreadlyColors.roseGoldLight },
+  cardSub: { fontSize: 11, color: ThreadlyColors.warmWhiteSubtle, fontStyle: 'italic' },
+  checkBadge: {
+    width: 26, height: 26, borderRadius: 13,
+    backgroundColor: ThreadlyColors.roseGold,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  checkText: { fontSize: 12, color: ThreadlyColors.black, fontWeight: '700' },
+  ctaWrap: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
     paddingHorizontal: ThreadlySpacing.screenPadding,
-    paddingTop: 60,
-    paddingBottom: 24,
+    paddingBottom: 44, paddingTop: 40, overflow: 'hidden',
   },
-  stepLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: ThreadlyColors.roseGold,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    marginBottom: 8,
+  ctaBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 18, borderRadius: ThreadlyRadius.xl, overflow: 'hidden', gap: 10,
   },
-  title: {
-    fontSize: 32,
-    fontFamily: 'Georgia',
-    color: ThreadlyColors.warmWhite,
-    marginBottom: 8,
-    lineHeight: 38,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: ThreadlyColors.warmWhiteMuted,
-    lineHeight: 20,
-  },
-  scroll: { flex: 1 },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    gap: 12,
-    paddingBottom: 24,
-  },
-  swatchContainer: {
-    alignItems: 'center',
-    gap: 6,
-  },
-  swatch: {
-    width: SWATCH_SIZE,
-    height: SWATCH_SIZE,
-    borderRadius: ThreadlyRadius.lg,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  swatchSelected: {
-    borderColor: ThreadlyColors.roseGold,
-    borderWidth: 2.5,
-  },
-  swatchCheck: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  swatchCheckText: { fontSize: 12, color: ThreadlyColors.warmWhite, fontWeight: '700' },
-  swatchLabel: {
-    fontSize: 11,
-    color: ThreadlyColors.warmWhiteSubtle,
-    textAlign: 'center',
-  },
-  swatchLabelSelected: { color: ThreadlyColors.roseGoldLight },
-  footer: {
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    paddingBottom: 40,
-    paddingTop: 16,
-    gap: 10,
-  },
-  nextBtn: { borderRadius: ThreadlyRadius.pill, overflow: 'hidden' },
-  nextBtnGradient: { paddingVertical: 18, alignItems: 'center' },
-  nextBtnText: { fontSize: 16, fontWeight: '700', color: ThreadlyColors.warmWhite, letterSpacing: 0.3 },
-  skipBtn: { alignItems: 'center', paddingVertical: 8 },
-  skipText: { fontSize: 13, color: ThreadlyColors.warmWhiteSubtle },
+  ctaBtnDisabled: { opacity: 0.6 },
+  ctaBtnText: { fontSize: 16, fontWeight: '700', color: ThreadlyColors.black },
+  ctaBtnTextDisabled: { color: ThreadlyColors.warmWhiteSubtle },
+  ctaBtnArrow: { fontSize: 18, color: ThreadlyColors.black, fontWeight: '700' },
 });

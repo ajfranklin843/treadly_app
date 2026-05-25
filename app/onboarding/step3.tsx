@@ -1,238 +1,214 @@
 /**
- * Threadly Onboarding — Step 3: Favorite Brands
- * User selects brands they love — used for deal tracking and style matching.
+ * Threadly Onboarding — Step 3: Shopping Personality
+ * 4 editorial archetype cards. Single select.
  */
 
-import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
-import { router } from 'expo-router';
+import { useState, useRef, useEffect } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity,
+  Dimensions, Image, Animated, ScrollView,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { saveStyleProfile } from '@/lib/onboarding-store';
-import { ThreadlyColors, ThreadlyRadius, ThreadlySpacing } from '@/constants/threadly';
+import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from '@/constants/threadly';
 
 const { width } = Dimensions.get('window');
-const CARD_W = (width - ThreadlySpacing.screenPadding * 2 - 10 * 2) / 3;
 
-const BRANDS = [
-  { id: 'zara', name: 'ZARA', tier: 'Fast Fashion' },
-  { id: 'hm', name: 'H&M', tier: 'Fast Fashion' },
-  { id: 'aritzia', name: 'ARITZIA', tier: 'Contemporary' },
-  { id: 'revolve', name: 'REVOLVE', tier: 'Contemporary' },
-  { id: 'nordstrom', name: 'NORDSTROM', tier: 'Department' },
-  { id: 'amazon', name: 'AMAZON', tier: 'Marketplace' },
-  { id: 'target', name: 'TARGET', tier: 'Value' },
-  { id: 'nike', name: 'NIKE', tier: 'Athletic' },
-  { id: 'mango', name: 'MANGO', tier: 'Contemporary' },
-  { id: 'aldo', name: 'ALDO', tier: 'Shoes' },
-  { id: 'sephora', name: 'SEPHORA', tier: 'Beauty' },
-  { id: 'free_people', name: 'FREE PEOPLE', tier: 'Boho' },
-  { id: 'anthropologie', name: 'ANTHRO', tier: 'Lifestyle' },
-  { id: 'lululemon', name: 'LULULEMON', tier: 'Athletic' },
-  { id: 'cos', name: 'COS', tier: 'Minimal' },
-  { id: 'madewell', name: 'MADEWELL', tier: 'Casual' },
-  { id: 'abercrombie', name: 'ABERCROMBIE', tier: 'Casual' },
-  { id: 'other', name: '+ OTHER', tier: 'Add yours' },
+const PERSONALITIES = [
+  {
+    id: 'budget-smart',
+    title: 'Budget Smart',
+    tagline: 'I want to look expensive without spending it.',
+    traits: ['Deal hunter', 'Dupes queen', 'Smart swaps'],
+    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80',
+    accent: '#5DBF8A',
+  },
+  {
+    id: 'trend-first',
+    title: 'Trend First',
+    tagline: 'I want to wear what\'s happening right now.',
+    traits: ['Early adopter', 'Seasonal refresh', 'Viral pieces'],
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
+    accent: '#C9956A',
+  },
+  {
+    id: 'investment-buyer',
+    title: 'Investment Buyer',
+    tagline: 'I buy less, but I buy better.',
+    traits: ['Quality over quantity', 'Timeless pieces', 'Cost-per-wear'],
+    image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600&q=80',
+    accent: '#C8B89A',
+  },
+  {
+    id: 'closet-maximizer',
+    title: 'Closet Maximizer',
+    tagline: 'I want to get more out of what I already own.',
+    traits: ['Outfit remixer', 'Capsule builder', 'Versatility seeker'],
+    image: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600&q=80',
+    accent: '#E8B89A',
+  },
 ];
 
-export default function Step3Brands() {
-  const [selected, setSelected] = useState<string[]>([]);
+export default function Step3Screen() {
+  const [selected, setSelected] = useState<string | null>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
 
-  const toggle = (id: string) => {
-    setSelected(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
-  };
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   const handleNext = async () => {
-    await saveStyleProfile({ favoriteBrands: selected });
+    if (!selected) return;
+    // Store as a style vibe extension
     router.push('/onboarding/step4');
   };
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#0A0A0A', '#1A1A1A']} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={['#0A0A0A', '#111111']} style={StyleSheet.absoluteFill} />
 
-      <View style={styles.header}>
-        <ProgressBar step={3} total={6} />
-        <Text style={styles.stepLabel}>STEP 3 OF 6</Text>
-        <Text style={styles.title}>Brands you love?</Text>
-        <Text style={styles.subtitle}>Threadly will track deals and find pieces from your favorites first.</Text>
-      </View>
+      <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <View style={styles.progressRow}>
+          {[1,2,3,4,5,6,7].map(i => (
+            <View key={i} style={[styles.progressDot, i <= 3 && styles.progressDotActive]} />
+          ))}
+        </View>
+        <Text style={styles.stepLabel}>STEP 3 OF 7</Text>
+        <Text style={styles.headline}>How do you{'\n'}shop?</Text>
+        <Text style={styles.subline}>Your shopping personality shapes every recommendation.</Text>
+      </Animated.View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.grid}
-        showsVerticalScrollIndicator={false}
-      >
-        {BRANDS.map(brand => {
-          const isSelected = selected.includes(brand.id);
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.cardList}>
+        {PERSONALITIES.map((p) => {
+          const isSelected = selected === p.id;
           return (
             <TouchableOpacity
-              key={brand.id}
-              style={[styles.brandCard, { width: CARD_W }, isSelected && styles.brandCardSelected]}
-              activeOpacity={0.8}
-              onPress={() => toggle(brand.id)}
+              key={p.id}
+              style={[styles.card, isSelected && styles.cardSelected]}
+              activeOpacity={0.88}
+              onPress={() => setSelected(p.id)}
             >
+              <Image source={{ uri: p.image }} style={styles.cardImage} resizeMode="cover" />
+              <LinearGradient
+                colors={['transparent', 'rgba(10,10,10,0.92)']}
+                style={StyleSheet.absoluteFill}
+              />
               {isSelected && (
-                <LinearGradient
-                  colors={['rgba(201,149,106,0.2)', 'rgba(201,149,106,0.05)']}
-                  style={StyleSheet.absoluteFill}
-                />
-              )}
-              <Text style={[styles.brandName, isSelected && styles.brandNameSelected]}>
-                {brand.name}
-              </Text>
-              <Text style={styles.brandTier}>{brand.tier}</Text>
-              {isSelected && (
-                <View style={styles.checkDot}>
-                  <Text style={styles.checkText}>✓</Text>
+                <View style={[styles.selectedOverlay, { borderColor: p.accent }]}>
+                  <LinearGradient
+                    colors={[`${p.accent}20`, 'transparent']}
+                    style={StyleSheet.absoluteFill}
+                  />
                 </View>
               )}
+              <View style={styles.cardContent}>
+                <View style={styles.cardTop}>
+                  <View>
+                    <Text style={styles.cardTitle}>{p.title}</Text>
+                    <Text style={styles.cardTagline}>{p.tagline}</Text>
+                  </View>
+                  {isSelected && (
+                    <View style={[styles.checkBadge, { backgroundColor: p.accent }]}>
+                      <Text style={styles.checkText}>✓</Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.traitRow}>
+                  {p.traits.map(t => (
+                    <View key={t} style={[styles.traitPill, isSelected && { borderColor: `${p.accent}60` }]}>
+                      <Text style={[styles.traitText, isSelected && { color: p.accent }]}>{t}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+              {isSelected && <View style={[styles.topAccentBar, { backgroundColor: p.accent }]} />}
             </TouchableOpacity>
           );
         })}
+        <View style={{ height: 120 }} />
       </ScrollView>
 
-      <View style={styles.footer}>
-        <Text style={styles.selectedCount}>
-          {selected.length > 0 ? `${selected.length} brand${selected.length > 1 ? 's' : ''} selected` : 'Select your favorites'}
-        </Text>
+      <View style={styles.ctaWrap}>
+        <LinearGradient colors={['transparent', 'rgba(10,10,10,0.98)']} style={StyleSheet.absoluteFill} />
         <TouchableOpacity
-          style={styles.nextBtn}
-          activeOpacity={0.85}
+          style={[styles.ctaBtn, !selected && styles.ctaBtnDisabled]}
+          activeOpacity={0.88}
           onPress={handleNext}
+          disabled={!selected}
         >
           <LinearGradient
-            colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.nextBtnGradient}
-          >
-            <Text style={styles.nextBtnText}>Continue</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleNext} style={styles.skipBtn}>
-          <Text style={styles.skipText}>Skip — I'll add later</Text>
+            colors={selected ? [ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight] : [ThreadlyColors.charcoal, ThreadlyColors.charcoal]}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <Text style={[styles.ctaBtnText, !selected && styles.ctaBtnTextDisabled]}>
+            {selected ? 'Continue' : 'Choose your style'}
+          </Text>
+          {selected && <Text style={styles.ctaBtnArrow}>→</Text>}
         </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-function ProgressBar({ step, total }: { step: number; total: number }) {
-  return (
-    <View style={pb.container}>
-      {Array.from({ length: total }).map((_, i) => (
-        <View key={i} style={[pb.dot, i < step ? pb.active : pb.inactive]} />
-      ))}
-    </View>
-  );
-}
-
-const pb = StyleSheet.create({
-  container: { flexDirection: 'row', gap: 6, marginBottom: 16 },
-  dot: { height: 3, borderRadius: 2 },
-  active: { width: 24, backgroundColor: ThreadlyColors.roseGold },
-  inactive: { width: 12, backgroundColor: ThreadlyColors.charcoalLight },
-});
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: ThreadlyColors.black },
-  header: {
+  header: { paddingHorizontal: ThreadlySpacing.screenPadding, paddingTop: 60, paddingBottom: 20 },
+  progressRow: { flexDirection: 'row', gap: 5, marginBottom: 16 },
+  progressDot: { flex: 1, height: 2, borderRadius: 1, backgroundColor: ThreadlyColors.charcoalLight },
+  progressDotActive: { backgroundColor: ThreadlyColors.roseGold },
+  stepLabel: { fontSize: 10, fontWeight: '700', color: ThreadlyColors.roseGold, letterSpacing: 2, marginBottom: 10 },
+  headline: { fontSize: 36, fontFamily: 'Georgia', color: ThreadlyColors.warmWhite, lineHeight: 44, marginBottom: 8 },
+  subline: { fontSize: 14, color: ThreadlyColors.warmWhiteMuted, fontStyle: 'italic' },
+  cardList: { paddingHorizontal: ThreadlySpacing.screenPadding, gap: 12 },
+  card: {
+    height: 160, borderRadius: ThreadlyRadius.xl,
+    overflow: 'hidden', borderWidth: 1,
+    borderColor: ThreadlyColors.charcoalLight, position: 'relative',
+  },
+  cardSelected: { borderColor: 'transparent' },
+  cardImage: { ...StyleSheet.absoluteFillObject },
+  selectedOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderWidth: 2, borderRadius: ThreadlyRadius.xl, overflow: 'hidden',
+  },
+  cardContent: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    padding: 16, gap: 10,
+  },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  cardTitle: { fontSize: 20, fontFamily: 'Georgia', color: ThreadlyColors.warmWhite, marginBottom: 3 },
+  cardTagline: { fontSize: 12, color: 'rgba(250,247,244,0.7)', fontStyle: 'italic', maxWidth: width * 0.65 },
+  checkBadge: {
+    width: 28, height: 28, borderRadius: 14,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  checkText: { fontSize: 14, color: ThreadlyColors.black, fontWeight: '700' },
+  traitRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
+  traitPill: {
+    paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: ThreadlyRadius.pill,
+    backgroundColor: 'rgba(10,10,10,0.6)',
+    borderWidth: 1, borderColor: 'rgba(250,247,244,0.2)',
+  },
+  traitText: { fontSize: 10, color: ThreadlyColors.warmWhiteMuted, fontWeight: '600' },
+  topAccentBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 2 },
+  ctaWrap: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
     paddingHorizontal: ThreadlySpacing.screenPadding,
-    paddingTop: 60,
-    paddingBottom: 20,
+    paddingBottom: 44, paddingTop: 40, overflow: 'hidden',
   },
-  stepLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: ThreadlyColors.roseGold,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    marginBottom: 8,
+  ctaBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 18, borderRadius: ThreadlyRadius.xl, overflow: 'hidden', gap: 10,
   },
-  title: {
-    fontSize: 32,
-    fontFamily: 'Georgia',
-    color: ThreadlyColors.warmWhite,
-    marginBottom: 8,
-    lineHeight: 38,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: ThreadlyColors.warmWhiteMuted,
-    lineHeight: 20,
-  },
-  scroll: { flex: 1 },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    gap: 10,
-    paddingBottom: 24,
-  },
-  brandCard: {
-    backgroundColor: ThreadlyColors.charcoal,
-    borderRadius: ThreadlyRadius.lg,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: ThreadlyColors.charcoalLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 72,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  brandCardSelected: {
-    borderColor: ThreadlyColors.roseGold,
-    borderWidth: 1.5,
-  },
-  brandName: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: ThreadlyColors.warmWhiteMuted,
-    letterSpacing: 0.8,
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  brandNameSelected: {
-    color: ThreadlyColors.roseGoldLight,
-  },
-  brandTier: {
-    fontSize: 9,
-    color: ThreadlyColors.warmWhiteSubtle,
-    letterSpacing: 0.3,
-    textAlign: 'center',
-  },
-  checkDot: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: ThreadlyColors.roseGold,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkText: { fontSize: 9, color: ThreadlyColors.warmWhite, fontWeight: '700' },
-  footer: {
-    paddingHorizontal: ThreadlySpacing.screenPadding,
-    paddingBottom: 40,
-    paddingTop: 12,
-    gap: 10,
-  },
-  selectedCount: {
-    fontSize: 12,
-    color: ThreadlyColors.roseGold,
-    textAlign: 'center',
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  nextBtn: { borderRadius: ThreadlyRadius.pill, overflow: 'hidden' },
-  nextBtnGradient: { paddingVertical: 18, alignItems: 'center' },
-  nextBtnText: { fontSize: 16, fontWeight: '700', color: ThreadlyColors.warmWhite, letterSpacing: 0.3 },
-  skipBtn: { alignItems: 'center', paddingVertical: 8 },
-  skipText: { fontSize: 13, color: ThreadlyColors.warmWhiteSubtle },
+  ctaBtnDisabled: { opacity: 0.6 },
+  ctaBtnText: { fontSize: 16, fontWeight: '700', color: ThreadlyColors.black },
+  ctaBtnTextDisabled: { color: ThreadlyColors.warmWhiteSubtle },
+  ctaBtnArrow: { fontSize: 18, color: ThreadlyColors.black, fontWeight: '700' },
 });
