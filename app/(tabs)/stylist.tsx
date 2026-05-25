@@ -24,6 +24,7 @@ import {
   Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenContainer } from "@/components/screen-container";
 import {
   ThreadlyColors,
@@ -214,12 +215,14 @@ export default function StylistScreen() {
     }
   };
 
+  const insets = useSafeAreaInsets();
+
   return (
     <ScreenContainer containerClassName="bg-[#0A0A0A]" edges={["top", "left", "right"]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={90}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
         {/* Header */}
         <View style={styles.header}>
@@ -272,7 +275,7 @@ export default function StylistScreen() {
         </ScrollView>
 
         {/* Input */}
-        <View style={styles.inputRow}>
+        <View style={[styles.inputRow, { paddingBottom: Math.max(insets.bottom, 12) }]}>
           <TextInput
             style={styles.input}
             value={input}
@@ -438,7 +441,7 @@ const styles = StyleSheet.create({
   },
   headerBtnText: { fontSize: 16, color: ThreadlyColors.roseGold },
   messageList: { flex: 1, backgroundColor: ThreadlyColors.black },
-  messageListContent: { padding: ThreadlySpacing.screenPadding, gap: 16 },
+  messageListContent: { padding: ThreadlySpacing.screenPadding, gap: 16, flexGrow: 1 },
   msgWrap: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
   msgWrapUser: { flexDirection: "row-reverse" },
   msgAvatar: {

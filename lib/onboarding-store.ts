@@ -69,11 +69,15 @@ export async function getStyleProfile(): Promise<StyleProfile> {
 
 export async function resetOnboarding(): Promise<void> {
   // Clear all Threadly demo/session data so the app feels fresh after reset
+  // Keys must exactly match the constants in each store file:
+  //   closet-history-store.ts  → "threadly_closet_history_v1"
+  //   worn-tracking-store.ts   → "@threadly/worn_tracking"
+  //   saved-looks-store.ts     → "@threadly_saved_looks"
   await AsyncStorage.multiRemove([
     ONBOARDING_KEY,
     PROFILE_KEY,
-    "@threadly_closet_history",
-    "@threadly/worn_tracking",
-    "@threadly_saved_looks",
+    "threadly_closet_history_v1",  // closet-history-store.ts STORAGE_KEY
+    "@threadly/worn_tracking",     // worn-tracking-store.ts STORAGE_KEY
+    "@threadly_saved_looks",       // saved-looks-store.ts LOOKS_KEY
   ]);
 }

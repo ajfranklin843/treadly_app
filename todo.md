@@ -300,3 +300,33 @@
 - [x] Fix welcome.tsx to use VIBE_HERO_MAP and pickFromPool
 - [x] Fix closet-scan-modal.tsx to use getAllClosetImages and pickFromPool
 - [x] TypeScript clean (0 errors), 12 tests passing
+
+## Phase 18 — Full Clickability & Visual Polish Sprint
+
+- [ ] Fix Go New center FAB — perfect centering, icon alignment, glow ring, touch target, elevation
+- [ ] Fix Stylist chat screen spacing — full screen height, keyboard avoidance, message list fills available space
+- [ ] Fix Home screen copy repetition — sharper editorial copy, no repeated sentences
+- [ ] Rebuild lib/images.ts with strict semantic role constants (HERO_PHONE_CLOSET, OUTFIT_OLD_MONEY, PRODUCT_BLAZER, etc.)
+- [ ] Build OutfitDetailSheet — large image, match score, items included, missing pieces, why this works, save/recreate CTAs
+- [ ] Build ProductDealSheet — large product image, brand, price, savings, style fit, shop CTA
+- [ ] Wire Home hero → OutfitDetailSheet
+- [ ] Wire Curated Picks → OutfitDetailSheet
+- [ ] Wire Trend Cards → OutfitDetailSheet filtered by trend
+- [ ] Wire Deal Cards → ProductDealSheet
+- [ ] Wire Closet items → ItemIntelligenceSheet (already done, verify)
+- [ ] Wire Recently Learned → ItemIntelligenceSheet (already done, verify)
+- [ ] Wire Saved Looks → detail / Recreate This Look
+- [ ] Wire Shop product cards → ProductDealSheet
+- [ ] Wire Stylist recommendation cards → OutfitDetailSheet
+- [ ] Wire Go New outfit cards → OutfitDetailSheet
+- [ ] Ensure every tappable card has press animation + haptic + visual feedback
+- [ ] TypeScript clean, 12 tests passing
+
+## Phase 18 — Full Clickability + Demo Journey Hardening
+
+- [x] Fix Stylist chat spacing — full-height message list, bottom safe-area padding on input row, flexGrow on content
+- [x] Fix reset onboarding key mismatch — closet history key was "@threadly_closet_history" but store uses "threadly_closet_history_v1"
+- [x] Wire Recreate This Look params into Go New — reads anchorItemId/Label/Image/occasion/fromLook from route params
+- [x] Auto-start build sequence when Go New opened from Recreate This Look
+- [x] Show recreate banner in ReadyState with anchor item name and context-aware header
+- [x] TypeScript clean (0 errors), 12 tests passing

@@ -9,6 +9,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { usePersonalization } from '@/lib/personalization';
+import { useLocalSearchParams } from 'expo-router';
 import { VIBE_OUTFIT_POOL, VIBE_DEAL_POOL, pickVibeImage } from '@/lib/images';
 import {
   View,
@@ -49,8 +50,17 @@ const BASE_BUILD_STEPS = [
 
 export default function GoNewScreen() {
   const p = usePersonalization();
-  const [state, setState] = useState<GoNewState>("idle");
-  const [selectedOccasion, setSelectedOccasion] = useState<string | null>(null);
+  // Read recreate-look context from Saved Looks → Recreate This Look
+  const params = useLocalSearchParams<{
+    anchorItemId?: string;
+    anchorItemLabel?: string;
+    anchorItemImage?: string;
+    occasion?: string;
+    fromLook?: string;
+  }>();
+  const isRecreating = !!params.fromLook;
+  const [state, setState] = useState<GoNewState>(isRecreating ? "building" : "idle");
+  const [selectedOccasion, setSelectedOccasion] = useState<string | null>(params.occasion ?? null);
 
   // Vibe-matched outfit image and missing pieces
   const primaryVibe = p.outfits[0]?.vibeTag ?? 'default';
@@ -65,6 +75,17 @@ export default function GoNewScreen() {
     if (p.isLoading) return BASE_BUILD_STEPS;
     const occasion = selectedOccasion ?? (p.outfits[0]?.occasion ?? 'your next look');
     const brand = p.deals[0]?.brand ?? 'your brands';
+    if (isRecreating && params.anchorItemLabel) {
+      return [
+        `Anchoring around your ${params.anchorItemLabel}`,
+        'Scanning compatible pieces in your closet',
+        'Matching to your saved look aesthetic',
+        'Finding complementary missing pieces',
+        `Searching ${brand} for the best deals`,
+        'Optimizing for your style profile',
+        'Recreating your saved look',
+      ];
+    }
     return [
       `Analyzing your closet for ${occasion}`,
       'Detecting trends in your aesthetic',
@@ -74,11 +95,18 @@ export default function GoNewScreen() {
       'Finding the best deals for your budget',
       'Finalizing your personalized look',
     ];
-  }, [p.isLoading, selectedOccasion, p.outfits, p.deals]);
+  }, [p.isLoading, selectedOccasion, p.outfits, p.deals, isRecreating, params.anchorItemLabel]);
   const [completedSteps, setCompletedSteps] = useState(0);
   const progressAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Auto-start build when opened from Recreate This Look
+  useEffect(() => {
+    if (isRecreating && state === 'building') {
+      startGoNew();
+    }
+  }, [isRecreating]);
 
   useEffect(() => {
     if (state === "building") {
@@ -134,7 +162,13 @@ export default function GoNewScreen() {
       )}
       {state === "ready" && (
         <Animated.View style={[{ flex: 1 }, { opacity: fadeAnim }]}>
-          <ReadyState onReset={reset} outfitImage={outfitImage} missingPieces={missingPieces} />
+          <ReadyState
+            onReset={reset}
+            outfitImage={params.anchorItemImage || outfitImage}
+            missingPieces={missingPieces}
+            anchorItemLabel={params.anchorItemLabel}
+            isRecreating={isRecreating}
+          />
         </Animated.View>
       )}
     </ScreenContainer>
@@ -360,16 +394,23 @@ function ReadyActionButton({ label, onPress }: { label: string; onPress: () => v
 
 // ─── Ready State ─────────────────────────────────────────────────────────────
 
-function ReadyState({ onReset, outfitImage, missingPieces }: { onReset: () => void; outfitImage: string; missingPieces: Array<{ id: string; brand: string; item: string; original: number; sale: number; off: number; image: string }> }) {
+function ReadyState({ onReset, outfitImage, missingPieces, anchorItemLabel, isRecreating }: { onReset: () => void; outfitImage: string; missingPieces: Array<{ id: string; brand: string; item: string; original: number; sale: number; off: number; image: string }>; anchorItemLabel?: string; isRecreating?: boolean }) {
   return (
     <ScrollView
       style={styles.scroll}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
+      {/* Recreate banner */}
+      {isRecreating && anchorItemLabel && (
+        <View style={styles.recreateBanner}>
+          <Text style={styles.recreateBannerText}>✦ Recreating look anchored on {anchorItemLabel}</Text>
+        </View>
+      )}
+
       {/* Header */}
       <View style={styles.readyHeader}>
-        <Text style={styles.readyEyebrow}>YOUR NEW LOOK IS READY ✦</Text>
+        <Text style={styles.readyEyebrow}>{isRecreating ? 'YOUR LOOK IS RECREATED ✦' : 'YOUR NEW LOOK IS READY ✦'}</Text>
         <Text style={styles.readyTitle}>GO NEW</Text>
       </View>
 
@@ -438,6 +479,22 @@ function ReadyState({ onReset, outfitImage, missingPieces }: { onReset: () => vo
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: ThreadlyColors.black },
   scrollContent: { paddingBottom: 32 },
+  recreateBanner: {
+    marginHorizontal: ThreadlySpacing.screenPadding,
+    marginTop: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    backgroundColor: 'rgba(201,149,106,0.12)',
+    borderRadius: ThreadlyRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(201,149,106,0.3)',
+  },
+  recreateBannerText: {
+    fontSize: 12,
+    color: ThreadlyColors.roseGoldLight,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
 
   // ── Idle ──
   idleHero: {
