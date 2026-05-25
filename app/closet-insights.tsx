@@ -225,6 +225,61 @@ export default function ClosetInsightsScreen() {
       : ["Curated", "Intentional", "Evolving"],
   };
 
+  // Empty state: no scan history and no worn data yet
+  if (!wi.isLoading && !wi.hasData) {
+    return (
+      <View style={[styles.root, { paddingTop: insets.top }]}>
+        <LinearGradient colors={[ThreadlyColors.black, "#0D0D0D"]} style={StyleSheet.absoluteFill} />
+        {/* Header */}
+        <Animated.View style={[styles.header, { opacity: headerFade }]}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => { hapticLight(); router.back(); }} activeOpacity={0.7}>
+            <Text style={styles.backBtnText}>←</Text>
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>CLOSET INSIGHTS</Text>
+            <Text style={styles.headerSub}>Your wardrobe intelligence report</Text>
+          </View>
+          <View style={{ width: 44 }} />
+        </Animated.View>
+        {/* Empty state */}
+        <View style={styles.emptyWrap}>
+          <View style={styles.emptyOrb}>
+            <LinearGradient
+              colors={[ThreadlyColors.roseGold + "30", ThreadlyColors.roseGold + "08"]}
+              style={StyleSheet.absoluteFill}
+            />
+            <Text style={styles.emptyOrbIcon}>◈</Text>
+          </View>
+          <Text style={styles.emptyTitle}>Your Wardrobe Personality{"\n"}is waiting to be revealed.</Text>
+          <Text style={styles.emptySub}>
+            Scan your first item to unlock your Closet IQ, Style Evolution, and personalized wardrobe insights.
+          </Text>
+          <TouchableOpacity
+            style={styles.emptyCTA}
+            onPress={() => { hapticLight(); router.back(); }}
+            activeOpacity={0.85}
+          >
+            <LinearGradient
+              colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
+              style={StyleSheet.absoluteFill}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            />
+            <Text style={styles.emptyCTAText}>Scan a Wardrobe Item</Text>
+          </TouchableOpacity>
+          <View style={styles.emptyPreviewRow}>
+            {["Closet IQ", "Style Evolution", "Wardrobe Personality"].map((label) => (
+              <View key={label} style={styles.emptyPreviewCard}>
+                <View style={styles.emptyPreviewDot} />
+                <Text style={styles.emptyPreviewLabel}>{label}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <LinearGradient colors={[ThreadlyColors.black, "#0D0D0D"]} style={StyleSheet.absoluteFill} />
@@ -803,6 +858,89 @@ const styles = StyleSheet.create({
     color: ThreadlyColors.black,
     fontSize: 15,
     fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+
+  // Empty State
+  emptyWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 32,
+    paddingBottom: 60,
+  },
+  emptyOrb: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: ThreadlyColors.roseGold + "40",
+    marginBottom: 28,
+  },
+  emptyOrbIcon: {
+    fontSize: 40,
+    color: ThreadlyColors.roseGold,
+  },
+  emptyTitle: {
+    color: ThreadlyColors.warmWhite,
+    fontSize: 24,
+    fontWeight: "700",
+    textAlign: "center",
+    lineHeight: 32,
+    marginBottom: 16,
+  },
+  emptySub: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 14,
+    lineHeight: 22,
+    textAlign: "center",
+    marginBottom: 32,
+  },
+  emptyCTA: {
+    height: 52,
+    paddingHorizontal: 32,
+    borderRadius: ThreadlyRadius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    marginBottom: 40,
+  },
+  emptyCTAText: {
+    color: ThreadlyColors.black,
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  emptyPreviewRow: {
+    flexDirection: "row",
+    gap: 10,
+    flexWrap: "wrap",
+    justifyContent: "center",
+  },
+  emptyPreviewCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  emptyPreviewDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: ThreadlyColors.roseGold,
+  },
+  emptyPreviewLabel: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 11,
+    fontWeight: "600",
     letterSpacing: 0.5,
   },
 });

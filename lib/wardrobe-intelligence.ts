@@ -60,11 +60,22 @@ export type WardrobeIntelligence = {
   underusedItems: string[]; // item IDs not worn in 14+ days
   topCategories: string[]; // most-worn categories
 
+  // Live stats for Daily Engagement cards
+  totalScanned: number;
+  totalWornEvents: number;
+  savedLooksCount: number; // placeholder — updated externally
+  outfitPotential: number; // derived from scanned count
+  hasData: boolean; // true if user has scanned at least one item
+
   // Attribution labels for recommendations
   getRecommendationAttribution: (itemId: string) => string | null;
 
   isLoading: boolean;
 };
+
+// ─── Constants ──────────────────────────────────────────────────────────────
+
+const PICKS_BASE = 24;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -318,6 +329,12 @@ export function useWardrobeIntelligence(): WardrobeIntelligence {
       .slice(0, 3);
   })();
 
+  // Live stats
+  const totalScanned = scanHistory.length;
+  const totalWornEvents = Object.values(wornData).reduce((acc, w) => acc + w.wornCount, 0);
+  const outfitPotential = Math.max(PICKS_BASE, totalScanned * 6 + totalWornEvents * 2);
+  const hasData = totalScanned > 0 || Object.keys(wornData).length > 0;
+
   return {
     getWornLabel,
     getVersatilityInsight,
@@ -332,6 +349,12 @@ export function useWardrobeIntelligence(): WardrobeIntelligence {
     underusedItems,
     topCategories,
     getRecommendationAttribution,
+    totalScanned,
+    totalWornEvents,
+    savedLooksCount: 0, // updated by screens that load saved-looks-store
+    outfitPotential,
+    hasData,
     isLoading,
   };
 }
+

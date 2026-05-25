@@ -33,6 +33,7 @@ import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from "@/constants/thr
 import { hapticLight, hapticSuccess, hapticMedium } from "@/lib/animations";
 import { saveLook } from "@/lib/saved-looks-store";
 import type { WardrobeItem } from "@/components/item-intelligence-sheet";
+import { trpc } from "@/lib/trpc";
 
 const { height: SCREEN_H, width: SCREEN_W } = Dimensions.get("window");
 const SHEET_HEIGHT = SCREEN_H * 0.92;
@@ -296,6 +297,7 @@ function OutfitState({
   onOccasionChange,
   onSave,
   saved,
+  aiOutfitInsight,
 }: {
   anchor: WardrobeItem;
   pieces: OutfitPiece[];
@@ -306,6 +308,7 @@ function OutfitState({
   onOccasionChange: (o: Occasion) => void;
   onSave: () => void;
   saved: boolean;
+  aiOutfitInsight: { whyItWorks: string | null; confidenceNote: string | null; elevationTip: string | null } | null;
 }) {
   const entranceAnim = useRef(new Animated.Value(0)).current;
 
@@ -380,6 +383,25 @@ function OutfitState({
                 </View>
               </View>
             ))}
+          </View>
+        </View>
+      )}
+
+      {/* AI Why This Works Card */}
+      {aiOutfitInsight?.whyItWorks && (
+        <View style={outfitStyles.section}>
+          <Text style={outfitStyles.sectionLabel}>WHY THIS WORKS</Text>
+          <View style={outfitStyles.aiOutfitCard}>
+            <Text style={outfitStyles.aiOutfitWhy}>{aiOutfitInsight.whyItWorks}</Text>
+            {aiOutfitInsight.confidenceNote && (
+              <Text style={outfitStyles.aiOutfitConfidence}>{aiOutfitInsight.confidenceNote}</Text>
+            )}
+            {aiOutfitInsight.elevationTip && (
+              <View style={outfitStyles.aiOutfitTipRow}>
+                <Text style={outfitStyles.aiOutfitTipLabel}>✦ ELEVATE</Text>
+                <Text style={outfitStyles.aiOutfitTip}>{aiOutfitInsight.elevationTip}</Text>
+              </View>
+            )}
           </View>
         </View>
       )}
@@ -529,6 +551,43 @@ const outfitStyles = StyleSheet.create({
   intelValue: { fontSize: 13, color: ThreadlyColors.warmWhite, fontWeight: "600" },
   intelValueAccent: { color: ThreadlyColors.roseGold },
 
+  // AI Outfit Card
+  aiOutfitCard: {
+    backgroundColor: "rgba(201,149,106,0.08)",
+    borderRadius: ThreadlyRadius.md,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "rgba(201,149,106,0.25)",
+    gap: 8,
+  },
+  aiOutfitWhy: {
+    fontSize: 13,
+    color: ThreadlyColors.warmWhite,
+    lineHeight: 19,
+    fontFamily: "Georgia",
+  },
+  aiOutfitConfidence: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.45)",
+    lineHeight: 16,
+    fontStyle: "italic",
+  },
+  aiOutfitTipRow: {
+    marginTop: 4,
+    gap: 4,
+  },
+  aiOutfitTipLabel: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: ThreadlyColors.roseGold,
+    letterSpacing: 2,
+  },
+  aiOutfitTip: {
+    fontSize: 12,
+    color: ThreadlyColors.roseGoldLight,
+    lineHeight: 17,
+  },
+
   // CTAs
   ctaSection: { marginHorizontal: ThreadlySpacing.screenPadding, marginTop: 24 },
   saveCta: { borderRadius: ThreadlyRadius.xl, overflow: "hidden" },
@@ -548,6 +607,13 @@ export function OutfitBuilderSheet({ anchor, visible, onClose, closetItems, user
   const [phase, setPhase] = useState<"building" | "outfit">("building");
   const [occasion, setOccasion] = useState<Occasion>("Casual");
   const [saved, setSaved] = useState(false);
+  const [aiOutfitInsight, setAiOutfitInsight] = useState<{
+    whyItWorks: string | null;
+    confidenceNote: string | null;
+    elevationTip: string | null;
+  } | null>(null);
+
+  const outfitInsightMutation = trpc.intelligence.outfitInsight.useMutation();
 
   const outfit = useMemo(() => {
     if (!anchor) return null;
@@ -560,6 +626,7 @@ export function OutfitBuilderSheet({ anchor, visible, onClose, closetItems, user
       setPhase("building");
       setOccasion("Casual");
       setSaved(false);
+      setAiOutfitInsight(null);
     }
   }, [visible]);
 
@@ -583,8 +650,23 @@ export function OutfitBuilderSheet({ anchor, visible, onClose, closetItems, user
     hapticMedium();
     setOccasion(occ);
     setPhase("building");
+    setAiOutfitInsight(null);
     setTimeout(() => setPhase("outfit"), 2200);
   }, []);
+
+  // Fire AI outfit insight when outfit is ready
+  useEffect(() => {
+    if (phase === "outfit" && anchor && outfit && outfit.pieces.length >= 2) {
+      outfitInsightMutation.mutate({
+        anchorItem: anchor.label,
+        selectedPieces: outfit.pieces.filter(p => p.role !== "Anchor").map(p => p.item.label),
+        occasion,
+        vibe: userVibe,
+      }, {
+        onSuccess: (data) => setAiOutfitInsight(data),
+      });
+    }
+  }, [phase, anchor?.id, occasion]);
 
   const handleSave = useCallback(async () => {
     if (!anchor || !outfit || saved) return;
@@ -643,6 +725,7 @@ export function OutfitBuilderSheet({ anchor, visible, onClose, closetItems, user
             onOccasionChange={handleOccasionChange}
             onSave={handleSave}
             saved={saved}
+            aiOutfitInsight={aiOutfitInsight}
           />
         ) : null}
       </Animated.View>

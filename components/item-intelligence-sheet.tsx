@@ -43,6 +43,8 @@ import {
   type WornRecord,
 } from "@/lib/worn-tracking-store";
 import { useWardrobeIntelligence } from "@/lib/wardrobe-intelligence";
+import { trpc } from "@/lib/trpc";
+import { getStyleProfile } from "@/lib/onboarding-store";
 
 const { height: SCREEN_H } = Dimensions.get("window");
 const SHEET_HEIGHT = SCREEN_H * 0.88;
@@ -169,14 +171,36 @@ export function ItemIntelligenceSheet({ item, visible, onClose, onBuildOutfit }:
   const [wornLoading, setWornLoading] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
+  // AI insight state
+  const [aiInsight, setAiInsight] = useState<{
+    insight: string | null;
+    pairsWith: string[];
+    occasions: string[];
+    styleNote: string | null;
+  } | null>(null);
+  const itemInsightMutation = trpc.intelligence.itemInsight.useMutation();
+
   // Load worn record when sheet opens
   useEffect(() => {
     if (visible && item) {
       setWornConfirmed(false);
-      loadWornStore().then((store) => {
+      setAiInsight(null);
+      Promise.all([loadWornStore(), getStyleProfile()]).then(([store, profile]) => {
         const record = store[item.id] ?? null;
         setWornRecord(record);
         setIsFavorite(record?.isFavorite ?? false);
+        // Fire AI insight after worn record loads
+        itemInsightMutation.mutate({
+          itemName: item.label,
+          category: item.category,
+          colorDNA: item.colorName,
+          matchScore: item.matchPct,
+          wornCount: record?.wornCount ?? item.wornCount ?? 0,
+          vibe: profile?.styleVibes?.[0] ?? undefined,
+          occasions: item.occasions,
+        }, {
+          onSuccess: (data) => setAiInsight(data),
+        });
       });
     }
   }, [visible, item?.id]);
@@ -255,8 +279,8 @@ export function ItemIntelligenceSheet({ item, visible, onClose, onBuildOutfit }:
   const closetIqBoost = item.closetIqBoost ?? 3;
   const colorHex = item.colorHex ?? "#C4A882";
   const colorName = item.colorName ?? "Warm Neutral";
-  const pairsWell = item.pairsWell ?? ["Straight-Leg Jeans", "Silk Blouse", "Loafers", "Trench Coat"];
-  const occasions = item.occasions ?? ["Casual", "Work", "Date Night"];
+  const pairsWell = (aiInsight?.pairsWith?.length ? aiInsight.pairsWith : null) ?? item.pairsWell ?? ["Straight-Leg Jeans", "Silk Blouse", "Loafers", "Trench Coat"];
+  const occasions = (aiInsight?.occasions?.length ? aiInsight.occasions : null) ?? item.occasions ?? ["Casual", "Work", "Date Night"];
   const aestheticTags = item.aestheticTags ?? ["Quiet Luxury", "Minimal", "Timeless"];
   const trendingIn = item.trendingIn ?? "your aesthetic";
   const wornCount = wornRecord?.wornCount ?? item.wornCount ?? 0;
@@ -332,6 +356,26 @@ export function ItemIntelligenceSheet({ item, visible, onClose, onBuildOutfit }:
               {item.brand && <Text style={styles.heroBrand}>{item.brand}</Text>}
             </View>
           </View>
+
+          {/* AI Insight Card — appears when AI returns insight */}
+          {(itemInsightMutation.isPending || aiInsight?.insight) && (
+            <View style={styles.aiInsightCard}>
+              {itemInsightMutation.isPending ? (
+                <View style={styles.aiInsightLoading}>
+                  <Text style={styles.aiInsightLoadingDot}>✦ ✦ ✦</Text>
+                  <Text style={styles.aiInsightLoadingText}>Analyzing your item...</Text>
+                </View>
+              ) : (
+                <>
+                  <Text style={styles.aiInsightLabel}>✦ STYLE INTELLIGENCE</Text>
+                  <Text style={styles.aiInsightText}>{aiInsight?.insight}</Text>
+                  {aiInsight?.styleNote && (
+                    <Text style={styles.aiInsightNote}>{aiInsight.styleNote}</Text>
+                  )}
+                </>
+              )}
+            </View>
+          )}
 
           {/* Worn Memory Row */}
           <View style={styles.wornMemoryRow}>
@@ -584,6 +628,52 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.5)",
     marginTop: 2,
     letterSpacing: 1,
+  },
+
+  // ── AI Insight Card ──
+  aiInsightCard: {
+    marginHorizontal: 20,
+    marginTop: 14,
+    backgroundColor: "rgba(201,149,106,0.08)",
+    borderRadius: ThreadlyRadius.md,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "rgba(201,149,106,0.25)",
+  },
+  aiInsightLoading: {
+    alignItems: "center",
+    gap: 6,
+  },
+  aiInsightLoadingDot: {
+    color: ThreadlyColors.roseGold,
+    fontSize: 10,
+    letterSpacing: 4,
+    opacity: 0.6,
+  },
+  aiInsightLoadingText: {
+    color: "rgba(255,255,255,0.35)",
+    fontSize: 11,
+    letterSpacing: 0.5,
+  },
+  aiInsightLabel: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: ThreadlyColors.roseGold,
+    letterSpacing: 2,
+    marginBottom: 6,
+  },
+  aiInsightText: {
+    fontSize: 13,
+    color: ThreadlyColors.warmWhite,
+    lineHeight: 19,
+    fontFamily: "Georgia",
+  },
+  aiInsightNote: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.45)",
+    marginTop: 6,
+    lineHeight: 16,
+    fontStyle: "italic",
   },
 
   // ── Worn Memory Row ──

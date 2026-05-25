@@ -330,3 +330,30 @@
 - [x] Auto-start build sequence when Go New opened from Recreate This Look
 - [x] Show recreate banner in ReadyState with anchor item name and context-aware header
 - [x] TypeScript clean (0 errors), 12 tests passing
+
+## Phase 19 — AI Style Intelligence Layer
+
+- [ ] Home: worn-count attribution badges on Curated Picks and Today's Look from real AsyncStorage data
+- [ ] Home: Daily Engagement cards reflect most-worn/favorite items with premium labels
+- [ ] Closet Insights: premium empty state with scan CTA deep-link and preview insight cards
+- [ ] Build server AI insight endpoint (structured output: whyThisWorks, paletteInsight, occasionFit, closetInsight, styleConfidence, nextBestAction)
+- [ ] Wire AI insights into ItemIntelligenceSheet with caching (item id + profile hash)
+- [ ] Wire AI insights into OutfitBuilderSheet anchor explanation and compatible piece reasoning
+- [ ] Wire AI insights into Go New ready state "Why this refresh works" card
+- [ ] Wire AI insights into Home Today's Look "Why Threadly picked this" card
+- [ ] Wire AI insights into Closet Insights wardrobe personality summary
+- [ ] Graceful fallbacks for all AI insight surfaces (premium copy, no raw errors)
+- [ ] AI insight cache store (AsyncStorage, keyed by context hash)
+- [ ] Sharpen Stylist LLM system prompt with full profile context
+- [ ] TypeScript clean, 12 tests passing
+
+## Phase 19 — AI Style Intelligence Layer (COMPLETED)
+
+- [x] Extended wardrobe-intelligence.ts with live closet stats (hasData, closetItemCount, recentlyScannedCount, wornItemCount, totalWornEvents, topCategories, getRecommendationAttribution)
+- [x] Home Daily Engagement section now uses live wardrobe intelligence data (closetIQ, outfitPotential, savedLooksCount, styleVibeLabel)
+- [x] Closet Insights empty state — premium orb + "Scan your first item" CTA + preview chips for locked features
+- [x] Server AI insight endpoints: intelligence.itemInsight (generates AI insight for a wardrobe item) and intelligence.outfitInsight (analyzes outfit combinations) in server/routers.ts
+- [x] Wire intelligence.itemInsight into ItemIntelligenceSheet — AI insight card with loading state, insight text, styleNote; AI-suggested pairsWith chips and occasions replace static defaults when available
+- [x] Wire intelligence.outfitInsight into OutfitBuilderSheet — "Why This Works" card with whyItWorks, confidenceNote, elevationTip appears after outfit is built
+- [x] Graceful fallbacks on all AI surfaces (static data shown if AI fails or is loading)
+- [x] TypeScript clean (0 errors), 12 tests passing

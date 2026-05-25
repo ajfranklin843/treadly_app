@@ -275,7 +275,10 @@ export default function HomeScreen() {
         {/* ── Daily Engagement ── */}
         <DailyEngagementSection
           vibe={p.heroTagline}
-          outfitCount={picks.length}
+          closetIQ={wi.closetIQ}
+          outfitPotential={wi.outfitPotential}
+          totalScanned={wi.totalScanned}
+          totalWornEvents={wi.totalWornEvents}
           onGoCloset={() => { hapticLight(); router.push("/(tabs)/closet"); }}
           onGoLooks={() => { hapticLight(); router.push("/(tabs)/looks"); }}
         />
@@ -557,10 +560,15 @@ function DealCard({
 // ─── Daily Engagement Section ───────────────────────────────────────────────
 
 function DailyEngagementSection({
-  vibe, outfitCount, onGoCloset, onGoLooks,
+  vibe, closetIQ, outfitPotential, totalScanned, totalWornEvents, onGoCloset, onGoLooks,
 }: {
-  vibe: string; outfitCount: number;
-  onGoCloset: () => void; onGoLooks: () => void;
+  vibe: string;
+  closetIQ: number;
+  outfitPotential: number;
+  totalScanned: number;
+  totalWornEvents: number;
+  onGoCloset: () => void;
+  onGoLooks: () => void;
 }) {
   const fade = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -570,6 +578,18 @@ function DailyEngagementSection({
   const today = new Date();
   const dayName = today.toLocaleDateString("en-US", { weekday: "long" });
 
+  // Derive IQ tier label from live score
+  const iqTier = closetIQ >= 90 ? "Top 5% of users"
+    : closetIQ >= 80 ? "Top 12% of users"
+    : closetIQ >= 70 ? "Top 25% of users"
+    : closetIQ >= 60 ? "Growing fast"
+    : "Scan items to grow";
+
+  // Derive insight copy from live data
+  const insightCopy = totalScanned > 0
+    ? `Threadly has analyzed ${totalScanned} wardrobe item${totalScanned !== 1 ? "s" : ""} and found ${outfitPotential}+ outfit combinations ready to wear today.`
+    : "Scan your first item to unlock outfit combinations and wardrobe intelligence.";
+
   return (
     <Animated.View style={[engStyles.wrap, { opacity: fade }]}>
       <View style={engStyles.headerRow}>
@@ -578,44 +598,44 @@ function DailyEngagementSection({
       </View>
 
       <View style={engStyles.cards}>
-        {/* Closet IQ card */}
+        {/* Closet IQ card — live from wardrobe intelligence */}
         <EngCard
           icon="◈"
           title="Closet IQ"
-          value="87"
+          value={String(closetIQ)}
           unit="/ 100"
-          sub="Top 12% of users"
+          sub={iqTier}
           accent
           onPress={onGoCloset}
         />
-        {/* Outfit potential card */}
+        {/* Outfit potential card — live from wardrobe intelligence */}
         <EngCard
           icon="✦"
           title="Outfit Potential"
-          value={String(outfitCount * 8)}
+          value={String(outfitPotential)}
           unit="looks"
-          sub="From your wardrobe"
+          sub={totalScanned > 0 ? `From ${totalScanned} items` : "Scan to unlock"}
           onPress={onGoCloset}
         />
       </View>
 
       <View style={engStyles.cards}>
-        {/* Saved looks card */}
+        {/* Worn events card — live from worn tracking */}
         <EngCard
           icon="♡"
-          title="Saved Looks"
-          value="3"
-          unit="collections"
-          sub="Tap to view"
-          onPress={onGoLooks}
+          title="Times Worn"
+          value={String(totalWornEvents)}
+          unit="events"
+          sub={totalWornEvents > 0 ? "Wardrobe memory active" : "Mark items as worn"}
+          onPress={onGoCloset}
         />
         {/* Vibe match card */}
         <EngCard
           icon="◆"
           title="Style Vibe"
-          value="94%"
+          value={totalScanned > 0 ? "94%" : "—"}
           unit=""
-          sub={`${vibe.slice(0, 22)}`}
+          sub={totalScanned > 0 ? vibe.slice(0, 22) : "Scan to discover"}
           onPress={onGoCloset}
         />
       </View>
@@ -628,9 +648,7 @@ function DailyEngagementSection({
         />
         <View style={engStyles.insightBorder} />
         <Text style={engStyles.insightIcon}>✦</Text>
-        <Text style={engStyles.insightText}>
-          Threadly has analyzed your wardrobe and found {outfitCount * 8}+ outfit combinations ready to wear today.
-        </Text>
+        <Text style={engStyles.insightText}>{insightCopy}</Text>
       </View>
     </Animated.View>
   );

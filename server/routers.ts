@@ -19,6 +19,101 @@ export const appRouter = router({
     }),
   }),
 
+  intelligence: router({
+    // Generate AI insight for a specific wardrobe item
+    itemInsight: publicProcedure
+      .input(z.object({
+        itemName: z.string(),
+        category: z.string().optional(),
+        colorDNA: z.string().optional(),
+        matchScore: z.number().optional(),
+        wornCount: z.number().optional(),
+        vibe: z.string().optional(),
+        occasions: z.array(z.string()).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const systemPrompt = `You are Threadly's wardrobe intelligence engine. Generate a single, precise, emotionally resonant insight about a specific wardrobe item. 
+
+Voice: luxury stylist, warm, specific, never generic. Under 40 words. No filler.
+
+Respond in JSON:
+{
+  "insight": "one sentence insight about this specific item",
+  "pairsWith": ["Item 1", "Item 2", "Item 3"],
+  "occasions": ["Occasion 1", "Occasion 2"],
+  "styleNote": "one sentence styling tip specific to this item"
+}`;
+
+        const userMessage = `Item: ${input.itemName}\nCategory: ${input.category ?? "Unknown"}\nColor: ${input.colorDNA ?? "Unknown"}\nMatch Score: ${input.matchScore ?? 0}%\nTimes Worn: ${input.wornCount ?? 0}\nUser Vibe: ${input.vibe ?? "Minimal"}\nOccasions: ${(input.occasions ?? []).join(", ") || "Everyday"}`;
+
+        try {
+          const result = await invokeLLM({ messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMessage },
+          ]});
+          const rawContent = result.choices?.[0]?.message?.content ?? "";
+          const raw = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
+          const jsonMatch = raw.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            return {
+              insight: parsed.insight ?? null,
+              pairsWith: (parsed.pairsWith ?? []).slice(0, 3) as string[],
+              occasions: (parsed.occasions ?? []).slice(0, 3) as string[],
+              styleNote: parsed.styleNote ?? null,
+            };
+          }
+          return { insight: null, pairsWith: [], occasions: [], styleNote: null };
+        } catch {
+          return { insight: null, pairsWith: [], occasions: [], styleNote: null };
+        }
+      }),
+
+    // Generate AI outfit combination insight
+    outfitInsight: publicProcedure
+      .input(z.object({
+        anchorItem: z.string(),
+        selectedPieces: z.array(z.string()),
+        occasion: z.string().optional(),
+        vibe: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const systemPrompt = `You are Threadly's outfit intelligence. Analyze a specific outfit combination and provide a luxury stylist's take.
+
+Voice: precise, warm, editorial. Under 60 words total. No filler.
+
+Respond in JSON:
+{
+  "whyItWorks": "one sentence of styling logic (proportion, color theory, texture, occasion fit)",
+  "confidenceNote": "one sentence about why this combination is strong",
+  "elevationTip": "one specific accessory or styling tweak to elevate the look"
+}`;
+
+        const userMessage = `Anchor: ${input.anchorItem}\nPieces: ${input.selectedPieces.join(", ")}\nOccasion: ${input.occasion ?? "Everyday"}\nVibe: ${input.vibe ?? "Minimal"}`;
+
+        try {
+          const result = await invokeLLM({ messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMessage },
+          ]});
+          const rawContent = result.choices?.[0]?.message?.content ?? "";
+          const raw = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
+          const jsonMatch = raw.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            return {
+              whyItWorks: parsed.whyItWorks ?? null,
+              confidenceNote: parsed.confidenceNote ?? null,
+              elevationTip: parsed.elevationTip ?? null,
+            };
+          }
+          return { whyItWorks: null, confidenceNote: null, elevationTip: null };
+        } catch {
+          return { whyItWorks: null, confidenceNote: null, elevationTip: null };
+        }
+      }),
+  }),
+
   stylist: router({
     chat: publicProcedure
       .input(z.object({
