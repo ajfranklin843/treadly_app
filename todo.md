@@ -84,3 +84,22 @@
 - [x] Progress bar (7 dots) on all steps
 - [x] Root layout anchor set to onboarding
 - [x] TypeScript clean, 12 tests passing
+
+## Phase 8 — Deep Personalization Layer
+- [x] Build personalization engine hook (usePersonalization) deriving all dynamic content from StyleProfile
+- [x] Vibe → outfit recommendations map (Old Money, Minimal, Clean Girl, Streetwear, Chic, Casual Luxury)
+- [x] Vibe → trend cards map with aesthetic-specific labels
+- [x] Brand → deal cards map (Zara, H&M, Mango, Aritzia, COS, Everlane, Uniqlo, Nordstrom, ALDO)
+- [x] Vibe → hero messaging map (tagline, subline, section titles, insight text)
+- [x] Occasion → Go New label derivation
+- [x] Time-aware greeting (Good morning/afternoon/evening)
+- [x] Home screen: shimmer loading states while profile loads
+- [x] Home screen: dynamic hero greeting, curated section labels, profile-matched outfit cards
+- [x] Home screen: "because you like X" attribution labels on cards
+- [x] Home screen: trend cards filtered by style vibes
+- [x] Home screen: deal cards filtered by favorite brands
+- [x] Home screen: color palette accent matching user's color preferences
+- [x] Home screen: AI insight card with profile-specific text
+- [x] Go New screen: personalized build steps with occasion and brand names
+- [x] Shop screen: deal cards from profile brands, filter tabs from occasions, dynamic section labels
+- [x] Stylist screen: personalized greeting message, profile-aware suggestion chips, dynamic status line

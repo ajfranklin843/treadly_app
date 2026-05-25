@@ -7,7 +7,8 @@
  * - Missing pieces with product images and deal prices
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { usePersonalization } from '@/lib/personalization';
 import {
   View,
   Text,
@@ -30,7 +31,7 @@ const { width } = Dimensions.get("window");
 
 type GoNewState = "idle" | "building" | "ready";
 
-const BUILD_STEPS = [
+const BASE_BUILD_STEPS = [
   "Analyzing your closet",
   "Detecting current trends",
   "Creating outfit combinations",
@@ -73,7 +74,24 @@ const MISSING_PIECES = [
 const OUTFIT_IMAGE = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=80";
 
 export default function GoNewScreen() {
+  const p = usePersonalization();
   const [state, setState] = useState<GoNewState>("idle");
+  const [selectedOccasion, setSelectedOccasion] = useState<string | null>(null);
+
+  const buildSteps = useMemo(() => {
+    if (p.isLoading) return BASE_BUILD_STEPS;
+    const occasion = selectedOccasion ?? (p.outfits[0]?.occasion ?? 'your next look');
+    const brand = p.deals[0]?.brand ?? 'your brands';
+    return [
+      `Analyzing your closet for ${occasion}`,
+      'Detecting trends in your aesthetic',
+      'Creating combinations you already own',
+      'Identifying missing pieces',
+      `Searching ${brand} and more`,
+      'Finding the best deals for your budget',
+      'Finalizing your personalized look',
+    ];
+  }, [p.isLoading, selectedOccasion, p.outfits, p.deals]);
   const [completedSteps, setCompletedSteps] = useState(0);
   const progressAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -101,7 +119,7 @@ export default function GoNewScreen() {
       duration: 3800,
       useNativeDriver: false,
     }).start();
-    BUILD_STEPS.forEach((_, i) => {
+    buildSteps.forEach((_, i) => {
       setTimeout(() => setCompletedSteps(i + 1), (i + 1) * 540);
     });
     setTimeout(() => {
@@ -121,12 +139,13 @@ export default function GoNewScreen() {
 
   return (
     <ScreenContainer containerClassName="bg-[#0A0A0A]" edges={["top", "left", "right"]}>
-      {state === "idle" && <IdleState onStart={startGoNew} />}
+      {state === "idle" && <IdleState onStart={startGoNew} goNewLabel={p.goNewLabel} accentColor={p.accentColor} />}
       {state === "building" && (
         <Animated.View style={[{ flex: 1 }, { opacity: fadeAnim }]}>
           <BuildingState
             completedSteps={completedSteps}
             pulseAnim={pulseAnim}
+            buildSteps={buildSteps}
           />
         </Animated.View>
       )}
@@ -141,7 +160,7 @@ export default function GoNewScreen() {
 
 // ─── Idle State ───────────────────────────────────────────────────────────────
 
-function IdleState({ onStart }: { onStart: () => void }) {
+function IdleState({ onStart, goNewLabel, accentColor }: { onStart: () => void; goNewLabel: string; accentColor: string }) {
   return (
     <ScrollView
       style={styles.scroll}
@@ -159,10 +178,11 @@ function IdleState({ onStart }: { onStart: () => void }) {
         </Text>
         <Text style={styles.idleSub}>
           Your AI stylist builds fresh, on-trend looks{" "}
-          <Text style={styles.idleSubAccent}>from what you own first</Text>
+          <Text style={[styles.idleSubAccent, { color: accentColor }]}>from what you own first</Text>
           {" — then finds the missing pieces "}
-          <Text style={styles.idleSubAccent}>for less.</Text>
+          <Text style={[styles.idleSubAccent, { color: accentColor }]}>for less.</Text>
         </Text>
+        <Text style={[styles.idlePersonalized, { color: accentColor }]}>{goNewLabel}</Text>
       </View>
 
       {/* Prompt chips */}
@@ -217,11 +237,13 @@ function IdleState({ onStart }: { onStart: () => void }) {
 function BuildingState({
   completedSteps,
   pulseAnim,
+  buildSteps,
 }: {
   completedSteps: number;
   pulseAnim: Animated.Value;
+  buildSteps: string[];
 }) {
-  const pct = Math.round((completedSteps / BUILD_STEPS.length) * 100);
+  const pct = Math.round((completedSteps / buildSteps.length) * 100);
 
   return (
     <View style={styles.buildingContainer}>
@@ -244,7 +266,7 @@ function BuildingState({
 
       {/* Checklist */}
       <View style={styles.stepsList}>
-        {BUILD_STEPS.map((step, i) => {
+        {buildSteps.map((step, i) => {
           const done = i < completedSteps;
           const active = i === completedSteps;
           return (
@@ -404,6 +426,12 @@ const styles = StyleSheet.create({
   idleSubAccent: {
     color: ThreadlyColors.roseGoldLight,
     fontStyle: "italic",
+  },
+  idlePersonalized: {
+    fontSize: 13,
+    fontStyle: "italic",
+    marginTop: 12,
+    opacity: 0.8,
   },
   promptGrid: {
     paddingHorizontal: ThreadlySpacing.screenPadding,

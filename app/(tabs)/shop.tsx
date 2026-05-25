@@ -4,7 +4,8 @@
  * Emotional outcome: "She found me the best deal. Again."
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { usePersonalization } from '@/lib/personalization';
 import {
   View,
   Text,
@@ -25,7 +26,7 @@ import {
 
 const { width } = Dimensions.get("window");
 
-const FILTER_TABS = ["All", "Work", "Date Night", "Casual", "Go New"];
+const BASE_FILTER_TABS = ["All", "Work", "Date Night", "Casual", "Vacation", "Events"];
 
 const DEALS = [
   {
@@ -112,7 +113,33 @@ const BRANDS = [
 ];
 
 export default function ShopScreen() {
+  const p = usePersonalization();
   const [activeFilter, setActiveFilter] = useState("All");
+
+  // Build filter tabs from user's occasions + defaults
+  const filterTabs = useMemo(() => {
+    if (p.isLoading) return BASE_FILTER_TABS;
+    const profileOccasions = p.outfits.map(o => o.occasion).filter(Boolean);
+    const merged = ['All', ...new Set([...profileOccasions, 'Work', 'Date Night', 'Casual'])];
+    return merged.slice(0, 6);
+  }, [p.isLoading, p.outfits]);
+
+  // Use personalized deals when available, fall back to static DEALS
+  const displayDeals = useMemo(() => {
+    if (p.isLoading || p.deals.length < 2) return DEALS;
+    return p.deals.map((d, i) => ({
+      id: d.id,
+      brand: d.brand,
+      item: d.item,
+      desc: `${d.matchReason} — ${d.expiry}`,
+      original: d.original,
+      sale: d.sale,
+      off: d.off,
+      image: d.image,
+      tag: i === 0 ? 'BEST MATCH' : i === 1 ? 'YOUR BRANDS' : 'DEAL ALERT',
+      expiry: d.expiry,
+    }));
+  }, [p.isLoading, p.deals]);
 
   return (
     <ScreenContainer containerClassName="bg-[#0A0A0A]" edges={["top", "left", "right"]}>
@@ -124,7 +151,7 @@ export default function ShopScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.headerLabel}>DEALS FOR YOU</Text>
+            <Text style={styles.headerLabel}>{p.isLoading ? 'DEALS FOR YOU' : p.dealSectionLabel}</Text>
             <Text style={styles.headerTitle}>Smart Shopping</Text>
           </View>
           <View style={styles.savingsBadge}>
@@ -141,8 +168,8 @@ export default function ShopScreen() {
           <View style={styles.aiBannerContent}>
             <Text style={styles.aiBannerIcon}>✦</Text>
             <View style={styles.aiBannerText}>
-              <Text style={styles.aiBannerTitle}>AI found 6 new deals</Text>
-              <Text style={styles.aiBannerSub}>Pieces that complete your looks, at the best prices</Text>
+              <Text style={styles.aiBannerTitle}>AI found {p.isLoading ? 6 : displayDeals.length} new deals</Text>
+              <Text style={styles.aiBannerSub}>{p.isLoading ? 'Pieces that complete your looks' : p.insightText}</Text>
             </View>
           </View>
         </View>
@@ -154,7 +181,7 @@ export default function ShopScreen() {
           contentContainerStyle={styles.filterList}
           style={styles.filterScroll}
         >
-          {FILTER_TABS.map(tab => (
+          {filterTabs.map(tab => (
             <TouchableOpacity
               key={tab}
               style={[styles.filterChip, activeFilter === tab && styles.filterChipActive]}
@@ -171,11 +198,11 @@ export default function ShopScreen() {
         {/* Deal Cards */}
         <View style={styles.dealsSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionLabel}>AI RECOMMENDED FOR YOU</Text>
-            <Text style={styles.sectionTitle}>Looks built for your style</Text>
+            <Text style={styles.sectionLabel}>{p.isLoading ? 'AI RECOMMENDED FOR YOU' : p.sectionLabel}</Text>
+            <Text style={styles.sectionTitle}>{p.isLoading ? 'Looks built for your style' : p.sectionTitle}</Text>
           </View>
 
-          {DEALS.map(deal => (
+          {displayDeals.map(deal => (
             <DealCard key={deal.id} deal={deal} />
           ))}
         </View>

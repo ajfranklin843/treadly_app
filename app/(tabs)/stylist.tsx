@@ -3,7 +3,8 @@
  * AI conversational stylist. Emotional outcome: "Like having a stylist who understands you."
  */
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { usePersonalization } from '@/lib/personalization';
 import {
   View,
   Text,
@@ -105,7 +106,43 @@ function getResponse(text: string): Message {
 }
 
 export default function StylistScreen() {
+  const p = usePersonalization();
+
+  // Build personalized initial message once profile loads
+  const initialMessages = useMemo((): Message[] => {
+    if (p.isLoading) return INITIAL_MESSAGES;
+    const vibe = p.sectionTitle.replace(' picks for you', '').replace(' for you', '');
+    return [{
+      id: '1',
+      role: 'stylist',
+      text: `Hi — I've already analyzed your wardrobe and built your ${vibe} profile. ${p.insightText} What are we dressing you for today?`,
+      timestamp: 'now',
+    }];
+  }, [p.isLoading, p.sectionTitle, p.insightText]);
+
+  // Build personalized suggestion chips from profile occasions
+  const suggestionChips = useMemo(() => {
+    if (p.isLoading) return SUGGESTION_CHIPS;
+    const occasionChip = p.outfits[0]?.occasion ? `Build me a look for ${p.outfits[0].occasion}` : 'Build me a look from what I own';
+    const brandChip = p.deals[0]?.brand ? `Find me deals from ${p.deals[0].brand}` : 'Find me deals under $50';
+    return [
+      occasionChip,
+      brandChip,
+      `What's trending in ${p.sectionTitle.replace(' picks for you', '')}?`,
+      'Make me look expensive for less',
+      'Work outfit that still feels like me',
+      p.goNewLabel.replace(' →', ''),
+    ];
+  }, [p.isLoading, p.outfits, p.deals, p.sectionTitle, p.goNewLabel]);
+
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
+
+  // Update messages when profile loads
+  useEffect(() => {
+    if (!p.isLoading) {
+      setMessages(initialMessages);
+    }
+  }, [p.isLoading]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -145,7 +182,7 @@ export default function StylistScreen() {
               <Text style={styles.headerName}>Threadly Stylist</Text>
               <View style={styles.onlineRow}>
                 <View style={styles.onlineDot} />
-                <Text style={styles.onlineText}>AI-powered · Always available</Text>
+                <Text style={styles.onlineText}>{p.isLoading ? 'AI-powered · Always available' : `Knows your ${p.sectionTitle.replace(' picks for you', '')} style`}</Text>
               </View>
             </View>
           </View>
@@ -176,7 +213,7 @@ export default function StylistScreen() {
           contentContainerStyle={styles.chipList}
           style={styles.chipScroll}
         >
-          {SUGGESTION_CHIPS.map((chip, i) => (
+          {suggestionChips.map((chip, i) => (
             <TouchableOpacity
               key={i}
               style={styles.chip}
