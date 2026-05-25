@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { VIBE_DEAL_POOL, pickVibeImage } from "@/lib/images";
+import { CLOSET_IMAGES } from "@/lib/images";
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from "@/constants/thr
 import { ClosetScanModal, ScannedItem } from "@/components/closet-scan-modal";
 import { ItemIntelligenceSheet, WardrobeItem } from "@/components/item-intelligence-sheet";
 import { getStyleProfile } from "@/lib/onboarding-store";
+import { loadClosetHistory, addToClosetHistory, PersistedScanItem } from "@/lib/closet-history-store";
 
 const { width } = Dimensions.get("window");
 const GRID_GAP = 10;
@@ -38,23 +39,35 @@ type ClosetItem = {
   cat: string;
   worn: number;
   image: string;
-  isNew?: boolean;
+    isNew?: boolean;
 };
 
-// Initial items use vibe-matched images from VIBE_DEAL_POOL (default vibe; overridden once profile loads)
+// Initial items — semantically correct category-specific images (24 items)
 const INITIAL_ITEMS: ClosetItem[] = [
-  { id: "1",  name: "Camel Blazer",        cat: "Outerwear",   worn: 12, image: pickVibeImage(VIBE_DEAL_POOL, "Quiet Luxury", 0) },
-  { id: "2",  name: "Black Tee",           cat: "Tops",        worn: 28, image: pickVibeImage(VIBE_DEAL_POOL, "Minimal", 1) },
-  { id: "3",  name: "Wide-Leg Trousers",   cat: "Bottoms",     worn: 9,  image: pickVibeImage(VIBE_DEAL_POOL, "Old Money", 2) },
-  { id: "4",  name: "White Linen Shirt",   cat: "Tops",        worn: 15, image: pickVibeImage(VIBE_DEAL_POOL, "Clean Girl", 0) },
-  { id: "5",  name: "Straight-Leg Jeans",  cat: "Bottoms",     worn: 22, image: pickVibeImage(VIBE_DEAL_POOL, "Casual Luxe", 1) },
-  { id: "6",  name: "Midi Slip Dress",     cat: "Dresses",     worn: 6,  image: pickVibeImage(VIBE_DEAL_POOL, "Chic", 2) },
-  { id: "7",  name: "White Sneakers",      cat: "Shoes",       worn: 31, image: pickVibeImage(VIBE_DEAL_POOL, "Streetwear", 0) },
-  { id: "8",  name: "Leather Tote",        cat: "Bags",        worn: 18, image: pickVibeImage(VIBE_DEAL_POOL, "Old Money", 3) },
-  { id: "9",  name: "Trench Coat",         cat: "Outerwear",   worn: 7,  image: pickVibeImage(VIBE_DEAL_POOL, "Quiet Luxury", 1) },
-  { id: "10", name: "Silk Blouse",         cat: "Tops",        worn: 5,  image: pickVibeImage(VIBE_DEAL_POOL, "Chic", 0) },
-  { id: "11", name: "Mini Skirt",          cat: "Bottoms",     worn: 4,  image: pickVibeImage(VIBE_DEAL_POOL, "Minimal", 3) },
-  { id: "12", name: "Gold Hoops",          cat: "Accessories", worn: 42, image: pickVibeImage(VIBE_DEAL_POOL, "Clean Girl", 2) },
+  { id: "1",  name: "Camel Blazer",        cat: "Outerwear",   worn: 12, image: CLOSET_IMAGES.outer1 },
+  { id: "2",  name: "Black Tee",           cat: "Tops",        worn: 28, image: CLOSET_IMAGES.top4 },
+  { id: "3",  name: "Wide-Leg Trousers",   cat: "Bottoms",     worn: 9,  image: CLOSET_IMAGES.bottom2 },
+  { id: "4",  name: "White Linen Shirt",   cat: "Tops",        worn: 15, image: CLOSET_IMAGES.top3 },
+  { id: "5",  name: "Straight-Leg Jeans",  cat: "Bottoms",     worn: 22, image: CLOSET_IMAGES.bottom4 },
+  { id: "6",  name: "Midi Slip Dress",     cat: "Dresses",     worn: 6,  image: CLOSET_IMAGES.dress2 },
+  { id: "7",  name: "White Sneakers",      cat: "Shoes",       worn: 31, image: CLOSET_IMAGES.shoe3 },
+  { id: "8",  name: "Leather Tote",        cat: "Bags",        worn: 18, image: CLOSET_IMAGES.bag2 },
+  { id: "9",  name: "Trench Coat",         cat: "Outerwear",   worn: 7,  image: CLOSET_IMAGES.outer2 },
+  { id: "10", name: "Silk Blouse",         cat: "Tops",        worn: 5,  image: CLOSET_IMAGES.top1 },
+  { id: "11", name: "Midi Skirt",          cat: "Bottoms",     worn: 4,  image: CLOSET_IMAGES.bottom3 },
+  { id: "12", name: "Gold Hoops",          cat: "Accessories", worn: 42, image: CLOSET_IMAGES.acc1 },
+  { id: "13", name: "Wrap Dress",          cat: "Dresses",     worn: 8,  image: CLOSET_IMAGES.dress3 },
+  { id: "14", name: "Leather Jacket",      cat: "Outerwear",   worn: 11, image: CLOSET_IMAGES.outer3 },
+  { id: "15", name: "Loafers",             cat: "Shoes",       worn: 19, image: CLOSET_IMAGES.shoe1 },
+  { id: "16", name: "Structured Bag",      cat: "Bags",        worn: 14, image: CLOSET_IMAGES.bag1 },
+  { id: "17", name: "Silk Scarf",          cat: "Accessories", worn: 23, image: CLOSET_IMAGES.acc2 },
+  { id: "18", name: "Tailored Trousers",   cat: "Bottoms",     worn: 16, image: CLOSET_IMAGES.bottom1 },
+  { id: "19", name: "Striped Top",         cat: "Tops",        worn: 9,  image: CLOSET_IMAGES.top5 },
+  { id: "20", name: "Mini Dress",          cat: "Dresses",     worn: 3,  image: CLOSET_IMAGES.dress4 },
+  { id: "21", name: "Heeled Boots",        cat: "Shoes",       worn: 12, image: CLOSET_IMAGES.shoe4 },
+  { id: "22", name: "Crossbody Bag",       cat: "Bags",        worn: 21, image: CLOSET_IMAGES.bag3 },
+  { id: "23", name: "Sunglasses",          cat: "Accessories", worn: 38, image: CLOSET_IMAGES.acc3 },
+  { id: "24", name: "Cream Knit",          cat: "Tops",        worn: 17, image: CLOSET_IMAGES.top2 },
 ];
 
 const COLOR_DNA = [
@@ -80,14 +93,34 @@ export default function ClosetScreen() {
   const [userVibe, setUserVibe] = useState("Minimal");
   const [selectedItem, setSelectedItem] = useState<WardrobeItem | null>(null);
   const [showIntelSheet, setShowIntelSheet] = useState(false);
-  // Recently learned: scanned items stored in order, most recent first
-  const [recentlyLearned, setRecentlyLearned] = useState<ScannedItem[]>([]);
+  // Recently learned: persisted scan history
+  const [recentlyLearned, setRecentlyLearned] = useState<PersistedScanItem[]>([]);
 
-  // Load user vibe from profile
+  // Load user vibe + scan history on mount
   useEffect(() => {
     getStyleProfile().then(profile => {
       if (profile?.styleVibes?.[0]) {
         setUserVibe(profile.styleVibes[0]);
+      }
+    }).catch(() => {});
+
+    loadClosetHistory().then(history => {
+      if (history.length > 0) {
+        setRecentlyLearned(history);
+        // Also restore scanned items into the grid (prepend, no isNew flag)
+        const restored: ClosetItem[] = history.map(h => ({
+          id: h.id,
+          name: h.name,
+          cat: h.category,
+          worn: h.worn,
+          image: h.image,
+          isNew: false,
+        }));
+        setClosetItems(prev => {
+          const existingIds = new Set(prev.map(i => i.id));
+          const newOnes = restored.filter(r => !existingIds.has(r.id));
+          return [...newOnes, ...prev];
+        });
       }
     }).catch(() => {});
   }, []);
@@ -103,8 +136,30 @@ export default function ClosetScreen() {
     };
     // Prepend the new item so it appears first in the grid
     setClosetItems(prev => [newItem, ...prev]);
-    // Add to recently learned (keep last 10)
-    setRecentlyLearned(prev => [scanned, ...prev].slice(0, 10));
+    // Persist to AsyncStorage and update recently learned state
+    const persisted: PersistedScanItem = {
+      id: scanned.id,
+      name: scanned.name,
+      brand: scanned.brand,
+      category: scanned.category,
+      color: scanned.color,
+      colorHex: scanned.colorHex,
+      styleTag: scanned.styleTag,
+      image: scanned.image,
+      outfitCount: scanned.outfitCount,
+      matchScore: scanned.matchScore,
+      closetIQ: scanned.closetIQ,
+      pairsWith: scanned.pairsWith,
+      trendingIn: scanned.trendingIn,
+      occasions: scanned.occasions,
+      worn: 0,
+      scannedAt: Date.now(),
+    };
+    addToClosetHistory(persisted).then(updated => {
+      setRecentlyLearned(updated);
+    }).catch(() => {
+      setRecentlyLearned(prev => [persisted, ...prev].slice(0, 20));
+    });
     hapticSuccess();
   }, []);
 
@@ -126,7 +181,7 @@ export default function ClosetScreen() {
     setShowIntelSheet(true);
   }, [userVibe]);
 
-  const handleScannedItemTap = useCallback((scanned: ScannedItem) => {
+  const handleScannedItemTap = useCallback((scanned: PersistedScanItem | ScannedItem) => {
     hapticLight();
     setSelectedItem({
       id: scanned.id,
@@ -433,8 +488,8 @@ function RecentlyLearnedRow({
   items,
   onItemTap,
 }: {
-  items: ScannedItem[];
-  onItemTap: (item: ScannedItem) => void;
+  items: (PersistedScanItem | ScannedItem)[];
+  onItemTap: (item: PersistedScanItem | ScannedItem) => void;
 }) {
   const entranceY = useRef(new Animated.Value(20)).current;
   const entranceOpacity = useRef(new Animated.Value(0)).current;
@@ -477,7 +532,7 @@ function RecentItemCard({
   index,
   onPress,
 }: {
-  item: ScannedItem;
+  item: PersistedScanItem | ScannedItem;
   index: number;
   onPress: () => void;
 }) {

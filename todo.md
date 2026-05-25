@@ -191,3 +191,12 @@
 - [x] Build Recently Learned row in Closet tab — horizontal scan history strip with match scores and AI insights
 - [ ] Persist scanned items to AsyncStorage so Recently Learned survives app restarts
 - [x] TypeScript clean, 12 tests passing
+
+## Phase 14 — Memory, First Impression & Image Integrity
+
+- [x] Rebuild images.ts with semantically correct category-specific URLs (jeans=jeans, blazers=blazers, etc.)
+- [x] Expand image library to 150+ URLs with proper category pools (tops, bottoms, dresses, outerwear, shoes, bags, accessories)
+- [x] Build closet-history-store.ts — AsyncStorage persistence for Recently Learned scan history
+- [x] Wire closet-history store into Closet tab — load on mount, persist on scan, clear on reset onboarding
+- [x] Update onboarding Step 1 vibe cards to use premium vibe-matched editorial images from VIBE_OUTFIT_POOL
+- [x] TypeScript clean, 12 tests passing
