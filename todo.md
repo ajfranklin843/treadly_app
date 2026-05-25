@@ -103,3 +103,50 @@
 - [x] Go New screen: personalized build steps with occasion and brand names
 - [x] Shop screen: deal cards from profile brands, filter tabs from occasions, dynamic section labels
 - [x] Stylist screen: personalized greeting message, profile-aware suggestion chips, dynamic status line
+
+## Phase 9 — Premium Micro-Interactions
+- [ ] Build shared animation utilities (useScalePress, useFadeIn, useGlowPulse)
+- [ ] Build AnimatedPressable component with scale + haptic
+- [ ] Build AnimatedCard component with press state + rose-gold glow border
+- [ ] Home: outfit card press scale (0.97) + haptic light
+- [ ] Home: image fade-in on load (opacity 0→1, 300ms)
+- [ ] Home: heart save animation (scale burst + rose-gold fill)
+- [ ] Home: Go New CTA animated pulse glow
+- [ ] Home: deal card press state with scale + opacity
+- [ ] Home: trend card horizontal scroll with momentum feel
+- [ ] Go New: start button animated press + glow ring
+- [ ] Go New: step completion checkmark animate in
+- [ ] Go New: outfit reveal fade-in with stagger
+- [ ] Go New: missing piece cards stagger entrance
+- [ ] Shop: deal card press scale + haptic
+- [ ] Shop: brand card press glow
+- [ ] Shop: filter tab active state animated underline
+- [ ] Closet: wardrobe item press scale
+- [ ] Closet: category filter animated active state
+- [ ] Stylist: send button press animation
+- [ ] Stylist: message bubble fade-in entrance
+- [ ] Stylist: suggestion chip press scale
+- [ ] Tab bar: active tab icon scale bounce on select
+- [ ] Go New FAB: continuous subtle pulse animation
+
+## Phase 9 — Completed Items
+- [x] Build shared animation utilities library (lib/animations.ts) — useScalePress (accepts any scale), useImageFade, useGlowPulse, useStaggerEntrance, hapticLight, hapticSuccess
+- [x] Build AnimatedPressable and AnimatedCard shared components (components/ui/animated-pressable.tsx)
+- [x] Home screen: AnimatedCard for outfit hero with scale press + rose-gold glow border
+- [x] Home screen: Heart save button with burst animation and haptic
+- [x] Home screen: Go New CTA with pulsing glow ring animation
+- [x] Home screen: Image fade-in on all outfit and trend card images
+- [x] Home screen: Stagger entrance animation for curated picks
+- [x] Home screen: Deal card press states with scale + glow
+- [x] Go New screen: AnimatedPromptChip with scale press + haptic
+- [x] Go New screen: GoNewStartButton with scale press + glow ring pulse
+- [x] Go New screen: MissingPieceCard with scale press + rose-gold glow border
+- [x] Go New screen: ReadyActionButton with scale press + gradient
+- [x] Shop screen: DealCard with scale press + image fade-in + glow border + animated View Deal button
+- [x] Closet screen: AnimatedScanCard with scale press + rose-gold glow border
+- [x] Closet screen: AnimatedItemCard with scale press for all wardrobe grid items
+- [x] Closet screen: Category tab press states with haptic
+- [x] Stylist screen: AnimatedChip with scale press for suggestion chips
+- [x] Stylist screen: AnimatedSendButton with scale press + gradient activation
+- [x] Stylist screen: AnimatedRecoCard with scale press + image fade-in
+- [x] TypeScript clean (0 errors), 12 tests passing

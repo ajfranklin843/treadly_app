@@ -18,7 +18,10 @@ import {
   Animated,
   Dimensions,
   Image,
+  Pressable,
 } from "react-native";
+import { useScalePress, useImageFade, useGlowPulse, useStaggerEntrance, hapticLight, hapticSuccess, ANIM } from '@/lib/animations';
+import { HeartButton } from '@/components/ui/animated-pressable';
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import {
@@ -158,6 +161,47 @@ export default function GoNewScreen() {
   );
 }
 
+// ─── Animated Prompt Chip ──────────────────────────────────────────────────────────
+
+function AnimatedPromptChip({ icon, text, onPress }: { icon: string; text: string; onPress: () => void }) {
+  const { scale, onPressIn, onPressOut } = useScalePress(ANIM.chipPressScale);
+  return (
+    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress} style={styles.promptCard}>
+      <Animated.View style={[{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }, { transform: [{ scale }] }]}>
+        <Text style={styles.promptIcon}>{icon}</Text>
+        <Text style={styles.promptText}>"{text}"</Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+// ─── Go New Start Button ──────────────────────────────────────────────────────────
+
+function GoNewStartButton({ onPress }: { onPress: () => void }) {
+  const { scale, onPressIn, onPressOut } = useScalePress(0.97);
+  const glowOpacity = useGlowPulse();
+  return (
+    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress} style={styles.ctaBtn}>
+      <Animated.View style={[{ borderRadius: ThreadlyRadius.xl, overflow: 'hidden' }, { transform: [{ scale }] }]}>
+        <LinearGradient
+          colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.ctaBtnGradient}
+        >
+          <Text style={styles.ctaBtnText}>Go New ✦</Text>
+          <Text style={styles.ctaBtnSub}>Build my look now</Text>
+        </LinearGradient>
+        {/* Pulse glow ring */}
+        <Animated.View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { borderRadius: ThreadlyRadius.xl, borderWidth: 1.5, borderColor: ThreadlyColors.roseGoldLight, opacity: glowOpacity }]}
+        />
+      </Animated.View>
+    </Pressable>
+  );
+}
+
 // ─── Idle State ───────────────────────────────────────────────────────────────
 
 function IdleState({ onStart, goNewLabel, accentColor }: { onStart: () => void; goNewLabel: string; accentColor: string }) {
@@ -193,10 +237,7 @@ function IdleState({ onStart, goNewLabel, accentColor }: { onStart: () => void; 
           { text: "Find the cheapest missing pieces.", icon: "◆" },
           { text: "Make me look trendy without wasting money.", icon: "✦" },
         ].map((p, i) => (
-          <TouchableOpacity key={i} style={styles.promptCard} activeOpacity={0.8}>
-            <Text style={styles.promptIcon}>{p.icon}</Text>
-            <Text style={styles.promptText}>"{p.text}"</Text>
-          </TouchableOpacity>
+          <AnimatedPromptChip key={i} icon={p.icon} text={p.text} onPress={() => hapticLight()} />
         ))}
       </View>
 
@@ -215,17 +256,7 @@ function IdleState({ onStart, goNewLabel, accentColor }: { onStart: () => void; 
       </View>
 
       {/* CTA */}
-      <TouchableOpacity style={styles.ctaBtn} activeOpacity={0.85} onPress={onStart}>
-        <LinearGradient
-          colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.ctaBtnGradient}
-        >
-          <Text style={styles.ctaBtnText}>Go New ✦</Text>
-          <Text style={styles.ctaBtnSub}>Build my look now</Text>
-        </LinearGradient>
-      </TouchableOpacity>
+      <GoNewStartButton onPress={() => { hapticSuccess(); onStart(); }} />
 
       <View style={{ height: 32 }} />
     </ScrollView>
@@ -289,6 +320,64 @@ function BuildingState({
   );
 }
 
+// ─── Missing Piece Card (animated) ─────────────────────────────────────────────
+
+type MissingPiece = { id: string; brand: string; item: string; original: number; sale: number; off: number; image: string };
+
+function MissingPieceCard({ piece }: { piece: MissingPiece }) {
+  const { scale, onPressIn, onPressOut } = useScalePress(0.97);
+  const { imageOpacity, onImageLoad } = useImageFade();
+  const glowOpacity = useRef(new Animated.Value(0)).current;
+  const handlePressIn = () => {
+    onPressIn();
+    Animated.timing(glowOpacity, { toValue: 1, duration: 80, useNativeDriver: true }).start();
+  };
+  const handlePressOut = () => {
+    onPressOut();
+    Animated.timing(glowOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+  };
+  return (
+    <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={() => hapticLight()}>
+      <Animated.View style={[styles.missingCard, { transform: [{ scale }] }]}>
+        <Animated.Image source={{ uri: piece.image }} style={[styles.missingImage, { opacity: imageOpacity }]} resizeMode="cover" onLoad={onImageLoad} />
+        <View style={styles.missingInfo}>
+          <Text style={styles.missingBrand}>{piece.brand}</Text>
+          <Text style={styles.missingItem}>{piece.item}</Text>
+          <View style={styles.missingPricing}>
+            <Text style={styles.missingOriginal}>${piece.original}</Text>
+            <Text style={styles.missingSale}>${piece.sale}</Text>
+          </View>
+        </View>
+        <View style={styles.missingOffBadge}>
+          <Text style={styles.missingOffText}>-{piece.off}%</Text>
+        </View>
+        <Animated.View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { borderRadius: ThreadlyRadius.lg, borderWidth: 1, borderColor: ThreadlyColors.roseGold, opacity: glowOpacity }]}
+        />
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+function ReadyActionButton({ label, onPress }: { label: string; onPress: () => void }) {
+  const { scale, onPressIn, onPressOut } = useScalePress(0.97);
+  return (
+    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress} style={styles.primaryBtn}>
+      <Animated.View style={[{ borderRadius: ThreadlyRadius.xl, overflow: 'hidden' }, { transform: [{ scale }] }]}>
+        <LinearGradient
+          colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.primaryBtnGradient}
+        >
+          <Text style={styles.primaryBtnText}>{label}</Text>
+        </LinearGradient>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
 // ─── Ready State ─────────────────────────────────────────────────────────────
 
 function ReadyState({ onReset }: { onReset: () => void }) {
@@ -339,24 +428,7 @@ function ReadyState({ onReset }: { onReset: () => void }) {
       </View>
 
       {MISSING_PIECES.map(piece => (
-        <TouchableOpacity key={piece.id} style={styles.missingCard} activeOpacity={0.85}>
-          <Image
-            source={{ uri: piece.image }}
-            style={styles.missingImage}
-            resizeMode="cover"
-          />
-          <View style={styles.missingInfo}>
-            <Text style={styles.missingBrand}>{piece.brand}</Text>
-            <Text style={styles.missingItem}>{piece.item}</Text>
-            <View style={styles.missingPricing}>
-              <Text style={styles.missingOriginal}>${piece.original}</Text>
-              <Text style={styles.missingSale}>${piece.sale}</Text>
-            </View>
-          </View>
-          <View style={styles.missingOffBadge}>
-            <Text style={styles.missingOffText}>-{piece.off}%</Text>
-          </View>
-        </TouchableOpacity>
+        <MissingPieceCard key={piece.id} piece={piece} />
       ))}
 
       {/* Total */}
@@ -367,19 +439,13 @@ function ReadyState({ onReset }: { onReset: () => void }) {
 
       {/* Actions */}
       <View style={styles.readyActions}>
-        <TouchableOpacity style={styles.primaryBtn} activeOpacity={0.88}>
-          <LinearGradient
-            colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.primaryBtnGradient}
-          >
-            <Text style={styles.primaryBtnText}>Shop Missing Pieces</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.secondaryBtn} onPress={onReset} activeOpacity={0.7}>
+        <ReadyActionButton label="Shop Missing Pieces" onPress={() => hapticSuccess()} />
+        <Pressable
+          style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.6 }]}
+          onPress={() => { hapticLight(); onReset(); }}
+        >
           <Text style={styles.secondaryBtnText}>Try Another Look</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       <View style={{ height: 40 }} />

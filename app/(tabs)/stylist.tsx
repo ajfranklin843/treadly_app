@@ -5,16 +5,19 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { usePersonalization } from '@/lib/personalization';
+import { useScalePress, useImageFade, hapticLight, hapticSuccess } from '@/lib/animations';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   ScrollView,
   TextInput,
   KeyboardAvoidingView,
   Platform,
   Image,
+  Animated,
   FlatList,
   Dimensions,
 } from "react-native";
@@ -214,14 +217,7 @@ export default function StylistScreen() {
           style={styles.chipScroll}
         >
           {suggestionChips.map((chip, i) => (
-            <TouchableOpacity
-              key={i}
-              style={styles.chip}
-              onPress={() => sendMessage(chip)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.chipText}>{chip}</Text>
-            </TouchableOpacity>
+            <AnimatedChip key={i} label={chip} onPress={() => { hapticLight(); sendMessage(chip); }} />
           ))}
         </ScrollView>
 
@@ -237,23 +233,73 @@ export default function StylistScreen() {
             onSubmitEditing={() => sendMessage(input)}
             multiline={false}
           />
-          <TouchableOpacity
-            style={[styles.sendBtn, !input.trim() && styles.sendBtnDisabled]}
-            onPress={() => sendMessage(input)}
-            activeOpacity={0.85}
-            disabled={!input.trim()}
-          >
-            <LinearGradient
-              colors={input.trim() ? [ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight] : [ThreadlyColors.charcoal, ThreadlyColors.charcoal]}
-              style={StyleSheet.absoluteFill}
-            />
-            <Text style={[styles.sendBtnText, !input.trim() && styles.sendBtnTextDisabled]}>→</Text>
-          </TouchableOpacity>
+          <AnimatedSendButton active={!!input.trim()} onPress={() => { hapticSuccess(); sendMessage(input); }} />
         </View>
       </KeyboardAvoidingView>
     </ScreenContainer>
   );
 }
+
+// ─── Animated Chip ───────────────────────────────────────────────────────────
+
+function AnimatedChip({ label, onPress }: { label: string; onPress: () => void }) {
+  const { scale, onPressIn, onPressOut } = useScalePress(0.93);
+  return (
+    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress}>
+      <Animated.View style={[styles.chip, { transform: [{ scale }] }]}>
+        <Text style={styles.chipText}>{label}</Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+// ─── Animated Send Button ─────────────────────────────────────────────────────
+
+function AnimatedSendButton({ active, onPress }: { active: boolean; onPress: () => void }) {
+  const { scale, onPressIn, onPressOut } = useScalePress(0.92);
+  return (
+    <Pressable
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      onPress={onPress}
+      disabled={!active}
+      style={[styles.sendBtn, !active && styles.sendBtnDisabled]}
+    >
+      <Animated.View style={[{ flex: 1, alignItems: 'center', justifyContent: 'center' }, { transform: [{ scale }] }]}>
+        <LinearGradient
+          colors={active ? [ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight] : [ThreadlyColors.charcoal, ThreadlyColors.charcoal]}
+          style={StyleSheet.absoluteFill}
+        />
+        <Text style={[styles.sendBtnText, !active && styles.sendBtnTextDisabled]}>→</Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+// ─── Animated Reco Card ───────────────────────────────────────────────────────
+
+function AnimatedRecoCard({ card }: { card: RecoCard }) {
+  const { scale, onPressIn, onPressOut } = useScalePress(0.96);
+  const { imageOpacity, onImageLoad } = useImageFade();
+  return (
+    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={() => hapticLight()} style={styles.recoCard}>
+      <Animated.View style={{ transform: [{ scale }] }}>
+        <Animated.Image source={{ uri: card.image }} style={[styles.recoCardImage, { opacity: imageOpacity }]} resizeMode="cover" onLoad={onImageLoad} />
+        <View style={styles.recoCardInfo}>
+          <Text style={styles.recoCardBrand}>{card.brand}</Text>
+          <Text style={styles.recoCardItem} numberOfLines={1}>{card.item}</Text>
+          {card.price > 0 ? (
+            <Text style={styles.recoCardPrice}>${card.price}</Text>
+          ) : (
+            <Text style={styles.recoCardOwned}>You own this</Text>
+          )}
+        </View>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+// ─── Message Bubble ───────────────────────────────────────────────────────────
 
 function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
@@ -280,18 +326,7 @@ function MessageBubble({ message }: { message: Message }) {
             style={styles.recoScroll}
           >
             {message.cards.map(card => (
-              <TouchableOpacity key={card.id} style={styles.recoCard} activeOpacity={0.85}>
-                <Image source={{ uri: card.image }} style={styles.recoCardImage} resizeMode="cover" />
-                <View style={styles.recoCardInfo}>
-                  <Text style={styles.recoCardBrand}>{card.brand}</Text>
-                  <Text style={styles.recoCardItem} numberOfLines={1}>{card.item}</Text>
-                  {card.price > 0 ? (
-                    <Text style={styles.recoCardPrice}>${card.price}</Text>
-                  ) : (
-                    <Text style={styles.recoCardOwned}>You own this</Text>
-                  )}
-                </View>
-              </TouchableOpacity>
+              <AnimatedRecoCard key={card.id} card={card} />
             ))}
           </ScrollView>
         )}

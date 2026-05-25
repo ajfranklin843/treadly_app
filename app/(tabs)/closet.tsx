@@ -3,7 +3,8 @@
  * Digital wardrobe with AI intelligence.
  */
 
-import { useState } from "react";
+import React from "react";
+import { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -12,7 +13,10 @@ import {
   ScrollView,
   Dimensions,
   Image,
+  Animated,
+  Pressable,
 } from "react-native";
+import { useScalePress, useImageFade, hapticLight, hapticSuccess } from '@/lib/animations';
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import {
@@ -86,7 +90,7 @@ export default function ClosetScreen() {
         </View>
 
         {/* Scan CTA */}
-        <TouchableOpacity style={styles.scanCard} activeOpacity={0.88}>
+        <AnimatedScanCard>
           <LinearGradient colors={["#1A0E08", "#2A1A10"]} style={StyleSheet.absoluteFill} />
           <View style={styles.scanCardBorder} />
           <View style={styles.scanCardContent}>
@@ -99,7 +103,7 @@ export default function ClosetScreen() {
             </View>
             <Text style={styles.scanCardArrow}>→</Text>
           </View>
-        </TouchableOpacity>
+        </AnimatedScanCard>
 
         {/* AI Analysis */}
         <View style={styles.analysisCard}>
@@ -185,7 +189,7 @@ export default function ClosetScreen() {
         {/* Items Grid */}
         <View style={styles.itemGrid}>
           {filtered.map(item => (
-            <TouchableOpacity key={item.id} style={[styles.itemCard, { width: ITEM_W }]} activeOpacity={0.85}>
+            <AnimatedItemCard key={item.id} item={item} width={ITEM_W}>
               <View style={styles.itemImageWrap}>
                 <Image source={{ uri: item.image }} style={styles.itemImage} resizeMode="cover" />
                 <View style={styles.itemWornBadge}>
@@ -196,13 +200,52 @@ export default function ClosetScreen() {
                 <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
                 <Text style={styles.itemCat}>{item.cat}</Text>
               </View>
-            </TouchableOpacity>
+            </AnimatedItemCard>
           ))}
         </View>
 
         <View style={{ height: 40 }} />
       </ScrollView>
     </ScreenContainer>
+  );
+}
+
+// ─── Animated Scan Card ───────────────────────────────────────────────────────────
+
+function AnimatedScanCard({ children }: { children: React.ReactNode }) {
+  const { scale, onPressIn, onPressOut } = useScalePress(0.97);
+  const glowOpacity = useRef(new Animated.Value(0)).current;
+  const handlePressIn = () => {
+    onPressIn();
+    Animated.timing(glowOpacity, { toValue: 1, duration: 80, useNativeDriver: true }).start();
+  };
+  const handlePressOut = () => {
+    onPressOut();
+    Animated.timing(glowOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+  };
+  return (
+    <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={() => hapticSuccess()}>
+      <Animated.View style={[styles.scanCard, { transform: [{ scale }] }]}>
+        {children}
+        <Animated.View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { borderRadius: ThreadlyRadius.xl, borderWidth: 1, borderColor: ThreadlyColors.roseGold, opacity: glowOpacity }]}
+        />
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+// ─── Animated Item Card ───────────────────────────────────────────────────────────
+
+function AnimatedItemCard({ children, item, width }: { children: React.ReactNode; item: { id: string }; width: number }) {
+  const { scale, onPressIn, onPressOut } = useScalePress(0.96);
+  return (
+    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={() => hapticLight()}>
+      <Animated.View style={[styles.itemCard, { width }, { transform: [{ scale }] }]}>
+        {children}
+      </Animated.View>
+    </Pressable>
   );
 }
 

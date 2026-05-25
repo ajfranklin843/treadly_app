@@ -4,7 +4,7 @@
  * Emotional outcome: "She found me the best deal. Again."
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { usePersonalization } from '@/lib/personalization';
 import {
   View,
@@ -15,7 +15,10 @@ import {
   FlatList,
   Dimensions,
   Image,
+  Animated,
+  Pressable,
 } from "react-native";
+import { useScalePress, useImageFade, hapticLight, hapticSuccess } from '@/lib/animations';
 import { LinearGradient } from "expo-linear-gradient";
 import { ScreenContainer } from "@/components/screen-container";
 import {
@@ -282,48 +285,71 @@ export default function ShopScreen() {
 }
 
 function DealCard({ deal }: { deal: typeof DEALS[0] }) {
+  const { scale, onPressIn, onPressOut } = useScalePress(0.97);
+  const { imageOpacity, onImageLoad } = useImageFade();
+  const glowOpacity = useRef(new Animated.Value(0)).current;
+  const { scale: btnScale, onPressIn: btnIn, onPressOut: btnOut } = useScalePress(0.95);
+
+  const handlePressIn = () => {
+    onPressIn();
+    Animated.timing(glowOpacity, { toValue: 1, duration: 80, useNativeDriver: true }).start();
+  };
+  const handlePressOut = () => {
+    onPressOut();
+    Animated.timing(glowOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+  };
+
   return (
-    <TouchableOpacity style={styles.dealCard} activeOpacity={0.88}>
-      <View style={styles.dealImageWrap}>
-        <Image source={{ uri: deal.image }} style={styles.dealImage} resizeMode="cover" />
-        <LinearGradient
-          colors={["transparent", "rgba(10,10,10,0.6)"]}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.dealTag}>
-          <Text style={styles.dealTagText}>{deal.tag}</Text>
-        </View>
-        <View style={styles.dealOffBadge}>
-          <Text style={styles.dealOffText}>-{deal.off}%</Text>
-        </View>
-        <View style={styles.dealExpiry}>
-          <Text style={styles.dealExpiryText}>{deal.expiry}</Text>
-        </View>
-      </View>
-      <View style={styles.dealCardInfo}>
-        <View style={styles.dealCardTop}>
-          <View style={styles.dealCardLeft}>
-            <Text style={styles.dealBrand}>{deal.brand}</Text>
-            <Text style={styles.dealItem}>{deal.item}</Text>
-            <Text style={styles.dealDesc}>{deal.desc}</Text>
-          </View>
-          <View style={styles.dealPricingBlock}>
-            <Text style={styles.dealOriginal}>${deal.original}</Text>
-            <Text style={styles.dealSale}>${deal.sale}</Text>
-          </View>
-        </View>
-        <TouchableOpacity style={styles.viewDealBtn} activeOpacity={0.85}>
+    <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={() => hapticLight()}>
+      <Animated.View style={[styles.dealCard, { transform: [{ scale }] }]}>
+        <View style={styles.dealImageWrap}>
+          <Animated.Image source={{ uri: deal.image }} style={[styles.dealImage, { opacity: imageOpacity }]} resizeMode="cover" onLoad={onImageLoad} />
           <LinearGradient
-            colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.viewDealBtnGradient}
-          >
-            <Text style={styles.viewDealBtnText}>View Deal</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
+            colors={["transparent", "rgba(10,10,10,0.6)"]}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.dealTag}>
+            <Text style={styles.dealTagText}>{deal.tag}</Text>
+          </View>
+          <View style={styles.dealOffBadge}>
+            <Text style={styles.dealOffText}>-{deal.off}%</Text>
+          </View>
+          <View style={styles.dealExpiry}>
+            <Text style={styles.dealExpiryText}>{deal.expiry}</Text>
+          </View>
+        </View>
+        <View style={styles.dealCardInfo}>
+          <View style={styles.dealCardTop}>
+            <View style={styles.dealCardLeft}>
+              <Text style={styles.dealBrand}>{deal.brand}</Text>
+              <Text style={styles.dealItem}>{deal.item}</Text>
+              <Text style={styles.dealDesc}>{deal.desc}</Text>
+            </View>
+            <View style={styles.dealPricingBlock}>
+              <Text style={styles.dealOriginal}>${deal.original}</Text>
+              <Text style={styles.dealSale}>${deal.sale}</Text>
+            </View>
+          </View>
+          <Pressable onPressIn={btnIn} onPressOut={btnOut} onPress={() => hapticSuccess()} style={styles.viewDealBtn}>
+            <Animated.View style={[{ borderRadius: ThreadlyRadius.xl, overflow: 'hidden' }, { transform: [{ scale: btnScale }] }]}>
+              <LinearGradient
+                colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.viewDealBtnGradient}
+              >
+                <Text style={styles.viewDealBtnText}>View Deal</Text>
+              </LinearGradient>
+            </Animated.View>
+          </Pressable>
+        </View>
+        {/* Rose-gold glow border on press */}
+        <Animated.View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { borderRadius: ThreadlyRadius.xl, borderWidth: 1, borderColor: ThreadlyColors.roseGold, opacity: glowOpacity }]}
+        />
+      </Animated.View>
+    </Pressable>
   );
 }
 

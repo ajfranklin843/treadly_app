@@ -5,7 +5,7 @@
  * Emotional outcome: "She already knows my taste."
  */
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,10 @@ import {
   Dimensions,
   Image,
   Animated,
+  Pressable,
 } from 'react-native';
+import { useImageFade, useGlowPulse, useScalePress, hapticLight, hapticSuccess, ANIM } from '@/lib/animations';
+import { AnimatedCard, HeartButton } from '@/components/ui/animated-pressable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScreenContainer } from '@/components/screen-container';
 import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from '@/constants/threadly';
@@ -63,18 +66,32 @@ const shimmerStyles = StyleSheet.create({
 
 function OutfitHeroCard({ outfit, accentColor, onPress }: { outfit: OutfitCard; accentColor: string; onPress: () => void }) {
   const fadeIn = useRef(new Animated.Value(0)).current;
+  const { imageOpacity, onImageLoad } = useImageFade();
+  const { scale, onPressIn, onPressOut } = useScalePress(ANIM.heroPressScale);
+  const [saved, setSaved] = useState(false);
+
   useEffect(() => {
     Animated.timing(fadeIn, { toValue: 1, duration: 600, useNativeDriver: true }).start();
   }, [outfit.id]);
 
   return (
     <Animated.View style={[styles.heroCard, { opacity: fadeIn }]}>
-      <TouchableOpacity activeOpacity={0.95} onPress={onPress} style={{ flex: 1 }}>
-        <Image source={{ uri: outfit.image }} style={styles.heroImage} resizeMode="cover" />
+      <Pressable
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        onPress={() => { hapticLight(); onPress(); }}
+        style={{ flex: 1 }}
+      >
+        <Animated.View style={{ flex: 1, transform: [{ scale }] }}>
+        <Animated.Image source={{ uri: outfit.image }} style={[styles.heroImage, { opacity: imageOpacity }]} resizeMode="cover" onLoad={onImageLoad} />
         <LinearGradient
           colors={['transparent', 'rgba(10,10,10,0.92)']}
           style={styles.heroGradient}
         />
+        {/* Heart save button */}
+        <View style={styles.heroHeartBtn}>
+          <HeartButton saved={saved} onToggle={() => { setSaved(s => !s); if (!saved) hapticSuccess(); }} size={20} />
+        </View>
         {/* Match badge */}
         <View style={styles.matchBadge}>
           <Text style={styles.matchPct}>{outfit.matchPct}%</Text>
@@ -101,7 +118,8 @@ function OutfitHeroCard({ outfit, accentColor, onPress }: { outfit: OutfitCard; 
             <Text style={[styles.viewBtnText, { color: accentColor }]}>View Look →</Text>
           </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+        </Animated.View>
+      </Pressable>
     </Animated.View>
   );
 }
@@ -109,25 +127,43 @@ function OutfitHeroCard({ outfit, accentColor, onPress }: { outfit: OutfitCard; 
 // ─── Trend Card ───────────────────────────────────────────────────────────────
 
 function TrendItem({ item }: { item: TrendCard }) {
+  const { scale, onPressIn, onPressOut } = useScalePress(0.96);
+  const { imageOpacity, onImageLoad } = useImageFade();
   return (
-    <TouchableOpacity style={styles.trendCard} activeOpacity={0.88}>
-      <Image source={{ uri: item.image }} style={styles.trendImage} resizeMode="cover" />
+    <Pressable
+      style={styles.trendCard}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      onPress={() => hapticLight()}
+    >
+      <Animated.View style={{ flex: 1, transform: [{ scale }] }}>
+      <Animated.Image source={{ uri: item.image }} style={[styles.trendImage, { opacity: imageOpacity }]} resizeMode="cover" onLoad={onImageLoad} />
       <LinearGradient colors={['transparent', 'rgba(10,10,10,0.88)']} style={styles.trendOverlay}>
         <Text style={styles.trendLabel}>{item.label}</Text>
         <Text style={styles.trendTitle}>{item.title}</Text>
         <Text style={styles.trendSub}>{item.sub}</Text>
       </LinearGradient>
-    </TouchableOpacity>
+      </Animated.View>
+    </Pressable>
   );
 }
 
 // ─── Deal Card ────────────────────────────────────────────────────────────────
 
 function DealItem({ item, accentColor }: { item: DealCard; accentColor: string }) {
+  const { scale, onPressIn, onPressOut } = useScalePress(0.95);
+  const { imageOpacity, onImageLoad } = useImageFade();
+  const [saved, setSaved] = useState(false);
   return (
-    <TouchableOpacity style={styles.dealCard} activeOpacity={0.88}>
+    <Pressable
+      style={styles.dealCard}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      onPress={() => hapticLight()}
+    >
+      <Animated.View style={{ transform: [{ scale }] }}>
       <View style={styles.dealImageWrap}>
-        <Image source={{ uri: item.image }} style={styles.dealImage} resizeMode="cover" />
+        <Animated.Image source={{ uri: item.image }} style={[styles.dealImage, { opacity: imageOpacity }]} resizeMode="cover" onLoad={onImageLoad} />
         <View style={styles.dealOffBadge}>
           <Text style={styles.dealOffText}>-{item.off}%</Text>
         </View>
@@ -142,7 +178,53 @@ function DealItem({ item, accentColor }: { item: DealCard; accentColor: string }
         <Text style={[styles.dealMatchReason, { color: accentColor }]}>✦ {item.matchReason}</Text>
         <Text style={styles.dealExpiry}>{item.expiry}</Text>
       </View>
-    </TouchableOpacity>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+// ─── Go New CTA (animated pulse) ────────────────────────────────────────────
+
+function GoNewCTA({ onPress, label }: { onPress: () => void; label: string }) {
+  const { scale, onPressIn, onPressOut } = useScalePress(0.97);
+  const glowOpacity = useGlowPulse();
+  return (
+    <Pressable
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      onPress={onPress}
+      style={{ marginHorizontal: ThreadlySpacing.screenPadding, marginBottom: 8 }}
+    >
+      <Animated.View style={[styles.goNewCta, { transform: [{ scale }] }]}>
+        <LinearGradient
+          colors={[ThreadlyColors.roseGold, ThreadlyColors.roseGoldLight]}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
+        {/* Animated glow ring */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              borderRadius: ThreadlyRadius.xl,
+              borderWidth: 1.5,
+              borderColor: ThreadlyColors.roseGoldLight,
+              opacity: glowOpacity,
+            },
+          ]}
+        />
+        <View style={styles.goNewContent}>
+          <View>
+            <Text style={styles.goNewTitle}>Go New ✦</Text>
+            <Text style={styles.goNewSub}>{label}</Text>
+          </View>
+          <View style={styles.goNewArrow}>
+            <Text style={styles.goNewArrowText}>→</Text>
+          </View>
+        </View>
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -207,6 +289,9 @@ export default function HomeScreen() {
 
         {/* ── Go New CTA ── */}
         {!p.isLoading && (
+          <GoNewCTA onPress={() => { hapticLight(); router.push('/(tabs)/gonew'); }} label={p.goNewLabel} />
+        )}
+        {false && (
           <TouchableOpacity
             style={styles.goNewCta}
             activeOpacity={0.88}
@@ -362,6 +447,15 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   notifIcon: { fontSize: 16, color: ThreadlyColors.roseGold },
+  heroHeartBtn: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    zIndex: 10,
+    backgroundColor: 'rgba(10,10,10,0.55)',
+    borderRadius: 20,
+    padding: 2,
+  },
 
   // Greeting
   greetingWrap: {
