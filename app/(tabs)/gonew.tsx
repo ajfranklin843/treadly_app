@@ -9,6 +9,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { usePersonalization } from '@/lib/personalization';
+import { ALL_OUTFIT_IMAGES, ALL_PRODUCT_IMAGES, pickImage } from '@/lib/images';
 import {
   View,
   Text,
@@ -48,33 +49,33 @@ const MISSING_PIECES = [
   {
     id: "1",
     brand: "ZARA",
-    item: "Oversized Blazer",
-    original: 89,
-    sale: 42,
-    off: 53,
-    image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=300&q=80",
+    item: "Tailored Blazer",
+    original: 129,
+    sale: 78,
+    off: 40,
+    image: pickImage(ALL_PRODUCT_IMAGES, 0),
   },
   {
     id: "2",
-    brand: "TARGET",
-    item: "White Sneakers",
-    original: 40,
-    sale: 28,
-    off: 30,
-    image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&q=80",
+    brand: "COS",
+    item: "Silk Midi Skirt",
+    original: 95,
+    sale: 57,
+    off: 40,
+    image: pickImage(ALL_PRODUCT_IMAGES, 3),
   },
   {
     id: "3",
-    brand: "AMAZON",
-    item: "Gold Hoop Earrings",
-    original: 22,
-    sale: 14,
-    off: 36,
-    image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=300&q=80",
+    brand: "MANGO",
+    item: "Leather Loafers",
+    original: 89,
+    sale: 54,
+    off: 39,
+    image: pickImage(ALL_PRODUCT_IMAGES, 6),
   },
 ];
 
-const OUTFIT_IMAGE = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=80";
+const OUTFIT_IMAGE = pickImage(ALL_OUTFIT_IMAGES, 2);
 
 export default function GoNewScreen() {
   const p = usePersonalization();

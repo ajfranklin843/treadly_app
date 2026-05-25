@@ -150,3 +150,24 @@
 - [x] Stylist screen: AnimatedSendButton with scale press + gradient activation
 - [x] Stylist screen: AnimatedRecoCard with scale press + image fade-in
 - [x] TypeScript clean (0 errors), 12 tests passing
+
+## Phase 10 — Closet Scan Signature Experience
+- [ ] Read Expo camera + image-picker docs for correct SDK 54 usage
+- [ ] Build ScanModal component — luxury dark camera UI with framing guides, source picker (camera / photo library / inspiration)
+- [ ] Build AI analysis animation — scan line sweep, glow pulse, step-by-step intelligence reveal (brand, color, category, style tags, outfit compatibility)
+- [ ] Build item reveal card — Color DNA swatch, Style Match score, Pairs Well section, outfit count, "Trending in your aesthetic"
+- [ ] Animate item card into Closet grid on confirmation
+- [ ] Wire ScanModal into Closet screen "Scan a New Item" CTA
+- [ ] Update Closet wardrobe grid to accept dynamically added items
+- [ ] TypeScript clean, tests passing
+
+## Phase 11 — Cohesive Feminine Editorial Image System
+- [ ] Build centralized ThreadlyImages library (lib/images.ts) with curated Unsplash URLs
+- [ ] Home: hero outfit card, curated picks, trend cards, deal cards — all with feminine editorial imagery
+- [ ] Go New: outfit flat lay, missing pieces product shots — cohesive aesthetic
+- [ ] Closet: wardrobe grid items, scan examples — feminine wardrobe editorial
+- [ ] Shop: deal card product images, brand imagery, trending picks — luxury feminine shopping
+- [ ] Stylist: recommendation card images — editorial fashion previews
+- [ ] Onboarding: style vibe cards (Minimal, Clean Girl, Old Money, etc.) — editorial fashion photography
+- [ ] Consistent aspect ratios, rounded corners, fade-in loading across all image surfaces
+- [ ] TypeScript clean, tests passing

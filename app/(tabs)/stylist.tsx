@@ -5,6 +5,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { usePersonalization } from '@/lib/personalization';
+import { ALL_PRODUCT_IMAGES, ALL_OUTFIT_IMAGES, pickImage } from '@/lib/images';
 import { useScalePress, useImageFade, hapticLight, hapticSuccess } from '@/lib/animations';
 import {
   View,
@@ -71,9 +72,9 @@ const MOCK_RESPONSES: Record<string, Message> = {
     role: "stylist",
     text: "I love that. Based on your closet, here's what I'd pull together — you already own 80% of this look. The only missing piece is a blazer, and I found one at 46% off.",
     cards: [
-      { id: "c1", brand: "ZARA", item: "Oversized Blazer", price: 59, image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=300&q=80" },
-      { id: "c2", brand: "YOUR CLOSET", item: "Straight-Leg Jeans", price: 0, image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&q=80" },
-      { id: "c3", brand: "YOUR CLOSET", item: "White Linen Shirt", price: 0, image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=300&q=80" },
+      { id: "c1", brand: "ZARA", item: "Tailored Blazer", price: 78, image: pickImage(ALL_PRODUCT_IMAGES, 0) },
+      { id: "c2", brand: "YOUR CLOSET", item: "Straight-Leg Jeans", price: 0, image: pickImage(ALL_PRODUCT_IMAGES, 4) },
+      { id: "c3", brand: "YOUR CLOSET", item: "White Linen Shirt", price: 0, image: pickImage(ALL_PRODUCT_IMAGES, 3) },
     ],
     timestamp: "now",
   },
@@ -82,9 +83,9 @@ const MOCK_RESPONSES: Record<string, Message> = {
     role: "stylist",
     text: "Rooftop dinner — I'm thinking elevated but effortless. Your camel blazer is perfect here. Pair it with the midi slip dress from your closet and these heels I found at 42% off.",
     cards: [
-      { id: "c4", brand: "YOUR CLOSET", item: "Camel Blazer", price: 0, image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=300&q=80" },
-      { id: "c5", brand: "YOUR CLOSET", item: "Midi Slip Dress", price: 0, image: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=300&q=80" },
-      { id: "c6", brand: "ALDO", item: "Pointed Slingback", price: 55, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&q=80" },
+      { id: "c4", brand: "YOUR CLOSET", item: "Camel Blazer", price: 0, image: pickImage(ALL_PRODUCT_IMAGES, 0) },
+      { id: "c5", brand: "YOUR CLOSET", item: "Midi Slip Dress", price: 0, image: pickImage(ALL_PRODUCT_IMAGES, 5) },
+      { id: "c6", brand: "ALDO", item: "Pointed Slingback", price: 55, image: pickImage(ALL_PRODUCT_IMAGES, 6) },
     ],
     timestamp: "now",
   },
@@ -93,9 +94,9 @@ const MOCK_RESPONSES: Record<string, Message> = {
     role: "stylist",
     text: "Under $50 and on-trend? I've got you. These three pieces all match your style profile and are currently on sale. Together they build 4 different looks.",
     cards: [
-      { id: "c7", brand: "H&M", item: "Linen Trousers", price: 25, image: "https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=300&q=80" },
-      { id: "c8", brand: "AMAZON", item: "Gold Hoops", price: 14, image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=300&q=80" },
-      { id: "c9", brand: "TARGET", item: "White Sneakers", price: 28, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&q=80" },
+      { id: "c7", brand: "H&M", item: "Linen Trousers", price: 25, image: pickImage(ALL_PRODUCT_IMAGES, 2) },
+      { id: "c8", brand: "MANGO", item: "Gold Hoops", price: 14, image: pickImage(ALL_PRODUCT_IMAGES, 11) },
+      { id: "c9", brand: "COS", item: "White Sneakers", price: 28, image: pickImage(ALL_PRODUCT_IMAGES, 9) },
     ],
     timestamp: "now",
   },

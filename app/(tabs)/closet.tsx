@@ -5,6 +5,7 @@
 
 import React from "react";
 import { useState, useRef } from "react";
+import { ALL_PRODUCT_IMAGES, pickImage } from '@/lib/images';
 import {
   View,
   Text,
@@ -33,18 +34,18 @@ const ITEM_W = (width - ThreadlySpacing.screenPadding * 2 - GRID_GAP * (GRID_COL
 const CATEGORIES = ["All", "Tops", "Bottoms", "Dresses", "Outerwear", "Shoes", "Bags", "Accessories"];
 
 const CLOSET_ITEMS = [
-  { id: "1", name: "Camel Blazer", cat: "Outerwear", worn: 12, image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=300&q=80" },
-  { id: "2", name: "Black Tee", cat: "Tops", worn: 28, image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&q=80" },
-  { id: "3", name: "Wide-Leg Trousers", cat: "Bottoms", worn: 9, image: "https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=300&q=80" },
-  { id: "4", name: "White Linen Shirt", cat: "Tops", worn: 15, image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=300&q=80" },
-  { id: "5", name: "Straight-Leg Jeans", cat: "Bottoms", worn: 22, image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&q=80" },
-  { id: "6", name: "Midi Slip Dress", cat: "Dresses", worn: 6, image: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=300&q=80" },
-  { id: "7", name: "White Sneakers", cat: "Shoes", worn: 31, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&q=80" },
-  { id: "8", name: "Leather Tote", cat: "Bags", worn: 18, image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=300&q=80" },
-  { id: "9", name: "Trench Coat", cat: "Outerwear", worn: 7, image: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=300&q=80" },
-  { id: "10", name: "Silk Blouse", cat: "Tops", worn: 5, image: "https://images.unsplash.com/photo-1564257631407-4deb1f99d992?w=300&q=80" },
-  { id: "11", name: "Mini Skirt", cat: "Bottoms", worn: 4, image: "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=300&q=80" },
-  { id: "12", name: "Gold Hoops", cat: "Accessories", worn: 42, image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=300&q=80" },
+  { id: "1", name: "Camel Blazer", cat: "Outerwear", worn: 12, image: pickImage(ALL_PRODUCT_IMAGES, 0) },
+  { id: "2", name: "Black Tee", cat: "Tops", worn: 28, image: pickImage(ALL_PRODUCT_IMAGES, 1) },
+  { id: "3", name: "Wide-Leg Trousers", cat: "Bottoms", worn: 9, image: pickImage(ALL_PRODUCT_IMAGES, 2) },
+  { id: "4", name: "White Linen Shirt", cat: "Tops", worn: 15, image: pickImage(ALL_PRODUCT_IMAGES, 3) },
+  { id: "5", name: "Straight-Leg Jeans", cat: "Bottoms", worn: 22, image: pickImage(ALL_PRODUCT_IMAGES, 4) },
+  { id: "6", name: "Midi Slip Dress", cat: "Dresses", worn: 6, image: pickImage(ALL_PRODUCT_IMAGES, 5) },
+  { id: "7", name: "White Sneakers", cat: "Shoes", worn: 31, image: pickImage(ALL_PRODUCT_IMAGES, 6) },
+  { id: "8", name: "Leather Tote", cat: "Bags", worn: 18, image: pickImage(ALL_PRODUCT_IMAGES, 7) },
+  { id: "9", name: "Trench Coat", cat: "Outerwear", worn: 7, image: pickImage(ALL_PRODUCT_IMAGES, 8) },
+  { id: "10", name: "Silk Blouse", cat: "Tops", worn: 5, image: pickImage(ALL_PRODUCT_IMAGES, 9) },
+  { id: "11", name: "Mini Skirt", cat: "Bottoms", worn: 4, image: pickImage(ALL_PRODUCT_IMAGES, 10) },
+  { id: "12", name: "Gold Hoops", cat: "Accessories", worn: 42, image: pickImage(ALL_PRODUCT_IMAGES, 11) },
 ];
 
 const COLOR_DNA = [

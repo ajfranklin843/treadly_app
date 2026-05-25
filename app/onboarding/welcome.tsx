@@ -12,9 +12,10 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from '@/constants/threadly';
+import { HERO_IMAGES, pickImage } from '@/lib/images';
 
 const { height } = Dimensions.get('window');
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=800&q=85';
+const HERO_IMAGE = pickImage(Object.values(HERO_IMAGES), 0);
 
 export default function WelcomeScreen() {
   const imageOpacity = useRef(new Animated.Value(0)).current;

@@ -6,6 +6,7 @@
 
 import { useState, useMemo, useRef } from "react";
 import { usePersonalization } from '@/lib/personalization';
+import { ALL_PRODUCT_IMAGES, pickImage } from '@/lib/images';
 import {
   View,
   Text,
@@ -40,7 +41,7 @@ const DEALS = [
     original: 110,
     sale: 59,
     off: 46,
-    image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500&q=80",
+    image: pickImage(ALL_PRODUCT_IMAGES, 0),
     tag: "BEST MATCH",
     expiry: "2h left",
   },
@@ -52,7 +53,7 @@ const DEALS = [
     original: 80,
     sale: 44,
     off: 45,
-    image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500&q=80",
+    image: pickImage(ALL_PRODUCT_IMAGES, 4),
     tag: "TRENDING",
     expiry: "24h left",
   },
@@ -64,7 +65,7 @@ const DEALS = [
     original: 95,
     sale: 55,
     off: 42,
-    image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=500&q=80",
+    image: pickImage(ALL_PRODUCT_IMAGES, 6),
     tag: "HOT DEAL",
     expiry: "6h left",
   },
@@ -76,7 +77,7 @@ const DEALS = [
     original: 22,
     sale: 14,
     off: 36,
-    image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500&q=80",
+    image: pickImage(ALL_PRODUCT_IMAGES, 11),
     tag: "YOUR STYLE",
     expiry: "48h left",
   },
@@ -88,7 +89,7 @@ const DEALS = [
     original: 45,
     sale: 25,
     off: 44,
-    image: "https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=500&q=80",
+    image: pickImage(ALL_PRODUCT_IMAGES, 2),
     tag: "QUIET LUXURY",
     expiry: "12h left",
   },
@@ -100,7 +101,7 @@ const DEALS = [
     original: 148,
     sale: 89,
     off: 40,
-    image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=500&q=80",
+    image: pickImage(ALL_PRODUCT_IMAGES, 7),
     tag: "INVESTMENT",
     expiry: "3d left",
   },

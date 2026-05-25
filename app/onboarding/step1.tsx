@@ -13,19 +13,20 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { saveStyleProfile } from '@/lib/onboarding-store';
 import { ThreadlyColors, ThreadlySpacing, ThreadlyRadius } from '@/constants/threadly';
+import { ALL_OUTFIT_IMAGES, HERO_IMAGES, pickImage } from '@/lib/images';
 
 const { width } = Dimensions.get('window');
 const CARD_W = (width - ThreadlySpacing.screenPadding * 2 - 12) / 2;
 
 const STYLE_VIBES = [
-  { id: 'minimal', label: 'Minimal', sub: 'Clean, quiet, intentional', image: 'https://images.unsplash.com/photo-1594938298603-c8148c4b4357?w=400&q=80', color: '#E8E4E0' },
-  { id: 'clean-girl', label: 'Clean Girl', sub: 'Effortless, dewy, polished', image: 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=400&q=80', color: '#F2D4C8' },
-  { id: 'old-money', label: 'Old Money', sub: 'Timeless, tailored, quiet luxury', image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&q=80', color: '#C8B89A' },
-  { id: 'streetwear', label: 'Streetwear', sub: 'Bold, urban, statement', image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&q=80', color: '#2A2A2A' },
-  { id: 'chic', label: 'Parisian Chic', sub: 'Effortless French elegance', image: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400&q=80', color: '#D4A090' },
-  { id: 'casual-luxury', label: 'Casual Luxury', sub: 'Elevated basics, premium feel', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80', color: '#B8A898' },
-  { id: 'romantic', label: 'Romantic', sub: 'Soft, feminine, dreamy', image: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=400&q=80', color: '#E8C8C0' },
-  { id: 'power', label: 'Power Dressing', sub: 'Structured, confident, bold', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&q=80', color: '#1A1A2E' },
+  { id: 'minimal', label: 'Minimal', sub: 'Clean, quiet, intentional', image: pickImage(ALL_OUTFIT_IMAGES, 0), color: '#E8E4E0' },
+  { id: 'clean-girl', label: 'Clean Girl', sub: 'Effortless, dewy, polished', image: pickImage(ALL_OUTFIT_IMAGES, 1), color: '#F2D4C8' },
+  { id: 'old-money', label: 'Old Money', sub: 'Timeless, tailored, quiet luxury', image: pickImage(ALL_OUTFIT_IMAGES, 2), color: '#C8B89A' },
+  { id: 'streetwear', label: 'Streetwear', sub: 'Bold, urban, statement', image: pickImage(ALL_OUTFIT_IMAGES, 3), color: '#2A2A2A' },
+  { id: 'chic', label: 'Parisian Chic', sub: 'Effortless French elegance', image: pickImage(ALL_OUTFIT_IMAGES, 4), color: '#D4A090' },
+  { id: 'casual-luxury', label: 'Casual Luxury', sub: 'Elevated basics, premium feel', image: pickImage(ALL_OUTFIT_IMAGES, 5), color: '#B8A898' },
+  { id: 'romantic', label: 'Romantic', sub: 'Soft, feminine, dreamy', image: pickImage(ALL_OUTFIT_IMAGES, 6), color: '#E8C8C0' },
+  { id: 'power', label: 'Power Dressing', sub: 'Structured, confident, bold', image: pickImage(Object.values(HERO_IMAGES), 2), color: '#1A1A2E' },
 ];
 
 export default function Step1Screen() {
